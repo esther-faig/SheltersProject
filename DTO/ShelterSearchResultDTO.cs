@@ -26,6 +26,8 @@ namespace DTO
         //המאפינים שיש במקלט
         public List<ShelterFeatureDTO> Features { get; set; }
         //public List<string> MatchReasons { get; set; } = new();
+
+        public List<string> Files { get; set; } = new(); // תמונות או קבצים של המקלט
     }
 
 }
