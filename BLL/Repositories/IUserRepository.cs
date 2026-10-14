@@ -10,10 +10,12 @@ namespace BLL.Repositories
 {
     public interface IUserRepository
     {
+        //יש ליצור פה פונקציות של הרשמה והתחברות ו
+        //DTO מתאימים
         List<UserProfileDTO> GetAll();
         UserProfileDTO? GetById(int id);
-        UserProfileDTO Add(UserProfileDTO dto);
-        UserProfileDTO? Update(int id, UserProfileDTO dto);
+        //UserProfileDTO Add(UserProfileDTO dto);
+        UserProfileDTO? Update(int id, UpdateUserRequestDTO dto);
         bool Delete(int id);
     }
 }

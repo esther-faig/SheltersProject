@@ -1,4 +1,7 @@
-﻿using DAL;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using DAL;
+using DTO;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,50 +11,73 @@ using System.Threading.Tasks;
 
 namespace BLL.Repositories
 {
-    internal class ShelterRepository
+    public class ShelterRepository: IShelterRepository
     {
         private readonly DB_Shelters _context;
+        private readonly IMapper _mapper;
 
-        public ShelterRepository(DB_Shelters context)
+        public ShelterRepository(
+            DB_Shelters context,
+            IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public Shelter GetById(int id)
+        public List<ShelterSearchResultDTO> GetAll()
         {
-            // שימוש ב-Find לשлиפה מהירה לפי המפתח הראשי
-            return _context.Shelter.Find(id);
+            return _context.Shelter
+                .AsNoTracking()
+                .ProjectTo<ShelterSearchResultDTO>(
+                    _mapper.ConfigurationProvider)
+                .ToList();
         }
 
-        // 2. החזרת רשימת אובייקטים
-        public IEnumerable<Shelter> GetAll()
+        public ShelterSearchResultDTO? GetById(int id)
         {
-            return _context.Shelter.ToList();
+            return _context.Shelter
+                .Where(p => p.ShelterId == id)
+                .ProjectTo<ShelterSearchResultDTO>(
+                    _mapper.ConfigurationProvider)
+                .FirstOrDefault();
         }
 
-        // 3. הוספת אובייקט
-        public void Add(Shelter entity)
+        public ShelterDetailsDTO Add(ShelterRequestDTO dto)
         {
-            _context.Shelter.Add(entity);
+            var shelter = _mapper.Map<Shelter>(dto);
+
+            _context.Shelter.Add(shelter);
             _context.SaveChanges();
+
+            return _mapper.Map<ShelterDetailsDTO>(shelter);
         }
 
-        // 4. מחיקת אובייקט
-        public void Delete(int id)
+        public ShelterDetailsDTO? Update(int id, ShelterRequestDTO dto)
         {
-            var entity = _context.Shelter.Find(id);
-            if (entity != null)
-            {
-                _context.Shelter.Remove(entity);
-                _context.SaveChanges();
-            }
-        }
+            var shelter = _context.Shelter
+                .FirstOrDefault(sf => sf.ShelterId == id);
 
-        // 5. עדכון אובייקט
-        public void Update(Shelter entity)
-        {
-            _context.Shelter.Update(entity);
+            if (shelter == null)
+                return null;
+            _mapper.Map(dto, shelter);
             _context.SaveChanges();
+
+            _context.SaveChanges();
+
+            return _mapper.Map<ShelterDetailsDTO>(shelter);
+        }
+        public bool Delete(int id)
+        {
+            var shelter = _context.Shelter
+                .FirstOrDefault(p => p.ShelterId == id);
+
+            if (shelter == null)
+                return false;
+
+            _context.Shelter.Remove(shelter);
+            _context.SaveChanges();
+
+            return true;
         }
     }
 }

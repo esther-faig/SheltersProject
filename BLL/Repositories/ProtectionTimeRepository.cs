@@ -27,6 +27,12 @@ namespace BLL.Repositories
                 .Include(pt => pt.AlertZone)
                 .FirstOrDefault(pt => pt.ProtectionTimeId == id);
         }
+        public List<ProtectionTime> GetAll()
+        {
+            return _context.ProtectionTime
+                .Include(pt => pt.AlertZone)
+                .ToList();
+        }
         public ProtectionTime Add(ProtectionTime entity)
         {
             _context.ProtectionTime.Add(entity);
@@ -55,14 +61,16 @@ namespace BLL.Repositories
             }
 
             // עדכון האובייקט ושמירת השינויים במסד הנתונים
-            entity.ProtectionTime = id;
+            entity.ProtectionTimeId = id;
             _context.ProtectionTime.Update(entity);
             _context.SaveChanges();
 
+
+
             // שליפת האובייקט המעודכן מחדש כולל קשרי הגומלין באמצעות Include
             return _context.ProtectionTime
-                .Include(az => az.Shelters)         // טעינת המקלטים הקשורים
-                .FirstOrDefault(az => az.AlertZoneId == id);
+           .Include(pt => pt.AlertZone)
+           .FirstOrDefault(pt => pt.ProtectionTimeId == id);
         }
     }
 }

@@ -1,4 +1,7 @@
-﻿using DAL;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using DAL;
+using DTO;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,50 +11,73 @@ using System.Threading.Tasks;
 
 namespace BLL.Repositories
 {
-    internal class ShelterFeatureRepository
+    public class ShelterFeatureRepository: IShelterFeatureRepository
     {
-        private readonly DB_Shelters _context; 
+        private readonly DB_Shelters _context;
+        private readonly IMapper _mapper;
 
-        public ShelterFeatureRepository(DB_Shelters context)
+        public ShelterFeatureRepository(
+            DB_Shelters context,
+            IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public ShelterFeature GetById(int id)
+        public List<ShelterFeatureDTO> GetAll()//-----
         {
-            // שימוש ב-Find לשлиפה מהירה לפי המפתח הראשי
-            return _context.ShelterFeature.Find(id);
+            return _context.ShelterFeature
+                .AsNoTracking()
+                .ProjectTo<ShelterFeatureDTO>(
+                    _mapper.ConfigurationProvider)
+                .ToList();
         }
 
-        // 2. החזרת רשימת אובייקטים
-        public IEnumerable<ShelterFeature> GetAll()
+        public ShelterFeatureDTO? GetById(int id)
         {
-            return _context.ShelterFeature.ToList();
+            return _context.ShelterFeature
+                .Where(p => p.ShelterFeatureId == id)
+                .ProjectTo<ShelterFeatureDTO>(
+                    _mapper.ConfigurationProvider)
+                .FirstOrDefault();
         }
 
-        // 3. הוספת אובייקט
-        public void Add(ShelterFeature entity)
+        public ShelterFeatureDTO Add(ShelterFeatureDTO dto)
         {
-            _context.ShelterFeature.Add(entity);
+            var preference = _mapper.Map<ShelterFeature>(dto);
+
+            _context.ShelterFeature.Add(preference);
             _context.SaveChanges();
+
+            return _mapper.Map<ShelterFeatureDTO>(preference);
         }
 
-        // 4. מחיקת אובייקט
-        public void Delete(int id)
+        public ShelterFeatureDTO? Update(int id, ShelterFeatureDTO dto)
         {
-            var entity = _context.ShelterFeature.Find(id);
-            if (entity != null)
-            {
-                _context.ShelterFeature.Remove(entity);
-                _context.SaveChanges();
-            }
-        }
+            var shelterFeature = _context.ShelterFeature
+                .FirstOrDefault(sf => sf.ShelterFeatureId == id);
 
-        // 5. עדכון אובייקט
-        public void Update(ShelterFeature entity)
-        {
-            _context.ShelterFeature.Update(entity);
+            if (shelterFeature == null)
+                return null;
+
+            shelterFeature.IsAvailable = dto.IsAvailable;
+
             _context.SaveChanges();
+
+            return _mapper.Map<ShelterFeatureDTO>(shelterFeature);
+        }
+        public bool Delete(int id)
+        {
+            var shelterFeature = _context.ShelterFeature
+                .FirstOrDefault(p => p.ShelterFeatureId == id);
+
+            if (shelterFeature == null)
+                return false;
+
+            _context.ShelterFeature.Remove(shelterFeature);
+            _context.SaveChanges();
+
+            return true;
         }
     }
 }

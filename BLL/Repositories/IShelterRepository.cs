@@ -10,10 +10,11 @@ namespace BLL.Repositories
 {
     public interface IShelterRepository
     {
+        //משמש להצגת המקלטים בתוצאות החיפוש, כולל מידע על תכונות המקלטים, זמינותם ומיקומם.
         List<ShelterSearchResultDTO> GetAll();
         ShelterSearchResultDTO? GetById(int id);
-        ShelterSearchResultDTO Add(ShelterSearchResultDTO dto);
-        ShelterSearchResultDTO? Update(int id, ShelterSearchResultDTO dto);
+        ShelterDetailsDTO Add(ShelterRequestDTO dto);
+        ShelterDetailsDTO? Update(int id, ShelterRequestDTO dto);
         bool Delete(int id);
     }
 }

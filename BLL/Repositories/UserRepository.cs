@@ -1,4 +1,7 @@
-﻿using DAL;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using DAL;
+using DTO;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,49 +11,94 @@ using System.Threading.Tasks;
 
 namespace BLL.Repositories
 {
-    internal class UserRepository
+    public class UserRepository: IUserRepository
     {
         private readonly DB_Shelters _context;
+        private readonly IMapper _mapper;
 
-        public UserRepository(DB_Shelters context)
+        public UserRepository(
+            DB_Shelters context,
+            IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public User GetById(int id)
+        public List<UserProfileDTO> GetAll()
         {
-            // שימוש ב-Find לשлиפה מהירה לפי המפתח הראשי
-            return _context.User.Find(id);
-        }
-        // 2. החזרת רשימת אובייקטים
-        public IEnumerable<User> GetAll()
-        {
-            return _context.User.ToList();
+            return _context.User
+                .AsNoTracking()
+                .ProjectTo<UserProfileDTO>(
+                    _mapper.ConfigurationProvider)
+                .ToList();
         }
 
-        // 3. הוספת אובייקט
-        public void Add(User entity)
+        public UserProfileDTO? GetById(int id)
         {
-            _context.User.Add(entity);
-            _context.SaveChanges();
+            return _context.User
+                .Where(p => p.UserId == id)
+                .ProjectTo<UserProfileDTO>(
+                    _mapper.ConfigurationProvider)
+                .FirstOrDefault();
         }
 
-        // 4. מחיקת אובייקט
-        public void Delete(int id)
+        //צריך לעשות פונקציות של הרשמה וכו
+        //public PreferenceDTO Add(PreferenceDTO dto)
+        //{
+        //    var preference = _mapper.Map<Preference>(dto);
+
+        //    _context.Preference.Add(preference);
+        //    _context.SaveChanges();
+
+        //    return _mapper.Map<PreferenceDTO>(preference);
+        //}
+
+        public UserProfileDTO? Update(int id, UpdateUserRequestDTO dto)
         {
-            var entity = _context.User.Find(id);
-            if (entity != null)
+            // שליפת המשתמש יחד עם ההעדפות הקיימות שלו מתוך ה-DAL
+            var userProfile = _context.User
+                .Include(u => u.UserPreferences) // ודא שאתה כולל את טבלת הקישור/ההעדפות
+                .FirstOrDefault(p => p.UserId == id);
+
+            if (userProfile == null)
+                return null;
+
+            // עדכון פרטי הבסיס של המשתמש
+            userProfile.FullName = dto.FullName;
+            userProfile.Email = dto.Email;
+
+            // טיפול בעדכון ההעדפות (מחיקת ישנות והוספת החדשות, או עדכון לפי הלגיקה של הפרויקט שלך)
+            // דוגמה בסיסית لإכלוס מחדש של ההעדפות בהתאם ל-DTO:
+            _context.UserPreference.RemoveRange(userProfile.UserPreferences);
+
+            foreach (var prefDto in dto.Preferences)
             {
-                _context.User.Remove(entity);
-                _context.SaveChanges();
+                userProfile.UserPreferences.Add(new UserPreference
+                {
+                    UserId = id,
+                    PreferenceId = prefDto.PreferenceId // בהנחה שיש מזהה להעדפה ב-DTO
+                                                        // הוסף שדות נוספים במידת הצורך בהתאם למודל ה-DAL שלך
+                });
             }
+
+            _context.SaveChanges();
+
+            // החזרת הפרופיל המעודכן ממופה ל-UserProfileDTO
+            return _mapper.Map<UserProfileDTO>(userProfile);
         }
 
-        // 5. עדכון אובייקט
-        public void Update(User entity)
+        public bool Delete(int id)
         {
-            _context.User.Update(entity);
+            var user = _context.User
+                .FirstOrDefault(p => p.UserId == id);
+
+            if (user == null)
+                return false;
+
+            _context.User.Remove(user);
             _context.SaveChanges();
+
+            return true;
         }
     }
 }
