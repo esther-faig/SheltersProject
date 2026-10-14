@@ -1,10 +1,8 @@
-﻿using DAL;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using DAL;
+using DTO;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL.Repositories
 {
@@ -39,7 +37,7 @@ namespace BLL.Repositories
                 .FirstOrDefault();
         }
 
-        public PreferenceDTO Create(PreferenceDTO dto)
+        public PreferenceDTO Add(PreferenceDTO dto)
         {
             var preference = _mapper.Map<Preference>(dto);
 

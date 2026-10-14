@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DAL;
+using DTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +8,12 @@ using System.Threading.Tasks;
 
 namespace BLL.Repositories
 {
-    internal interface IShelterRepository
+    public interface IShelterRepository
     {
+        List<ShelterSearchResultDTO> GetAll();
+        ShelterSearchResultDTO? GetById(int id);
+        ShelterSearchResultDTO Add(ShelterSearchResultDTO dto);
+        ShelterSearchResultDTO? Update(int id, ShelterSearchResultDTO dto);
+        bool Delete(int id);
     }
 }
