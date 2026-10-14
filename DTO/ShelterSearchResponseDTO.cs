@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    internal class ShelterSearchResponseDTO
+    public class ShelterSearchResponseDTO
     {
+        //כל תוצאות החיפוש
+        public List<ShelterSearchResultDTO> Results { get; set; } = new();
+        public bool HasResults { get; set; }
+        public string Message { get; set; } = "";
     }
 }

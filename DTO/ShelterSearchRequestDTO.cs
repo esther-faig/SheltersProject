@@ -12,5 +12,6 @@ namespace DTO
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public string TravelMode { get; set; } = "WALKING";//ברירת מחדל
+        public int? UserId { get; set; } // null עבור משתמש אורח
     }
 }

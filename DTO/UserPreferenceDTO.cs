@@ -10,8 +10,8 @@ namespace DTO
     {
         //משמש להצגת ההעדפות של המשתמש וגם לשליחת העדפותיו לשמירה
         public int PreferenceId { get; set; }
-        public string Name { get; set; } = "";
-        public string? Category { get; set; }
+
+        public string? Name { get; set; } = "";
         public int Priority { get; set; }
         public bool IsRequired { get; set; }
     }

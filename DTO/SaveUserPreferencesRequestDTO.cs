@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    internal class SaveUserPreferencesRequestDTO
+    public class SaveUserPreferencesRequestDTO
     {
+        //לשלוח לשרת את כל ההעדפות שהמשתמש בחר בהרשמה או בעריכה
+        public List<UserPreferenceDTO> Preferences { get; set; } = new();
     }
 }

@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    internal class UpdateUserRequestDTO
+    public class UpdateUserRequestDTO
     {
+        // פרטי המשתמש
+        public string FullName { get; set; } = "";
+        public string Email { get; set; } = "";
+
+        // ההעדפות שהמשתמש בחר
+        public List<UserPreferenceDTO> Preferences { get; set; } = new();
     }
 }

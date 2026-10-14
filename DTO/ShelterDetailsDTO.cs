@@ -19,6 +19,6 @@ namespace DTO
         public int MaxCapacity { get; set; }
 
         public List<ShelterFeatureDTO> Features { get; set; } = new();
-        public List<ShelterFileDTO> Files { get; set; } = new();
+        public List<string> Files { get; set; } = new(); // תמונות או קבצים של המקלט
     }
 }
