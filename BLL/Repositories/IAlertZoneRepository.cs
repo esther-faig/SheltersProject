@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace BLL.Repositories
 {
-    internal interface IAlertZoneRepository
+    public interface IAlertZoneRepository
     {
+        AlertZone GetById(int id);
     }
 }
