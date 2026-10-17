@@ -1,3 +1,6 @@
+using BLL;
+using BLL.Mapper;
+using BLL.Repositories;
 using DAL;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
@@ -14,6 +17,22 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<DB_Shelters>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
     x => x.UseNetTopologySuite()));
+
+
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<MappingProfile>();
+});
+
+builder.Services.AddScoped<IAlertZoneRepository, AlertZoneRepository>();
+builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
+builder.Services.AddScoped<IProtectionTimeRepository, ProtectionTimeRepository>();
+builder.Services.AddScoped<IShelterFeatureRepository, ShelterFeatureRepository>();
+builder.Services.AddScoped<IShelterRepository, ShelterRepository>();
+builder.Services.AddScoped<IUserPreferenceRepository, UserPreferenceRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+
 
 
 var app = builder.Build();
