@@ -12,10 +12,10 @@ namespace BLL.Services
 {
     public interface IPreferenceService
     {
-        List<Preference> GetAll();
-        Preference? GetById(int id);
-        Preference Add(Preference entity);
-        Preference? Update(int id, Preference entity);
+        List<PreferenceDTO> GetAll();
+        PreferenceDTO? GetById(int id);
+        PreferenceDTO Add(PreferenceDTO dto);
+        PreferenceDTO? Update(int id, PreferenceDTO dto);
         bool Delete(int id);
     }
 }

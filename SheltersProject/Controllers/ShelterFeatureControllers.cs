@@ -1,5 +1,4 @@
-﻿
-using BLL.Repositories;
+﻿using BLL.Services;
 using DTO;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,28 +8,26 @@ namespace SheltersProject.Controllers
     [ApiController]
     public class ShelterFeaturesController : ControllerBase
     {
-        private readonly IShelterFeatureRepository _repository;
+        private readonly IShelterFeatureService _service;
 
-        public ShelterFeaturesController(
-            IShelterFeatureRepository repository)
+        public ShelterFeaturesController(IShelterFeatureService service)
         {
-            _repository = repository;
+            _service = service;
         }
 
         // GET: api/ShelterFeatures
         [HttpGet]
         public ActionResult<List<ShelterFeatureDTO>> GetAll()
         {
-            var features = _repository.GetAll();
+            var features = _service.GetAll();
             return Ok(features);
         }
 
         // GET: api/ShelterFeatures/5
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public ActionResult<ShelterFeatureDTO> GetById(int id)
         {
-            var feature = _repository.GetById(id);
-
+            var feature = _service.GetById(id);
             if (feature == null)
                 return NotFound();
 
@@ -39,22 +36,17 @@ namespace SheltersProject.Controllers
 
         // POST: api/ShelterFeatures
         [HttpPost]
-        public ActionResult<ShelterFeatureDTO> Add(
-            [FromBody] ShelterFeatureDTO dto)
+        public ActionResult<ShelterFeatureDTO> Add([FromBody] ShelterFeatureDTO dto)
         {
-            var addedFeature = _repository.Add(dto);
-
+            var addedFeature = _service.Add(dto);
             return Ok(addedFeature);
         }
 
         // PUT: api/ShelterFeatures/5
-        [HttpPut("{id}")]
-        public ActionResult<ShelterFeatureDTO> Update(
-            int id,
-            [FromBody] ShelterFeatureDTO dto)
+        [HttpPut("{id:int}")]
+        public ActionResult<ShelterFeatureDTO> Update(int id, [FromBody] ShelterFeatureDTO dto)
         {
-            var updatedFeature = _repository.Update(id, dto);
-
+            var updatedFeature = _service.Update(id, dto);
             if (updatedFeature == null)
                 return NotFound();
 
@@ -62,11 +54,10 @@ namespace SheltersProject.Controllers
         }
 
         // DELETE: api/ShelterFeatures/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public IActionResult Delete(int id)
         {
-            var deleted = _repository.Delete(id);
-
+            var deleted = _service.Delete(id);
             if (!deleted)
                 return NotFound();
 

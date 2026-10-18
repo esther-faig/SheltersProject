@@ -1,4 +1,4 @@
-﻿using BLL.Repositories;
+﻿using BLL.Services;
 using DTO;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,11 +8,11 @@ namespace SheltersProject.Controllers
     [ApiController]
     public class PreferencesController : ControllerBase
     {
-        private readonly IPreferenceRepository _preferenceRepository;
+        private readonly IPreferenceService _service;
 
-        public PreferencesController(IPreferenceRepository preferenceRepository)
+        public PreferencesController(IPreferenceService service)
         {
-            _preferenceRepository = preferenceRepository;
+            _service = service;
         }
 
         // GET: api/Preferences
@@ -20,18 +20,16 @@ namespace SheltersProject.Controllers
         [HttpGet]
         public ActionResult<List<PreferenceDTO>> GetAll()
         {
-            var preferences = _preferenceRepository.GetAll();
-
+            var preferences = _service.GetAll();
             return Ok(preferences);
         }
 
         // GET: api/Preferences/5
         // מחזיר העדפה לפי מזהה
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public ActionResult<PreferenceDTO> GetById(int id)
         {
-            var preference = _preferenceRepository.GetById(id);
-
+            var preference = _service.GetById(id);
             if (preference == null)
             {
                 return NotFound();
@@ -50,7 +48,7 @@ namespace SheltersProject.Controllers
                 return BadRequest("יש להזין שם להעדפה.");
             }
 
-            var newPreference = _preferenceRepository.Add(dto);
+            var newPreference = _service.Add(dto);
 
             return CreatedAtAction(
                 nameof(GetById),
@@ -61,18 +59,15 @@ namespace SheltersProject.Controllers
 
         // PUT: api/Preferences/5
         // מעדכן העדפה קיימת
-        [HttpPut("{id}")]
-        public ActionResult<PreferenceDTO> Update(
-            int id,
-            [FromBody] PreferenceDTO dto)
+        [HttpPut("{id:int}")]
+        public ActionResult<PreferenceDTO> Update(int id, [FromBody] PreferenceDTO dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
             {
                 return BadRequest("יש להזין שם להעדפה.");
             }
 
-            var updatedPreference = _preferenceRepository.Update(id, dto);
-
+            var updatedPreference = _service.Update(id, dto);
             if (updatedPreference == null)
             {
                 return NotFound();
@@ -83,11 +78,10 @@ namespace SheltersProject.Controllers
 
         // DELETE: api/Preferences/5
         // מוחק העדפה לפי מזהה
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public IActionResult Delete(int id)
         {
-            bool deleted = _preferenceRepository.Delete(id);
-
+            bool deleted = _service.Delete(id);
             if (!deleted)
             {
                 return NotFound();

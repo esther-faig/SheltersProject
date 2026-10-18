@@ -93,14 +93,14 @@ namespace BLL.Mapper
                 .ForMember(d => d.SharedShelters, o => o.MapFrom(s => s.Shelters));
 
             CreateMap<User, UserResponseDto>()
-                .ForMember(d => d.Role, o => o.MapFrom(s => s.Roles.ToString()))
+                .ForMember(d => d.Role, o => o.MapFrom(s => s.Role.ToString()))
                 .ForMember(d => d.Token, o => o.Ignore());                    // JWT נוצר אחרי המיפוי
 
             // Password לא ממופה בכוונה: חייבים להצפין (hash) בשירות לפני שמירה
             CreateMap<RegisterRequestDTO, User>()
                 .ForMember(d => d.UserId, o => o.Ignore())
                 .ForMember(d => d.Password, o => o.Ignore())
-                .ForMember(d => d.Roles, o => o.MapFrom(_ => UserRole.Resident))
+                .ForMember(d => d.Role, o => o.MapFrom(_ => UserRole.Resident))
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
                 .ForMember(d => d.UpdatedAt, o => o.Ignore())
                 .ForMember(d => d.Shelters, o => o.Ignore())
@@ -109,7 +109,7 @@ namespace BLL.Mapper
             CreateMap<UpdateUserRequestDTO, User>()
                 .ForMember(d => d.UserId, o => o.Ignore())
                 .ForMember(d => d.Password, o => o.Ignore())
-                .ForMember(d => d.Roles, o => o.Ignore())
+                .ForMember(d => d.Role, o => o.Ignore())
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
                 .ForMember(d => d.UpdatedAt, o => o.MapFrom(_ => DateTime.UtcNow))
                 .ForMember(d => d.Shelters, o => o.Ignore())

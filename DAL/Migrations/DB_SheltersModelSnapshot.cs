@@ -41,9 +41,12 @@ namespace DAL.Migrations
 
                     b.Property<string>("OfficialCode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("AlertZoneId");
+
+                    b.HasIndex("OfficialCode")
+                        .IsUnique();
 
                     b.ToTable("AlertZone");
                 });
@@ -86,7 +89,7 @@ namespace DAL.Migrations
 
                     b.Property<string>("AlertType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("AlertZoneId")
                         .HasColumnType("int");
@@ -109,7 +112,7 @@ namespace DAL.Migrations
 
                     b.HasKey("ProtectionTimeId");
 
-                    b.HasIndex("AlertZoneId");
+                    b.HasIndex("AlertZoneId", "AlertType", "EffectiveFrom");
 
                     b.ToTable("ProtectionTime");
                 });
@@ -140,6 +143,9 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<double>("Latitude")
                         .HasColumnType("float");
 
@@ -153,6 +159,10 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("ShelterType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -160,35 +170,40 @@ namespace DAL.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("ShelterId");
 
                     b.HasIndex("AlertZoneId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("Status", "IsActive");
 
                     b.ToTable("Shelter");
                 });
 
             modelBuilder.Entity("DAL.ShelterFeature", b =>
                 {
-                    b.Property<int>("ShelterId")
+                    b.Property<int>("ShelterFeatureId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("PreferenceId")
-                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ShelterFeatureId"));
 
                     b.Property<bool?>("IsAvailable")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ShelterFeatureId")
+                    b.Property<int>("PreferenceId")
                         .HasColumnType("int");
 
-                    b.HasKey("ShelterId", "PreferenceId");
+                    b.Property<int>("ShelterId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ShelterFeatureId");
 
                     b.HasIndex("PreferenceId");
+
+                    b.HasIndex("ShelterId", "PreferenceId")
+                        .IsUnique();
 
                     b.ToTable("ShelterFeature");
                 });
@@ -206,7 +221,7 @@ namespace DAL.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -216,7 +231,7 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Roles")
+                    b.Property<int>("Role")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -224,29 +239,38 @@ namespace DAL.Migrations
 
                     b.HasKey("UserId");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.ToTable("User");
                 });
 
             modelBuilder.Entity("DAL.UserPreference", b =>
                 {
-                    b.Property<int>("UserId")
+                    b.Property<int>("UserPreferenceId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("PreferenceId")
-                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserPreferenceId"));
 
                     b.Property<bool>("IsRequired")
                         .HasColumnType("bit");
 
+                    b.Property<int>("PreferenceId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Priority")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserPreferenceId")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.HasKey("UserId", "PreferenceId");
+                    b.HasKey("UserPreferenceId");
 
                     b.HasIndex("PreferenceId");
+
+                    b.HasIndex("UserId", "PreferenceId")
+                        .IsUnique();
 
                     b.ToTable("UserPreference");
                 });
@@ -266,11 +290,12 @@ namespace DAL.Migrations
                 {
                     b.HasOne("DAL.AlertZone", "AlertZone")
                         .WithMany("Shelters")
-                        .HasForeignKey("AlertZoneId");
+                        .HasForeignKey("AlertZoneId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("DAL.User", "User")
                         .WithMany("Shelters")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -284,7 +309,7 @@ namespace DAL.Migrations
                     b.HasOne("DAL.Preference", "Preference")
                         .WithMany("ShelterFeatures")
                         .HasForeignKey("PreferenceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("DAL.Shelter", "Shelter")
@@ -303,7 +328,7 @@ namespace DAL.Migrations
                     b.HasOne("DAL.Preference", "Preference")
                         .WithMany("UserPreferences")
                         .HasForeignKey("PreferenceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("DAL.User", "User")

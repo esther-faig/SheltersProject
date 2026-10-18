@@ -31,13 +31,12 @@ namespace DAL
         [Required]
         public string Password { get; set; }
 
-        public UserRole Roles { get; set; }
+        public UserRole Role { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
-        //ICollection????
         public List<Shelter> Shelters { get; set; } = new List<Shelter>();
         public List<UserPreference> UserPreferences { get; set; } = new List<UserPreference>();
 

@@ -19,7 +19,7 @@ namespace DAL.Migrations
                     AlertZoneId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     AreaName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OfficialCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OfficialCode = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     AreaGeometry = table.Column<Geometry>(type: "geography", nullable: false)
                 },
                 constraints: table =>
@@ -49,9 +49,9 @@ namespace DAL.Migrations
                     UserId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Roles = table.Column<int>(type: "int", nullable: false),
+                    Role = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -67,7 +67,7 @@ namespace DAL.Migrations
                     ProtectionTimeId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     AlertZoneId = table.Column<int>(type: "int", nullable: false),
-                    AlertType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AlertType = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     DurationSeconds = table.Column<int>(type: "int", nullable: false),
                     EffectiveFrom = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EffectiveUntil = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -99,9 +99,10 @@ namespace DAL.Migrations
                     Longitude = table.Column<double>(type: "float", nullable: false),
                     MaxCapacity = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    RejectionReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     AlertZoneId = table.Column<int>(type: "int", nullable: true),
                     CreatedByUserId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: false),
                     Files = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -111,10 +112,11 @@ namespace DAL.Migrations
                         name: "FK_Shelter_AlertZone_AlertZoneId",
                         column: x => x.AlertZoneId,
                         principalTable: "AlertZone",
-                        principalColumn: "AlertZoneId");
+                        principalColumn: "AlertZoneId",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
-                        name: "FK_Shelter_User_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Shelter_User_CreatedByUserId",
+                        column: x => x.CreatedByUserId,
                         principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
@@ -124,21 +126,22 @@ namespace DAL.Migrations
                 name: "UserPreference",
                 columns: table => new
                 {
+                    UserPreferenceId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     PreferenceId = table.Column<int>(type: "int", nullable: false),
-                    UserPreferenceId = table.Column<int>(type: "int", nullable: false),
                     Priority = table.Column<int>(type: "int", nullable: false),
                     IsRequired = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserPreference", x => new { x.UserId, x.PreferenceId });
+                    table.PrimaryKey("PK_UserPreference", x => x.UserPreferenceId);
                     table.ForeignKey(
                         name: "FK_UserPreference_Preference_PreferenceId",
                         column: x => x.PreferenceId,
                         principalTable: "Preference",
                         principalColumn: "PreferenceId",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_UserPreference_User_UserId",
                         column: x => x.UserId,
@@ -151,20 +154,21 @@ namespace DAL.Migrations
                 name: "ShelterFeature",
                 columns: table => new
                 {
+                    ShelterFeatureId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     ShelterId = table.Column<int>(type: "int", nullable: false),
                     PreferenceId = table.Column<int>(type: "int", nullable: false),
-                    ShelterFeatureId = table.Column<int>(type: "int", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ShelterFeature", x => new { x.ShelterId, x.PreferenceId });
+                    table.PrimaryKey("PK_ShelterFeature", x => x.ShelterFeatureId);
                     table.ForeignKey(
                         name: "FK_ShelterFeature_Preference_PreferenceId",
                         column: x => x.PreferenceId,
                         principalTable: "Preference",
                         principalColumn: "PreferenceId",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ShelterFeature_Shelter_ShelterId",
                         column: x => x.ShelterId,
@@ -174,9 +178,15 @@ namespace DAL.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProtectionTime_AlertZoneId",
+                name: "IX_AlertZone_OfficialCode",
+                table: "AlertZone",
+                column: "OfficialCode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProtectionTime_AlertZoneId_AlertType_EffectiveFrom",
                 table: "ProtectionTime",
-                column: "AlertZoneId");
+                columns: new[] { "AlertZoneId", "AlertType", "EffectiveFrom" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Shelter_AlertZoneId",
@@ -184,9 +194,14 @@ namespace DAL.Migrations
                 column: "AlertZoneId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Shelter_UserId",
+                name: "IX_Shelter_CreatedByUserId",
                 table: "Shelter",
-                column: "UserId");
+                column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Shelter_Status_IsActive",
+                table: "Shelter",
+                columns: new[] { "Status", "IsActive" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ShelterFeature_PreferenceId",
@@ -194,9 +209,27 @@ namespace DAL.Migrations
                 column: "PreferenceId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ShelterFeature_ShelterId_PreferenceId",
+                table: "ShelterFeature",
+                columns: new[] { "ShelterId", "PreferenceId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_User_Email",
+                table: "User",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserPreference_PreferenceId",
                 table: "UserPreference",
                 column: "PreferenceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPreference_UserId_PreferenceId",
+                table: "UserPreference",
+                columns: new[] { "UserId", "PreferenceId" },
+                unique: true);
         }
 
         /// <inheritdoc />

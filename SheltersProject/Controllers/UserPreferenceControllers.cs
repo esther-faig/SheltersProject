@@ -1,5 +1,4 @@
-﻿
-using BLL.Repositories;
+﻿using BLL.Services;
 using DTO;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,66 +8,47 @@ namespace SheltersProject.Controllers
     [ApiController]
     public class UserPreferenceController : ControllerBase
     {
-        private readonly IUserPreferenceRepository _repository;
+        private readonly IUserPreferenceService _service;
 
-        public UserPreferenceController(
-            IUserPreferenceRepository repository)
+        public UserPreferenceController(IUserPreferenceService service)
         {
-            _repository = repository;
+            _service = service;
         }
 
         // GET: api/UserPreference
         [HttpGet]
         public ActionResult<List<UserPreferenceDTO>> GetAll()
         {
-            var preferences = _repository.GetAll();
+            var preferences = _service.GetAll();
             return Ok(preferences);
         }
 
         // GET: api/UserPreference/5
-        [HttpGet("{id}")]
-        public ActionResult<ShelterSearchResultDTO> GetById(int id)
+        [HttpGet("{id:int}")]
+        public ActionResult<UserPreferenceDTO> GetById(int id)
         {
-            var preference = _repository.GetById(id);
-
+            var preference = _service.GetById(id);
             if (preference == null)
                 return NotFound();
 
             return Ok(preference);
         }
 
-        // POST: api/UserPreference
-        [HttpPost]
-        public ActionResult<ShelterSearchResultDTO> Add(
-            [FromBody] ShelterSearchResultDTO dto)
+        // GET: api/UserPreference/user/5
+        // ההעדפות של משתמש מסוים (מסך 6)
+        [HttpGet("user/{userId:int}")]
+        public ActionResult<List<UserPreferenceDTO>> GetByUserId(int userId)
         {
-            var addedPreference = _repository.Add(dto);
-            return Ok(addedPreference);
+            var preferences = _service.GetByUserId(userId);
+            return Ok(preferences);
         }
 
-        // PUT: api/UserPreference/5
-        [HttpPut("{id}")]
-        public ActionResult<UserPreferenceDTO> Update(
-            int id,
-            [FromBody] ShelterSearchResultDTO dto)
+        // PUT: api/UserPreference/user/5
+        // שמירת ההעדפות של המשתמש (מסך 4 חלק שני, ומסך 6 "עריכת העדפות")
+        [HttpPut("user/{userId:int}")]
+        public IActionResult SaveUserPreferences(int userId, [FromBody] SaveUserPreferencesRequestDTO dto)
         {
-            var updatedPreference = _repository.Update(id, dto);
-
-            if (updatedPreference == null)
-                return NotFound();
-
-            return Ok(updatedPreference);
-        }
-
-        // DELETE: api/UserPreference/5
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
-        {
-            bool deleted = _repository.Delete(id);
-
-            if (!deleted)
-                return NotFound();
-
+            _service.SaveUserPreferences(userId, dto);
             return NoContent();
         }
     }

@@ -27,15 +27,61 @@ namespace DAL
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Ignore<NetTopologySuite.Geometries.Geometry>();
-
-            // הגדרת מפתח מורכב לטבלת UserPreference
+            // מפתח ראשי נשאר ה-Id (Identity) שבישות.
+            // הייחודיות של הזוג נאכפת באינדקס ייחודי (במקום מפתח מורכב שמתנגש עם ה-Id)
             modelBuilder.Entity<UserPreference>()
-                .HasKey(up => new { up.UserId, up.PreferenceId });
+                .HasIndex(up => new { up.UserId, up.PreferenceId })
+                .IsUnique();
 
-            // הגדרת מפתח מורכב לטבלת ShelterFeature
             modelBuilder.Entity<ShelterFeature>()
-                .HasKey(sf => new { sf.ShelterId, sf.PreferenceId });
+                .HasIndex(sf => new { sf.ShelterId, sf.PreferenceId })
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<AlertZone>()
+                .HasIndex(z => z.OfficialCode)
+                .IsUnique();
+
+            // דורש UseNetTopologySuite() בהגדרת ה-DbContext ב-Program.cs
+            modelBuilder.Entity<AlertZone>()
+                .Property(z => z.AreaGeometry)
+                .HasColumnType("geography");
+
+            // אינדקסים לחיפוש
+            modelBuilder.Entity<Shelter>()
+                .HasIndex(s => new { s.Status, s.IsActive });
+
+            modelBuilder.Entity<ProtectionTime>()
+                .HasIndex(p => new { p.AlertZoneId, p.AlertType, p.EffectiveFrom });
+
+            // מחיקת אזור התרעה לא מוחקת מקלטים, רק מאפסת את האזור שלהם
+            modelBuilder.Entity<Shelter>()
+                .HasOne(s => s.AlertZone)
+                .WithMany(z => z.Shelters)
+                .HasForeignKey(s => s.AlertZoneId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Shelter>()
+                .HasOne(s => s.User)
+                .WithMany(u => u.Shelters)
+                .HasForeignKey(s => s.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // מחיקת העדפה שנמצאת בשימוש נחסמת (במקום למחוק בשקט את ההעדפות של כל המשתמשים)
+            modelBuilder.Entity<UserPreference>()
+                .HasOne(up => up.Preference)
+                .WithMany(p => p.UserPreferences)
+                .HasForeignKey(up => up.PreferenceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ShelterFeature>()
+                .HasOne(sf => sf.Preference)
+                .WithMany(p => p.ShelterFeatures)
+                .HasForeignKey(sf => sf.PreferenceId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
 

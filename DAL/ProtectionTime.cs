@@ -13,7 +13,7 @@ namespace DAL
         public int ProtectionTimeId { get; set; }
 
         public int AlertZoneId { get; set; }
-
+        [Required]
         public string AlertType { get; set; }
 
         public int DurationSeconds { get; set; }

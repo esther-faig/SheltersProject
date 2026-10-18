@@ -19,6 +19,7 @@ namespace DAL.Repositories
                  .ToList();
         }
 
+
         public Preference? GetById(int id)
         {
             return _context.Preference
@@ -40,10 +41,11 @@ namespace DAL.Repositories
             if (preference == null)
                 return null;
 
-            // עדכון שדות הבסיס בלבד באמצעות SetValues או ישירות
-            _context.Entry(preference).CurrentValues.SetValues(entity);
-            preference.PreferenceId = id; //
-                                          // וידוא מפתח ראשי
+            // עדכון ידני של השדות הרלוונטיים בלבד (ללא נגיעה ב-PreferenceId)
+            preference.Name = entity.Name;
+            preference.Description = entity.Description;
+            preference.Category = entity.Category;
+
             _context.SaveChanges();
             return preference;
         }

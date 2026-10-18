@@ -13,10 +13,10 @@ namespace BLL.Services
 {
     public interface IShelterFeatureService
     {
-        List<ShelterFeature> GetAll();
-        ShelterFeature? GetById(int id);
-        ShelterFeature Add(ShelterFeature entity);
-        ShelterFeature? Update(int id, ShelterFeature entity);
+        List<ShelterFeatureDTO> GetAll();
+        ShelterFeatureDTO? GetById(int id);
+        ShelterFeatureDTO Add(ShelterFeatureDTO dto);
+        ShelterFeatureDTO? Update(int id, ShelterFeatureDTO dto);
         bool Delete(int id);
     }
 }
