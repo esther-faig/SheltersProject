@@ -10,3 +10,22 @@ obj/
 # appsettings.json
 # *.user
 # *.suo
+
+
+# התעלמות מתיקיית התלויות של נהוד (נוצרת אוטומטית כשמריצים npm install)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# קבצי לוג וקבצים זמניים של npm
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnp*
+frontend/.eslintcache
+
+# משתני סביבה רגישים בריאקט
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+frontend/.env.test.local
