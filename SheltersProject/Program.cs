@@ -1,7 +1,8 @@
 using BLL;
 using BLL.Mapper;
-using BLL.Repositories;
+using BLL.Services;
 using DAL;
+using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
 
@@ -24,6 +25,8 @@ builder.Services.AddAutoMapper(cfg =>
     cfg.AddProfile<MappingProfile>();
 });
 
+
+// ????????????? Repositories (DAL) ?????????????
 builder.Services.AddScoped<IAlertZoneRepository, AlertZoneRepository>();
 builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
 builder.Services.AddScoped<IProtectionTimeRepository, ProtectionTimeRepository>();
@@ -32,6 +35,15 @@ builder.Services.AddScoped<IShelterRepository, ShelterRepository>();
 builder.Services.AddScoped<IUserPreferenceRepository, UserPreferenceRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+
+// ????????????? Services (BLL) ?????????????
+builder.Services.AddScoped<IAlertZoneService, AlertZoneService>();
+builder.Services.AddScoped<IPreferenceService, PreferenceService>();
+builder.Services.AddScoped<IProtectionTimeService, ProtectionTimeService>();
+builder.Services.AddScoped<IShelterFeatureService, ShelterFeatureService>();
+builder.Services.AddScoped<IShelterService, ShelterService>();
+builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 
 
@@ -45,8 +57,26 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+//app.UseAuthentication();   // לפני UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
+
+
+
+
+
+
+
+//if (app.Environment.IsDevelopment())
+//{
+//    app.MapOpenApi();
+
+//    // בודק בהפעלה שכל המיפויים של AutoMapper תקינים
+//    using var scope = app.Services.CreateScope();
+//    scope.ServiceProvider
+//        .GetRequiredService<AutoMapper.IConfigurationProvider>()
+//        .AssertConfigurationIsValid();
+//}
