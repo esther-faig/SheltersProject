@@ -1,47 +1,59 @@
 import React from 'react';
-import MyShelterCard from './MyShelterCard';
-
-interface Preference {
-  id: number;
-  name: string;
-}
-
-interface MyShelter {
-  id: number;
-  name: string;
-  address: string;
-}
-
-const myPreferences: Preference[] = [
-  { id: 1, name: 'ללא מדרגות' },
-  { id: 2, name: 'אוורור טוב' },
-];
-
-const myShelters: MyShelter[] = [
-  { id: 1, name: 'ממ"ד פרטי', address: 'רחוב הגפן 5, גבעת שמואל' },
-];
 
 function ProfileScreen() {
-  return (
-    <div>
-      <h2>הפרופיל שלי</h2>
-      <p>שם: רחל כהן</p>
-      <p>מייל: rachel@example.com</p>
+    // נתונים קבועים לדוגמה של המשתמש
+    const user = {
+        name: "ישראל ישראלי",
+        email: "israel@example.com"
+    };
 
-      <h3>ההעדפות שלי</h3>
-      <ul>
-        {myPreferences.map(preference => (
-          <li key={preference.id}>{preference.name}</li>
-        ))}
-      </ul>
-      <button>עריכת העדפות</button>
+    // מערך קבוע של ההעדפות שהמשתמש בחר בעבר
+    const myPreferences = [
+        "ללא מדרגות",
+        "אוורור טוב",
+        "מקומות ישיבה"
+    ];
 
-      <h3>המקלטים ששיתפתי</h3>
-      {myShelters.map(shelter => (
-        <MyShelterCard key={shelter.id} name={shelter.name} address={shelter.address} />
-      ))}
-    </div>
-  );
+    // מערך קבוע של מקלטים שהמשתמש שיתף
+    const mySharedShelters = [
+        { id: 1, name: 'ממ"ד משפחת ישראלי', address: "רחוב השלום 10" }
+    ];
+
+    return (
+        <div>
+            <h2>הפרופיל שלי</h2>
+            
+            <div style={{ padding: '10px', border: '1px solid #ccc', marginBottom: '20px' }}>
+                <p><strong>שם:</strong> {user.name}</p>
+                <p><strong>מייל:</strong> {user.email}</p>
+            </div>
+
+            <div>
+                <h3>ההעדפות שלי</h3>
+                <ul>
+                    {myPreferences.map((pref, index) => (
+                        <li key={index}>{pref}</li>
+                    ))}
+                </ul>
+                <button>עריכת העדפות</button>
+            </div>
+
+            <hr />
+
+            <div>
+                <h3>המקלטים ששיתפתי</h3>
+                <ul>
+                    {mySharedShelters.map((shelter) => (
+                        <li key={shelter.id} style={{ marginBottom: '15px' }}>
+                            <strong>{shelter.name}</strong> - {shelter.address}
+                            <br />
+                            <button style={{ marginTop: '5px' }}>עריכת מקלט</button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    );
 }
 
 export default ProfileScreen;

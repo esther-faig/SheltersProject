@@ -1,0 +1,138 @@
+/* הגדרות כלליות למסך הבית */
+.home-wrapper {
+    direction: rtl;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom, #e3f2fd, #ffffff);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    color: #0d47a1;
+}
+
+/* עיצוב התפריט העליון */
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 30px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: #0d47a1;
+}
+
+.logo-icon {
+    font-size: 24px;
+    margin-left: 8px;
+}
+
+.nav-links {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* תוכן מרכזי */
+.home-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.main-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: #00296b;
+    margin-bottom: 15px;
+    line-height: 1.2;
+}
+
+.main-subtitle {
+    font-size: 16px;
+    color: #003366;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+/* אזור הכפתורים */
+.buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 350px;
+}
+
+/* עיצוב כפתורים בסיסי */
+.buttons-container button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%;
+}
+
+.icon {
+    font-size: 20px;
+}
+
+/* כפתור 1: כחול מלא */
+.btn-primary {
+    background-color: #1565c0;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 10px rgba(21, 101, 192, 0.3);
+}
+
+.btn-primary:hover {
+    background-color: #0d47a1;
+}
+
+/* כפתור 2: לבן עם מסגרת כחולה */
+.btn-secondary {
+    background-color: white;
+    color: #1565c0;
+    border: 2px solid #1565c0;
+}
+
+.btn-secondary:hover {
+    background-color: #f0f8ff;
+}
+
+/* כפתור 3: ירוק בהיר עם מסגרת ירוקה */
+.btn-tertiary {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+}
+
+.btn-tertiary:hover {
+    background-color: #c8e6c9;
+}
+
+/* כותרת תחתונה */
+.home-footer {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #1565c0;
+    padding-top: 40px;
+}
+
+.heart-icon {
+    color: #1565c0;
+}

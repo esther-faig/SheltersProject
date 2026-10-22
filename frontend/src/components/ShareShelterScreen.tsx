@@ -1,46 +1,51 @@
-import React from 'react';
-
-interface Option {
-  id: number;
-  name: string;
-}
-
-const shelterTypes: Option[] = [
-  { id: 1, name: 'ממ"ד פרטי' },
-  { id: 2, name: 'מקלט פרטי' },
-  { id: 3, name: 'מרחב מוגן אחר' },
-];
-
-const features: Option[] = [
-  { id: 1, name: 'יש מדרגות' },
-  { id: 2, name: 'נגיש' },
-  { id: 3, name: 'יש אוורור' },
-  { id: 4, name: 'מרווח' },
-  { id: 5, name: 'מקומות ישיבה' },
-];
+import React, { useState } from 'react';
 
 function ShareShelterScreen() {
-  return (
-    <div>
-      <h2>שיתוף מקלט פרטי</h2>
-      <input type="text" placeholder="שם המקלט" />
-      <select>
-        {shelterTypes.map(type => (
-          <option key={type.id}>{type.name}</option>
-        ))}
-      </select>
-      <input type="text" placeholder="כתובת" />
-      <div>כאן תוצג המפה</div>
-      <h3>מאפיינים</h3>
-      {features.map(feature => (
-        <div key={feature.id}>
-          <input type="checkbox" /> {feature.name}
+    const [shelterName, setShelterName] = useState<string>('');
+    const [shelterType, setShelterType] = useState<string>('');
+    const [address, setAddress] = useState<string>('');
+
+    return (
+        <div>
+            <h2>שיתוף מקלט פרטי</h2>
+            
+            <form onSubmit={(e) => e.preventDefault()}>
+                <div>
+                    <label>שם המקלט: </label>
+                    <input type="text" onChange={(e) => setShelterName(e.target.value)} />
+                </div>
+                <br />
+                
+                <div>
+                    <label>סוג המקום: </label>
+                    <select onChange={(e) => setShelterType(e.target.value)}>
+                        <option value="">בחר סוג...</option>
+                        <option value="mamad">ממ"ד פרטי</option>
+                        <option value="private_shelter">מקלט פרטי</option>
+                        <option value="other">מרחב מוגן אחר</option>
+                    </select>
+                </div>
+                <br />
+
+                <div>
+                    <label>מיקום / כתובת: </label>
+                    <input type="text" onChange={(e) => setAddress(e.target.value)} />
+                </div>
+                <br />
+
+                <div>
+                    <h4>מאפיינים:</h4>
+                    <label><input type="checkbox" /> יש מדרגות?</label><br />
+                    <label><input type="checkbox" /> המקום נגיש?</label><br />
+                    <label><input type="checkbox" /> יש אוורור?</label><br />
+                    <label><input type="checkbox" /> המקום מרווח?</label>
+                </div>
+                <br />
+
+                <button type="submit">שיתוף המקלט</button>
+            </form>
         </div>
-      ))}
-      <input type="file" />
-      <button>שיתוף המקלט</button>
-    </div>
-  );
+    );
 }
 
 export default ShareShelterScreen;
