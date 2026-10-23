@@ -1,5 +1,7 @@
 import React from 'react';
 import FeatureTag from './FeatureTag';
+// משמש להצגת פרטים של מקלט ובדרך כלל משתמשים בו בקומפוננטות אחרות
+
 
 interface ShelterCardProps {
   name: string;
