@@ -10,10 +10,8 @@ namespace DAL
 {
     public class AlertZone
     {
-        [Key]
         public int AlertZoneId { get; set; }
 
-        [Required]
         public string AreaName { get; set; }
 
 

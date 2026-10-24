@@ -9,7 +9,6 @@ namespace DAL
 {
     public class ShelterFeature
     {
-        [Key]
         public int ShelterFeatureId { get; set; }
 
         public int ShelterId { get; set; }

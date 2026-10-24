@@ -9,7 +9,6 @@ namespace DAL
 {
     public class UserPreference
     {
-        [Key]
         public int UserPreferenceId { get; set; }
 
         public int UserId { get; set; }
