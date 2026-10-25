@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace BLL.Services
 {
-    public class UserService: IUserService
+    public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
@@ -35,7 +35,37 @@ namespace BLL.Services
         }
 
         //פונקציות הרשמה והתחברות
+        //לממש
+        public UserResponseDto Register(RegisterRequestDTO dto)
+        {
+            return null;
+        }
+        public UserResponseDto? Login(LoginRequestDTO dto)
+        {
+            return null;
+        }
 
+
+        //לבדוק
+        public UserProfileDTO? Update(int userId, UpdateUserRequestDTO dto)
+        {
+            var user = _userRepository.GetById(userId);
+            if (user == null)
+                return null;
+
+            var email = dto.Email.Trim().ToLowerInvariant();
+
+            var sameEmail = _userRepository.GetByEmail(email);
+            if (sameEmail != null && sameEmail.UserId != userId)
+                throw new InvalidOperationException("כבר קיים משתמש אחר עם המייל הזה");
+
+            // רק שם ומייל. הסיסמה, התפקיד וההעדפות לא נוגעים
+            user.FullName = dto.FullName;
+            user.Email = email;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            return _mapper.Map<UserProfileDTO>(_userRepository.Update(user));
+        }
 
 
     }

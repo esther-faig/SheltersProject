@@ -2,6 +2,7 @@
 using BLL.Services;
 using DAL;
 using DAL.Repositories;
+using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Algorithm;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
@@ -10,49 +11,45 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NetTopologySuite.Geometries;
 
 namespace BLL.Services
 {
-    public class AlertZoneService:IAlertZoneService
+    public class AlertZoneService : IAlertZoneService
     {
-       
-        
-        private readonly IAlertZoneRepository _alertZoneRepository;
-        private readonly IMapper _mapper;
+        private readonly IAlertZoneRepository _repository;
 
-        public AlertZoneService(IAlertZoneRepository alertZoneRepository, IMapper mapper)
+        // SRID 4326 = קואורדינטות GPS רגילות (WGS84), מתאים לעמודת geography
+        private static readonly GeometryFactory Factory = new GeometryFactory(new PrecisionModel(), 4326);
+
+        public AlertZoneService(IAlertZoneRepository repository)
         {
-            _alertZoneRepository = alertZoneRepository;
-            _mapper = mapper;
+            _repository = repository;
         }
 
-        public AlertZone? GetById(int id)
+        public AlertZone? FindByLocation(double latitude, double longitude)
         {
-            return _alertZoneRepository.GetById(id);
+            // ב-NetTopologySuite X = קו אורך, Y = קו רוחב 
+            var point = Factory.CreatePoint(new Coordinate(longitude, latitude));
+
+            // "עכשיו" נקבע כאן, ב-Service, ולא ב-Repository
+            return _repository.GetContainingPoint(point, DateTime.UtcNow);
         }
 
-        public List<AlertZone> GetAll()
+        public int? FindZoneIdByLocation(double latitude, double longitude)
         {
-            return _alertZoneRepository.GetAll();
+            var point = Factory.CreatePoint(new Coordinate(longitude, latitude));
+            return _repository.GetContainingPoint(point, DateTime.UtcNow)?.AlertZoneId;
         }
 
-        public AlertZone Add(AlertZone entity)
+        public int? GetDurationSeconds(AlertZone zone, string alertType)
         {
-            // לוגיקה עסקית נוספת במידת הצורך לפני הוספה
-            return _alertZoneRepository.Add(entity);
+            // הרשומות שנטענו כבר מסוננות לתקפות עכשיו. אם בכל זאת יש כמה, הכי חדשה קובעת
+            return zone.ProtectionTimes
+                .Where(pt => string.Equals(pt.AlertType, alertType, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(pt => pt.EffectiveFrom)
+                .Select(pt => (int?)pt.DurationSeconds)
+                .FirstOrDefault();
         }
-
-        public AlertZone? Update(int id, AlertZone entity)
-        {
-            return _alertZoneRepository.Update(id, entity);
-        }
-
-        public bool Delete(int id)
-        {
-            return _alertZoneRepository.Delete(id);
-        }
-        
-
     }
 }
-

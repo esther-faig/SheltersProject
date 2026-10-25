@@ -18,55 +18,58 @@ namespace DAL.Repositories
             _context = context;
         }
 
-        public ProtectionTime? GetById(int id)
-        {
-            return _context.ProtectionTime
-                .Include(pt => pt.AlertZone)
-                .FirstOrDefault(pt => pt.ProtectionTimeId == id);
-        }
-        public List<ProtectionTime> GetAll()
-        {
-            return _context.ProtectionTime
-                .Include(pt => pt.AlertZone)
-                .ToList();
-        }
+        //public ProtectionTime? GetById(int id)
+        //{
+        //    return _context.ProtectionTime
+        //        .FirstOrDefault(pt => pt.ProtectionTimeId == id);
+        //}
+        //public List<ProtectionTime> GetAll()
+        //{
+        //    return _context.ProtectionTime
+        //        .AsNoTracking()
+        //        .ToList();
+        //}
+        //public List<ProtectionTime> GetByAlertZoneId(int alertZoneId)
+        //{
+        //    return _context.ProtectionTime
+        //        .AsNoTracking()
+        //        .Where(pt => pt.AlertZoneId == alertZoneId)
+        //        .OrderByDescending(pt => pt.EffectiveFrom)
+        //        .ToList();
+        //}
+
         public ProtectionTime Add(ProtectionTime entity)
         {
             _context.ProtectionTime.Add(entity);
             _context.SaveChanges();
             return entity;
         }
-        public bool Delete(int id)
+
+        public ProtectionTime? GetValidAt(int alertZoneId, string alertType, DateTime atTime)
         {
-            var entity = _context.ProtectionTime.Find(id);
-            if (entity != null)
-            {
-                _context.ProtectionTime.Remove(entity);
-                _context.SaveChanges();
-                return true;
-            }
-            return false;
-        }
-
-        public ProtectionTime? Update(int id, ProtectionTime entity)
-        {
-
-            if (entity == null)
-            {
-                return null;
-            }
-
-            // עדכון האובייקט ושמירת השינויים במסד הנתונים
-            entity.ProtectionTimeId = id;
-            _context.ProtectionTime.Update(entity);
-            _context.SaveChanges();
-
-
-
-            // שליפת האובייקט המעודכן מחדש כולל קשרי הגומלין באמצעות Include
             return _context.ProtectionTime
-           .Include(pt => pt.AlertZone)
-           .FirstOrDefault(pt => pt.ProtectionTimeId == id);
+                .FirstOrDefault(pt => pt.AlertZoneId == alertZoneId
+                                   && pt.AlertType == alertType
+                                   && pt.EffectiveFrom <= atTime
+                                   && (pt.EffectiveUntil == null || pt.EffectiveUntil > atTime));
         }
+        //public bool Delete(int id)
+        //{
+        //    var entity = _context.ProtectionTime.Find(id);
+        //    if (entity != null)
+        //    {
+        //        _context.ProtectionTime.Remove(entity);
+        //        _context.SaveChanges();
+        //        return true;
+        //    }
+        //    return false;
+        //}
+
+        //public ProtectionTime? Update(ProtectionTime entity)
+        //{
+        //    _context.ProtectionTime.Update(entity);
+        //    _context.SaveChanges();
+        //    return entity;
+        //}
     }
 }

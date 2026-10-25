@@ -78,7 +78,11 @@ namespace BLL.Mapper
                 .ForMember(d => d.AlertZoneId, o => o.Ignore())               // נקבע ע"י point-in-polygon
                 .ForMember(d => d.AlertZone, o => o.Ignore())
                 .ForMember(d => d.CreatedByUserId, o => o.Ignore())           // נקבע מהמשתמש המחובר
+                .ForMember(d => d.IsActive, o => o.Ignore())              // נקבע ב-Service
+                .ForMember(d => d.RejectionReason, o => o.Ignore())       // נקבע ע"י מנהל
                 .ForMember(d => d.User, o => o.Ignore());
+
+
 
             // החלטת מנהל: Status מגיע כמחרוזת. RejectionReason אין לו שדה ב-DAL
             CreateMap<UpdateShelterStatusDTO, Shelter>(MemberList.None)

@@ -22,18 +22,26 @@ namespace DAL.Repositories
         public List<User> GetAll()
         {
             return _context.User
-                            .AsNoTracking()
                             .Include(u => u.UserPreferences)
+                                .ThenInclude(up => up.Preference)
+                            .Include(u => u.Shelters)
+                            .AsNoTracking()
                             .ToList();
         }
 
         public User? GetById(int id)
         {
             return _context.User
-                .Include(u => u.UserPreferences)
-                .FirstOrDefault(p => p.UserId == id);
+                 .Include(u => u.UserPreferences)
+                     .ThenInclude(up => up.Preference)
+                 .Include(u => u.Shelters)
+                 .FirstOrDefault(u => u.UserId == id);
         }
-
+        public User? GetByEmail(string email)
+        {
+            return _context.User
+                .FirstOrDefault(u => u.Email == email);
+        }
         public User Add(User entity)
         {
             _context.User.Add(entity);
@@ -41,31 +49,12 @@ namespace DAL.Repositories
             return entity;
         }
 
-        public User? Update(int id, User entity)
+        public User? Update(User entity)
         {
-            var user = _context.User
-                .Include(u => u.UserPreferences)
-                .FirstOrDefault(p => p.UserId == id);
-
-            if (user == null)
-                return null;
-
-            // 1. עדכון שדות הבסיס של המשתמש
-            _context.Entry(user).CurrentValues.SetValues(entity);
-            user.UserId = id;
-            user.UpdatedAt = DateTime.UtcNow;
-
-            // 2. טיפול בעדכון ההעדפות המקושרות (UserPreferences)
-            if (entity.UserPreferences != null)
-            {
-                _context.UserPreference.RemoveRange(user.UserPreferences);
-                user.UserPreferences = entity.UserPreferences;
-            }
-
+            _context.User.Update(entity);
             _context.SaveChanges();
-            return user;
+            return GetById(entity.UserId)!;
         }
-
       
     }
 }

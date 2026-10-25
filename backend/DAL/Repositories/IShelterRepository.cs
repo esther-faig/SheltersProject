@@ -11,10 +11,19 @@ namespace DAL.Repositories
     {
         //ShelterSearchResultDTO
         //משמש להצגת המקלטים בתוצאות החיפוש, כולל מידע על תכונות המקלטים, זמינותם ומיקומם.
-        List<Shelter> GetAll();
+
+
+        //בשביל חיפוש המקלטים לפי תנאים מסוימים
+        //למנהל- עבור מסך הניהול שהוא רוצה לראות את כל המקלטים
+        //נשלח לפונקציה פעמיים NULL למנהל-
+        List<Shelter> Find(ShelterStatus? status, bool? isActive);
+        
+        //למשתמש-להצגת המקלטים שהוא שיתף
+        List<Shelter> GetByUserId(int userId);
         Shelter? GetById(int id);
-        Shelter Add(Shelter dtentityo);
-        Shelter? Update(int id, Shelter entity);
+        Shelter Add(Shelter entity);
+        Shelter? Update(Shelter entity);
         bool Delete(int id);
+        Shelter? GetOwned(int id, int userId);   // מקלט לפי מזהה *וגם* של המשתמש הזה
     }
 }

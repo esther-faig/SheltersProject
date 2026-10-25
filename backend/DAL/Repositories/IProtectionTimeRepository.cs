@@ -9,10 +9,19 @@ namespace DAL.Repositories
 {
     public interface IProtectionTimeRepository
     {
-        ProtectionTime? GetById(int id);
-        List<ProtectionTime> GetAll();
+        //משמש רק לחיפוש
+
+        //ProtectionTime? GetById(int id);
+        //List<ProtectionTime> GetAll();
+        //// כל ההיסטוריה של אזור, מהחדש לישן
+        //List<ProtectionTime> GetByAlertZoneId(int alertZoneId);
+
+
         ProtectionTime Add(ProtectionTime entity);
-        bool Delete(int id);
-        ProtectionTime? Update(int id, ProtectionTime entity);
+
+        // הרשומה שתקפה ברגע atTime לאזור ולסוג התרעה
+        ProtectionTime? GetValidAt(int alertZoneId, string alertType, DateTime atTime);
+        //bool Delete(int id);
+        //ProtectionTime? Update(ProtectionTime entity);
     }
 }

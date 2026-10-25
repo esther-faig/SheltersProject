@@ -14,7 +14,7 @@ namespace DAL.Repositories
         ShelterFeature Add(ShelterFeature entity);
         public List<ShelterFeature> GetByShelterId(int shelterId);
 
-        ShelterFeature? Update(int id, ShelterFeature entity);
+        ShelterFeature? Update(ShelterFeature entity);
         bool Delete(int id);
     }
 }

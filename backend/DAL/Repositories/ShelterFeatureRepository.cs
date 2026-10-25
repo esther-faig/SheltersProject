@@ -19,12 +19,7 @@ namespace DAL.Repositories
             _context = context;
         }
 
-        //public List<ShelterFeature> GetAll()
-        //{
-        //    return _context.ShelterFeature
-        //        .AsNoTracking()
-        //        .ToList();
-        //}
+
         public List<ShelterFeature> GetAll()
         {
             return _context.ShelterFeature
@@ -32,12 +27,6 @@ namespace DAL.Repositories
                 .Include(sf => sf.Preference)
                 .ToList();
         }
-
-        //public ShelterFeature? GetById(int id)
-        //{
-        //    return _context.ShelterFeature
-        //        .FirstOrDefault(p => p.ShelterFeatureId == id);
-        //}
 
         public ShelterFeature? GetById(int id)
         {
@@ -60,19 +49,10 @@ namespace DAL.Repositories
             return GetById(entity.ShelterFeatureId)!;
         }
 
-        public ShelterFeature? Update(int id, ShelterFeature entity)
+        public ShelterFeature? Update(ShelterFeature entity)
         {
-            var shelterFeature = _context.ShelterFeature
-                .FirstOrDefault(sf => sf.ShelterFeatureId == id);
-
-            if (shelterFeature == null)
-                return null;
-
-            _context.Entry(shelterFeature).CurrentValues.SetValues(entity);
-
-            shelterFeature.ShelterFeatureId = id;
             _context.SaveChanges();
-            return shelterFeature;
+            return GetById(entity.ShelterFeatureId)!;
         }
 
         public bool Delete(int id)

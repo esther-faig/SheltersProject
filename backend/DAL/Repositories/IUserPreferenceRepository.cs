@@ -15,9 +15,8 @@ namespace DAL.Repositories
 
 
         UserPreference Add(UserPreference entity);
-        UserPreference? Update(int id, UserPreference entity);
+        UserPreference? Update(UserPreference entity);
 
         bool Delete(int id);
-        void ReplaceForUser(int userId, List<UserPreference> preferences);
     }
 }

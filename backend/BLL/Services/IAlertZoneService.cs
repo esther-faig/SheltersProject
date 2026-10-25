@@ -11,10 +11,15 @@ namespace BLL.Services
     {
         //אין DTO
 
-        AlertZone? GetById(int id);
-        List<AlertZone> GetAll();
-        AlertZone Add(AlertZone entity);
-        bool Delete(int id);
-        AlertZone? Update(int id, AlertZone entity);
+        //הנתונים נכנסים בהתחלה ומשמשים רק לחיפוש ולכן לא צריך כלל הוספה וכו
+
+        // לחיפוש: האזור של המיקום + זמני ההתגוננות שתקפים עכשיו. null = מחוץ לכל אזור
+        AlertZone? FindByLocation(double latitude, double longitude);
+
+        // כשצריך רק את הקוד (למשל בהוספת מקלט)
+        int? FindZoneIdByLocation(double latitude, double longitude);
+
+        // זמן ההתגוננות (בשניות) של האזור לסוג ההתרעה. null = אין נתון לסוג הזה באזור
+        int? GetDurationSeconds(AlertZone zone, string alertType);
     }
 }

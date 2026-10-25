@@ -9,10 +9,9 @@ namespace BLL.Services
 {
     public interface IProtectionTimeService
     {
-        ProtectionTime? GetById(int id);
-        List<ProtectionTime> GetAll();
-        ProtectionTime Add(ProtectionTime entity);
-        bool Delete(int id);
-        ProtectionTime? Update(int id, ProtectionTime entity);
+        // לייבוא / עדכון מהמקור הרשמי. שומר היסטוריה, ואם הערך לא השתנה לא עושה כלום
+
+        ProtectionTime SetDuration(int alertZoneId, string alertType, int durationSeconds, string source);
+
     }
 }

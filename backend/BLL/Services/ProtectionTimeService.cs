@@ -12,39 +12,38 @@ namespace BLL.Services
     public class ProtectionTimeService:IProtectionTimeService
     {
 
-        private readonly IProtectionTimeRepository _protectionTimeRepository;
-        private readonly IMapper _mapper;
+        private readonly IProtectionTimeRepository _repository ;
 
-        public ProtectionTimeService(IProtectionTimeRepository protectionTimeRepository, IMapper mapper)
+        public ProtectionTimeService(IProtectionTimeRepository repository)
         {
-            _protectionTimeRepository = protectionTimeRepository;
-            _mapper = mapper;
+            _repository = repository;
         }
 
-        public ProtectionTime? GetById(int id)
+        public ProtectionTime SetDuration(int alertZoneId, string alertType, int durationSeconds, string source)
         {
-            return _protectionTimeRepository.GetById(id);
-        }
+            var now = DateTime.UtcNow;
+            var current = _repository.GetValidAt(alertZoneId, alertType, now);
 
-        public List<ProtectionTime> GetAll()
-        {
-            return _protectionTimeRepository.GetAll();
-        }
+            // אותו ערך כבר בתוקף, אין מה לעשות
+            if (current != null && current.DurationSeconds == durationSeconds)
+                return current;
 
-        public ProtectionTime Add(ProtectionTime entity)
-        {
-            // לוגיקה עסקית נוספת במידת הצורך לפני הוספה
-            return _protectionTimeRepository.Add(entity);
-        }
+            // סוגרים את הרשומה הישנה. היא נשמרת באותו SaveChanges של החדשה
+            if (current != null)
+                current.EffectiveUntil = now;
 
-        public ProtectionTime? Update(int id, ProtectionTime entity)
-        {
-            return _protectionTimeRepository.Update(id, entity);
-        }
+            var entity = new ProtectionTime
+            {
+                AlertZoneId = alertZoneId,
+                AlertType = alertType,
+                DurationSeconds = durationSeconds,
+                Source = source,
+                EffectiveFrom = now,
+                EffectiveUntil = null,
+                UpdatedAt = now
+            };
 
-        public bool Delete(int id)
-        {
-            return _protectionTimeRepository.Delete(id);
+            return _repository.Add(entity);
         }
 
     }

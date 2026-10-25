@@ -53,20 +53,16 @@ namespace DAL.Repositories
         {
             _context.UserPreference.Add(entity);
             _context.SaveChanges();
-            return entity;
+            return GetById(entity.UserPreferenceId)!;
         }
 
-        public UserPreference? Update(int id, UserPreference entity)
+        public UserPreference? Update(UserPreference entity)
         {
-            var userPreference = _context.UserPreference
-                .FirstOrDefault(up => up.UserPreferenceId == id);
-            if (userPreference == null)
-                return null;
-            // עדכון השדות הרלוונטיים
-            _context.Entry(userPreference).CurrentValues.SetValues(entity);
-            userPreference.UserPreferenceId = id;
+            _context.UserPreference.Update(entity);
             _context.SaveChanges();
-            return userPreference;
+
+            // טעינה מחדש של האובייקט כולל הקשרים
+            return GetById(entity.UserPreferenceId)!;
         }
 
         public bool Delete(int id)
@@ -79,45 +75,7 @@ namespace DAL.Repositories
             _context.SaveChanges();
             return true;
         }
-        public void ReplaceForUser(int userId, List<UserPreference> preferences)
-        {
-            var existing = _context.UserPreference
-                .Where(up => up.UserId == userId)
-                .ToList();
-
-            var incomingIds = preferences.Select(p => p.PreferenceId).ToHashSet();
-
-            // מוחקים את מה שהמשתמש הסיר
-            _context.UserPreference.RemoveRange(
-                existing.Where(e => !incomingIds.Contains(e.PreferenceId)));
-
-            foreach (var incoming in preferences)
-            {
-                var current = existing.FirstOrDefault(e => e.PreferenceId == incoming.PreferenceId);
-                if (current != null)
-                {
-                    // קיימת: מעדכנים עדיפות וחובה
-                    current.Priority = incoming.Priority;
-                    current.IsRequired = incoming.IsRequired;
-                }
-                else
-                {
-                    _context.UserPreference.Add(new UserPreference
-                    {
-                        UserId = userId,
-                        PreferenceId = incoming.PreferenceId,
-                        Priority = incoming.Priority,
-                        IsRequired = incoming.IsRequired
-                    });
-                }
-            }
-
-            // SaveChanges אחד: או שהכול נשמר או שלא נשמר כלום
-            _context.SaveChanges();
-        }
 
     }
-
-
 }
 

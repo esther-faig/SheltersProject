@@ -5,16 +5,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DAL;
+using NetTopologySuite.Geometries;
 
 
 namespace DAL.Repositories
 {
     public interface IAlertZoneRepository
     {
-        AlertZone? GetById(int id);
-        List<AlertZone> GetAll();
-        AlertZone Add(AlertZone entity);
-        bool Delete(int id);
-        AlertZone? Update( int id,AlertZone entity);
+        //זה נתונים שנכנסים בתחילה ומשתמשים בהם רק לחיפוש
+
+        //AlertZone? GetById(int id);
+        //List<AlertZone> GetAll();
+        //AlertZone? GetByOfficialCode(string officialCode);
+        AlertZone? GetContainingPoint(Point point, DateTime atTime);
+
+        //AlertZone Add(AlertZone entity);
+        //bool Delete(int id);
+        //AlertZone? Update(AlertZone entity);
     }
 }
