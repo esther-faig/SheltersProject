@@ -10,6 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+//CORS- לאפשר את ריאקט
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("React", policy => policy
+        .WithOrigins("http://localhost:3000", "http://localhost:5173")   // הכתובת של שרת ה-React שלך
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+});
+
 
 // ����� Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -38,11 +47,6 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAlertZoneService, AlertZoneService>();
 builder.Services.AddScoped<IPreferenceService, PreferenceService>();
 builder.Services.AddScoped<IProtectionTimeService, ProtectionTimeService>();
-
-//האם למחוק??
-builder.Services.AddScoped<IShelterFeatureService, ShelterFeatureService>();
-
-
 builder.Services.AddScoped<IShelterService, ShelterService>();
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -57,6 +61,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("React");
 
 app.UseAuthorization();
 
