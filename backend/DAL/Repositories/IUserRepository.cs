@@ -11,12 +11,11 @@ namespace DAL.Repositories
     {
         List<User> GetAll();
         User? GetById(int id);
+        User? GetByEmail(string email);
         //לצורך פונקצית ההרשמה
         User Add(User entity);
 
-        User? Update(int id, User entity);
-       
-
+        User? Update(User entity);
         //אין אפשרות למחוק משתמשים, לכן אין פונקצית מחיקה
         //bool Delete(int id);
     }

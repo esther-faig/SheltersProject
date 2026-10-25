@@ -48,16 +48,18 @@ namespace BLL.Services
                 .Select(g => g.Last())
                 .ToList();
 
+            //בדיקה שההעדפות קימות במערכת
             var validIds = _preferenceRepository.GetAll().Select(p => p.PreferenceId).ToHashSet();
             if (incoming.Any(p => !validIds.Contains(p.PreferenceId)))
                 throw new InvalidOperationException("נשלחה העדפה שלא קיימת");
+            //TOHASHSET- ממירה אוסף נתונים לקבוצה של ערכים יחודים שמייעלת חיפושים
 
             var existing = _repository.GetByUserId(userId);
             var incomingIds = incoming.Select(p => p.PreferenceId).ToHashSet();
 
-            // מוחקים מה שהמשתמש הסיר
-            foreach (var old in existing.Where(e => !incomingIds.Contains(e.PreferenceId)).ToList())
-                _repository.Delete(old.UserPreferenceId);
+
+            var toRemove = existing.Where(e => !incomingIds.Contains(e.PreferenceId)).ToList();
+            var toAdd = new List<DAL.UserPreference>();
 
             foreach (var p in incoming)
             {
@@ -65,15 +67,15 @@ namespace BLL.Services
 
                 if (current != null)
                 {
-                    // קיימת: מעדכנים עדיפות וחובה
+                    //קיימת--
+                    // משנים בזיכרון, והשמירה קורית ב-SaveBatch
                     current.Priority = p.Priority;
                     current.IsRequired = p.IsRequired;
-                    _repository.Update(current);
                 }
                 else
-                {
+                {   
                     // חדשה: מוסיפים
-                    _repository.Add(new DAL.UserPreference
+                    toAdd.Add(new DAL.UserPreference
                     {
                         UserId = userId,
                         PreferenceId = p.PreferenceId,
@@ -81,6 +83,12 @@ namespace BLL.Services
                         IsRequired = p.IsRequired
                     });
                 }
-
             }
+
+            _repository.SaveBatch(toAdd, toRemove);
+        }
+
+
+
+    }
 }

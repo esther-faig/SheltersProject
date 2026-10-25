@@ -14,6 +14,7 @@ namespace DAL.Repositories
         Preference Add(Preference entity);
         Preference? Update(int id, Preference entity);
         bool Delete(int id);
+        bool IsInUse(int id);   // האם ההעדפה בשימוש אצל משתמש או במקלט
 
     }
 }

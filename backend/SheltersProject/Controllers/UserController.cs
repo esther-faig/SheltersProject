@@ -36,5 +36,22 @@ namespace SheltersProject.Controllers
         }
 
         // כאן יתווספו בהמשך: הרשמה (Register) והתחברות (Login), כשיהיו ב-IUserService
+
+
+
+
+        //להוסיף גם עדכון
+        [HttpPut("{id:int}")]
+        public ActionResult<UserProfileDTO> Update(int id, [FromBody] UpdateUserRequestDTO dto)
+        {
+            var updated = _service.Update(id, dto);
+            if (updated == null)
+                return NotFound();
+
+            return Ok(updated);
+        }
+
+
+
     }
 }

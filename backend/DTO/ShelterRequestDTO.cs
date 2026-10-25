@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,10 +14,12 @@ namespace DTO
         public string Name { get; set; } = "";
         public string ShelterType { get; set; } = "";
         public string Address { get; set; } = "";
-        public string City { get; set; }= "";   
-
+        public string City { get; set; }= "";
+        [Range(-90, 90)]
         public double Latitude { get; set; }
+        [Range(-180,180)]
         public double Longitude { get; set; }
+        [Range(0, 100000)]
         public int MaxCapacity { get; set; }
 
         // פה נשתמש בDTO שמשנים בו על כל העדפה רק אם קימת

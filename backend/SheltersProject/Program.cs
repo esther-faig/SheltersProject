@@ -11,11 +11,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// äâãøú Swagger
+// ï¿½ï¿½ï¿½ï¿½ï¿½ Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(); 
 
-// äæø÷ú úìåéåú
+// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 builder.Services.AddDbContext<DB_Shelters>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
     x => x.UseNetTopologySuite()));
@@ -38,7 +38,11 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAlertZoneService, AlertZoneService>();
 builder.Services.AddScoped<IPreferenceService, PreferenceService>();
 builder.Services.AddScoped<IProtectionTimeService, ProtectionTimeService>();
+
+//×”×× ×œ××—×•×§??
 builder.Services.AddScoped<IShelterFeatureService, ShelterFeatureService>();
+
+
 builder.Services.AddScoped<IShelterService, ShelterService>();
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
 builder.Services.AddScoped<IUserService, UserService>();

@@ -75,6 +75,13 @@ namespace DAL.Repositories
             _context.SaveChanges();
             return true;
         }
+        // שמירה אטומית של מה שהסרוויס החליט. גם שינויים בישויות שכבר נטענו (עדכון עדיפות) נשמרים כאן
+        public void SaveBatch(List<UserPreference> toAdd, List<UserPreference> toRemove)
+        {
+            _context.UserPreference.RemoveRange(toRemove);
+            _context.UserPreference.AddRange(toAdd);
+            _context.SaveChanges();
+        }
 
     }
 }

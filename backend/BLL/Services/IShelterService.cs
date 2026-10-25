@@ -30,7 +30,6 @@ namespace BLL.Services
 
         // למנהל
         List<AdminShelterDTO> GetByStatus(string? status);
-        //מתקבלת מחרוזת מהקונטרולר
         ShelterDetailsDTO? UpdateStatus(int id, UpdateShelterStatusDTO dto);
 
 

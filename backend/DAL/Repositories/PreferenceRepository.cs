@@ -35,6 +35,7 @@ namespace DAL.Repositories
 
         public Preference? Update(int id, Preference entity)
         {
+            _context.Preference.Update(entity);
             _context.SaveChanges();
             return entity;
         }
@@ -51,6 +52,11 @@ namespace DAL.Repositories
             _context.SaveChanges();
 
             return true;
+        }
+        public bool IsInUse(int id)
+        {
+            return _context.UserPreference.Any(up => up.PreferenceId == id)
+                || _context.ShelterFeature.Any(sf => sf.PreferenceId == id);
         }
     }
 }

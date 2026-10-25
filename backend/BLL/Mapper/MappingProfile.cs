@@ -85,8 +85,7 @@ namespace BLL.Mapper
 
 
             // החלטת מנהל: Status מגיע כמחרוזת. RejectionReason אין לו שדה ב-DAL
-            CreateMap<UpdateShelterStatusDTO, Shelter>(MemberList.None)
-                .ForMember(d => d.Status, o => o.MapFrom(s => Enum.Parse<ShelterStatus>(s.Status, true)));
+            CreateMap<UpdateShelterStatusDTO, Shelter>(MemberList.None);
 
             // בעל המקלט מפעיל/מבטל את המקלט (IsActive לפי שם)
             CreateMap<UpdateShelterAvailabilityDTO, Shelter>(MemberList.None);

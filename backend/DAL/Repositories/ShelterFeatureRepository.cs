@@ -51,6 +51,8 @@ namespace DAL.Repositories
 
         public ShelterFeature? Update(ShelterFeature entity)
         {
+            _context.ShelterFeature.Update(entity);
+
             _context.SaveChanges();
             return GetById(entity.ShelterFeatureId)!;
         }
