@@ -27,6 +27,9 @@ namespace DTO
         public List<ShelterFeatureDTO> Features { get; set; }
         //public List<string> MatchReasons { get; set; } = new();
 
+        // האם אפשר לתקן את מאפייני המקלט -מקלט שנטען מראש
+        public bool IsImported { get; set; }
+
         public List<string> Files { get; set; } = new(); // תמונות או קבצים של המקלט
     }
 

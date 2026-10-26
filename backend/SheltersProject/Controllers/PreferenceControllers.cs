@@ -1,5 +1,6 @@
 ﻿using BLL.Services;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SheltersProject.Controllers
@@ -26,6 +27,7 @@ namespace SheltersProject.Controllers
 
         // GET: api/Preferences/5
         // מחזיר העדפה לפי מזהה
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id:int}")]
         public ActionResult<PreferenceDTO> GetById(int id)
         {
@@ -39,7 +41,8 @@ namespace SheltersProject.Controllers
         }
 
         // POST: api/Preferences
-        // מוסיף העדפה חדשה למערכת
+        // רק מנהל מוסיף סוג העדפה חדש
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public ActionResult<PreferenceDTO> Add([FromBody] PreferenceDTO dto)
         {
@@ -59,6 +62,7 @@ namespace SheltersProject.Controllers
 
         // PUT: api/Preferences/5
         // מעדכן העדפה קיימת
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id:int}")]
         public ActionResult<PreferenceDTO> Update(int id, [FromBody] PreferenceDTO dto)
         {
@@ -78,6 +82,7 @@ namespace SheltersProject.Controllers
 
         // DELETE: api/Preferences/5
         // מוחק העדפה לפי מזהה
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id:int}")]
         public IActionResult Delete(int id)
         {

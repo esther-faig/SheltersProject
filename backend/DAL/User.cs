@@ -10,9 +10,7 @@ namespace DAL
 
     public enum UserRole
     {
-        Admin,
-        Resident,
-        ShelterManager
+        Resident = 0, ShelterManager = 1, Admin = 2
     }
 
     public class User

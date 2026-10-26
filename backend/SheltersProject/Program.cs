@@ -4,9 +4,11 @@ using BLL.Services;
 using DAL;
 using DAL.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using NetTopologySuite;
 using System.Text;
 
@@ -37,8 +39,12 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
-
+builder.Services.AddAuthorization(options =>
+{
+    // ברירת מחדל: הכול נעול. פותחים במפורש עם [AllowAnonymous]
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser().Build();
+});
 
 //images
 
@@ -56,7 +62,24 @@ builder.Services.AddCors(options =>
 
 // ����� Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(); 
+//I can check in swagger the tokens
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "הדביקי את הטוקן מ-login (בלי המילה Bearer)"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { new OpenApiSecurityScheme { Reference = new OpenApiReference
+            { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() }
+    });
+});
 
 // ����� ������
 builder.Services.AddDbContext<DB_Shelters>(options =>

@@ -79,7 +79,8 @@ namespace BLL.Mapper
                 .ForMember(d => d.AlertZone, o => o.Ignore())
                 .ForMember(d => d.CreatedByUserId, o => o.Ignore())           // נקבע מהמשתמש המחובר
                 .ForMember(d => d.IsActive, o => o.Ignore())              // נקבע ב-Service
-                .ForMember(d => d.RejectionReason, o => o.Ignore())       // נקבע ע"י מנהל
+                .ForMember(d => d.RejectionReason, o => o.Ignore())
+                .ForMember(d => d.IsImported, o => o.Ignore())// נקבע ע"י מנהל
                 .ForMember(d => d.User, o => o.Ignore());
 
 
@@ -95,7 +96,7 @@ namespace BLL.Mapper
                 .ForMember(d => d.Preferences, o => o.MapFrom(s => s.UserPreferences))
                 .ForMember(d => d.SharedShelters, o => o.MapFrom(s => s.Shelters));
 
-            CreateMap<User, UserResponseDto>()
+            CreateMap<User, UserResponseDTO>()
                 .ForMember(d => d.Role, o => o.MapFrom(s => s.Role.ToString()))
                 .ForMember(d => d.Token, o => o.Ignore());                    // JWT נוצר אחרי המיפוי
 

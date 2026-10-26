@@ -31,7 +31,7 @@ namespace BLL.Services
         public PreferenceDTO? GetById(int id)
         {
             var preference = _repository.GetById(id);
-            return preference == null ? null : _mapper.Map<PreferenceDTO>(entity);
+            return preference == null ? null : _mapper.Map<PreferenceDTO>(preference);
         }
 
         public PreferenceDTO Add(PreferenceDTO dto)

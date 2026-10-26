@@ -20,7 +20,7 @@ namespace BLL.Services
         private readonly IPasswordHasher<User> _hasher;
 
 
-        public UserService(IUserRepository userRepository,, ITokenService tokens, IPasswordHasher<User> hasher, IMapper mapper)
+        public UserService(IUserRepository userRepository, ITokenService tokens, IPasswordHasher<User> hasher, IMapper mapper)
         {
             _userRepository = userRepository;
             _mapper = mapper;
@@ -48,9 +48,10 @@ namespace BLL.Services
                 return false;
 
             // התפקיד נקבע בשרת, לא מגיע מהלקוח
-            var user = new User { Email = email, Role = UserRole.Resident};
-            //הצפנת הסיסמה
-            user.Password = _hasher.HashPassword(user, dto.Password);
+            var user = _mapper.Map<User>(dto);
+            user.Email = email;
+            user.Role = UserRole.Resident;                     // תמיד נקבע בשרת
+            user.Password = _hasher.HashPassword(user, dto.Password);            //הצפנת הסיסמה
 
             _userRepository.Add(user);
             return true; // הקונטרולר יחליט מה להחזיר ללקוח

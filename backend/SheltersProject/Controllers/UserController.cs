@@ -1,5 +1,6 @@
 ﻿using BLL.Services;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SheltersProject.Controllers
@@ -16,28 +17,42 @@ namespace SheltersProject.Controllers
         }
 
         // GET: api/User
-        //[HttpGet]
-        //public ActionResult<List<UserProfileDTO>> GetAll()
-        //{
-        //    var users = _service.GetAll();
-        //    return Ok(users);
-        //}
+        [Authorize(Roles ="Admin")]
+        [HttpGet]
+        public ActionResult<List<UserProfileDTO>> GetAll()
+        {
+            var users = _service.GetAll();
+            return Ok(users);
+        }
 
 
         // GET: api/User/5
-        // פרופיל משתמש (מסך 6)
-        [HttpGet("{id:int}")]
-        public ActionResult<UserProfileDTO> GetById(int id)
+        // הפרופיל שלי + ההעדפות שלי + המקלטים ששיתפתי (מסך 6)
+        [HttpGet("me")]
+        public ActionResult<UserProfileDTO> GetMe(int id)
         {
-            var user = _service.GetById(id);
+            var user = _service.GetById(User.GetUserId());
             if (user == null)
                 return NotFound();
 
             return Ok(user);
         }
 
+        // PUT: api/User/me
+        // עדכון שם ומייל של עצמי
+        [HttpPut("me")]
+        public ActionResult<UserProfileDTO> UpdateMe([FromBody] UpdateUserRequestDTO dto)
+        {
+            var updated = _service.Update(User.GetUserId(), dto);
+            if (updated == null)
+                return NotFound();
+
+            return Ok(updated);
+        }
+
         //הרשמה והתחברות    
         // POST api/user/register
+        [AllowAnonymous]
         [HttpPost("register")]
         public IActionResult Register(RegisterRequestDTO dto)
         {
@@ -49,6 +64,7 @@ namespace SheltersProject.Controllers
         }
 
         // POST api/user/login
+        [AllowAnonymous]
         [HttpPost("login")]
         public ActionResult<AuthResponseDTO> Login(LoginRequestDTO dto)
         {
@@ -58,20 +74,6 @@ namespace SheltersProject.Controllers
 
             return Ok(result);
         }
-
-
-
-        //להוסיף גם עדכון
-        [HttpPut("{id:int}")]
-        public ActionResult<UserProfileDTO> Update(int id, [FromBody] UpdateUserRequestDTO dto)
-        {
-            var updated = _service.Update(id, dto);
-            if (updated == null)
-                return NotFound();
-
-            return Ok(updated);
-        }
-
 
 
     }
