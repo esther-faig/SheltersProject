@@ -12,8 +12,8 @@ namespace BLL.Services
         public List<UserProfileDTO> GetAll();
         public UserProfileDTO? GetById(int id);
 
-        UserResponseDto Register(RegisterRequestDTO dto);
-        UserResponseDto? Login(LoginRequestDTO dto);                     // null = פרטים שגויים
+        bool Register(RegisterRequestDTO dto);
+        AuthResponseDTO? Login(LoginRequestDTO dto);                     // null = פרטים שגויים
 
         UserProfileDTO? Update(int userId, UpdateUserRequestDTO dto);
 

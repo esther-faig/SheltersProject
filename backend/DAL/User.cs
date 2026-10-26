@@ -25,9 +25,9 @@ namespace DAL
 
         public string Email { get; set; }
 
-        public string Password { get; set; }
+        public string Password { get; set; } = null;//סיסמה מוצפנת
 
-        public UserRole Role { get; set; }
+        public UserRole? Role { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

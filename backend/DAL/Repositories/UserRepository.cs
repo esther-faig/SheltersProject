@@ -42,6 +42,8 @@ namespace DAL.Repositories
             return _context.User
                 .FirstOrDefault(u => u.Email == email);
         }
+        public bool EmailExists(string email) =>
+        _context.User.Any(u => u.Email == email);
         public User Add(User entity)
         {
             _context.User.Add(entity);

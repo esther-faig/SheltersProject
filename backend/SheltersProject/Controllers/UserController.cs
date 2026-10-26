@@ -16,12 +16,13 @@ namespace SheltersProject.Controllers
         }
 
         // GET: api/User
-        [HttpGet]
-        public ActionResult<List<UserProfileDTO>> GetAll()
-        {
-            var users = _service.GetAll();
-            return Ok(users);
-        }
+        //[HttpGet]
+        //public ActionResult<List<UserProfileDTO>> GetAll()
+        //{
+        //    var users = _service.GetAll();
+        //    return Ok(users);
+        //}
+
 
         // GET: api/User/5
         // פרופיל משתמש (מסך 6)
@@ -35,8 +36,28 @@ namespace SheltersProject.Controllers
             return Ok(user);
         }
 
-        // כאן יתווספו בהמשך: הרשמה (Register) והתחברות (Login), כשיהיו ב-IUserService
+        //הרשמה והתחברות    
+        // POST api/user/register
+        [HttpPost("register")]
+        public IActionResult Register(RegisterRequestDTO dto)
+        {
+            if (!_service.Register(dto))
+                return Conflict("Email is already registered.");
 
+            // ההרשמה רק יוצרת את המשתמש. את הטוקן מקבלים בהתחברות
+            return Ok();
+        }
+
+        // POST api/user/login
+        [HttpPost("login")]
+        public ActionResult<AuthResponseDTO> Login(LoginRequestDTO dto)
+        {
+            var result = _service.Login(dto);
+            if (result is null)
+                return Unauthorized("Wrong email or password.");
+
+            return Ok(result);
+        }
 
 
 

@@ -3,6 +3,7 @@ using AutoMapper.QueryableExtensions;
 using DAL;
 using DAL.Repositories;
 using DTO;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,12 +16,16 @@ namespace BLL.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly ITokenService _tokens;
+        private readonly IPasswordHasher<User> _hasher;
 
 
-        public UserService(IUserRepository userRepository, IMapper mapper)
+        public UserService(IUserRepository userRepository,, ITokenService tokens, IPasswordHasher<User> hasher, IMapper mapper)
         {
             _userRepository = userRepository;
             _mapper = mapper;
+            _tokens = tokens;
+            _hasher = hasher;
         }
 
         public List<UserProfileDTO> GetAll()
@@ -35,14 +40,35 @@ namespace BLL.Services
         }
 
         //פונקציות הרשמה והתחברות
-        //לממש
-        public UserResponseDto Register(RegisterRequestDTO dto)
+        public bool Register(RegisterRequestDTO dto)
         {
-            return null;
+            //לא מביא טוקן
+            var email = dto.Email.Trim().ToLowerInvariant();
+            if (_userRepository.EmailExists(email))
+                return false;
+
+            // התפקיד נקבע בשרת, לא מגיע מהלקוח
+            var user = new User { Email = email, Role = UserRole.Resident};
+            //הצפנת הסיסמה
+            user.Password = _hasher.HashPassword(user, dto.Password);
+
+            _userRepository.Add(user);
+            return true; // הקונטרולר יחליט מה להחזיר ללקוח
+        
         }
-        public UserResponseDto? Login(LoginRequestDTO dto)
+        public AuthResponseDTO? Login(LoginRequestDTO dto)
         {
-            return null;
+            //מביא טוקן
+            var email = dto.Email.Trim().ToLowerInvariant();
+            var user = _userRepository.GetByEmail(email);
+            if (user is null)
+                return null;
+            //פיענוח הסיסמה
+            var result = _hasher.VerifyHashedPassword(user, user.Password, dto.Password);
+            if (result == PasswordVerificationResult.Failed)
+                return null;
+
+            return _tokens.CreateToken(user);
         }
 
 

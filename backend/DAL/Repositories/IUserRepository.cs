@@ -14,7 +14,7 @@ namespace DAL.Repositories
         User? GetByEmail(string email);
         //לצורך פונקצית ההרשמה
         User Add(User entity);
-
+        bool EmailExists(string email);
         User? Update(User entity);
         //אין אפשרות למחוק משתמשים, לכן אין פונקצית מחיקה
         //bool Delete(int id);
