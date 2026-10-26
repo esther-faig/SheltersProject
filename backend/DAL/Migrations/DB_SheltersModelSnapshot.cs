@@ -77,6 +77,50 @@ namespace DAL.Migrations
                     b.HasKey("PreferenceId");
 
                     b.ToTable("Preference");
+
+                    b.HasData(
+                        new
+                        {
+                            PreferenceId = 1,
+                            Category = "נגישות",
+                            Description = "הגעה למקלט ללא צורך בעלייה או בירידה במדרגות",
+                            Name = "ללא מדרגות"
+                        },
+                        new
+                        {
+                            PreferenceId = 2,
+                            Category = "נגישות",
+                            Description = "כניסה ותנועה בתוך המקלט מתאימות לכיסא גלגלים",
+                            Name = "נגיש לכיסא גלגלים"
+                        },
+                        new
+                        {
+                            PreferenceId = 3,
+                            Category = "מרחב",
+                            Description = "מקלט מרווח, מתאים למי שזקוק ליותר מקום, למשל בגלל קוצר נשימה",
+                            Name = "מרחב גדול"
+                        },
+                        new
+                        {
+                            PreferenceId = 4,
+                            Category = "נוחות",
+                            Description = "אוורור או כניסת אוויר מספקים בתוך המקלט",
+                            Name = "אוורור טוב"
+                        },
+                        new
+                        {
+                            PreferenceId = 5,
+                            Category = "מרחב",
+                            Description = "מקלט שבדרך כלל שוהים בו מעט אנשים ביחס לגודלו",
+                            Name = "צפיפות נמוכה"
+                        },
+                        new
+                        {
+                            PreferenceId = 6,
+                            Category = "נוחות",
+                            Description = "במקלט יש מקומות ישיבה",
+                            Name = "מקומות ישיבה"
+                        });
                 });
 
             modelBuilder.Entity("DAL.ProtectionTime", b =>
@@ -144,6 +188,9 @@ namespace DAL.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsImported")
                         .HasColumnType("bit");
 
                     b.Property<double>("Latitude")
@@ -231,7 +278,7 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Role")
+                    b.Property<int?>("Role")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
