@@ -57,33 +57,24 @@ namespace SheltersProject.Controllers
         // POST: api/Shelter?userId=5
         // זמני: בשלב ההרשאות ה-userId יילקח מה-token ולא מה-URL
         [HttpPost]
-        public ActionResult<ShelterDetailsDTO> Add([FromQuery] int userId, [FromBody] ShelterRequestDTO dto)
+        public ActionResult<ShelterDetailsDTO> Add([FromQuery] int userId, [FromForm] ShelterRequestDTO dto)
         {
             // Ok ולא CreatedAtAction: מקלט חדש ממתין לאישור, ו-GetById מחזיר 404 למקלט כזה
-            return Ok(_service.Add(userId, dto));
+            try { return Ok(_service.Add(userId, dto)); }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
         }
-        [HttpPost]
-        public IActionResult Add([FromForm] ShelterDetailsDTO dto)
-        {
-            try
-            {
-                return Ok(.Add(dto));
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+
 
         // PUT: api/Shelter/5
         [HttpPut("{id:int}")]
-        public ActionResult<ShelterDetailsDTO> Update(int id, [FromQuery] int userId, [FromBody] ShelterRequestDTO dto)
+        public ActionResult<ShelterDetailsDTO> Update(int id, [FromQuery] int userId, [FromForm] ShelterRequestDTO dto)
         {
-            var updated = _service.Update(id, userId, dto);
-            if (updated == null)
-                return NotFound();   // לא קיים או לא שלך: אותה תשובה
-
-            return Ok(updated);
+            try
+            {
+                var updated = _service.Update(id, userId, dto);
+                return updated == null ? NotFound() : Ok(updated);
+            }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
         }
         // PUT: api/Shelter/5/availability?userId=3
         // בעל המקלט מבטל או מפעיל אותו זמנית

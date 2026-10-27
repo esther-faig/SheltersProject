@@ -16,5 +16,8 @@ namespace DTO
         public string Status { get; set; } = "";
         public bool IsActive { get; set; }
 
+        //להחזרה לקלינט- רק שם התמונה
+        public List<string> Files { get; set; }
+
     }
 }

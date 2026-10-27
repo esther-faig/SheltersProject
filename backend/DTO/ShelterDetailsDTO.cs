@@ -23,6 +23,8 @@ namespace DTO
         
 
         public List<ShelterFeatureDTO> Features { get; set; } = new();
-        public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>();
+        
+        //משמש להצגה לקלינט ולכן נשמר פה רק השם
+        public List<string> ImageFiles { get; set; } = new List<IFormFile>();
     }
 }

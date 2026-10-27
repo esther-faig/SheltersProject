@@ -80,6 +80,7 @@ namespace BLL.Mapper
                 .ForMember(d => d.CreatedByUserId, o => o.Ignore())           // נקבע מהמשתמש המחובר
                 .ForMember(d => d.IsActive, o => o.Ignore())              // נקבע ב-Service
                 .ForMember(d => d.RejectionReason, o => o.Ignore())       // נקבע ע"י מנהל
+                .ForMember(d => d.Files, o => o.Ignore())   // נקבע ב-ShelterService אחרי השמירה בתיקייה
                 .ForMember(d => d.User, o => o.Ignore());
 
 

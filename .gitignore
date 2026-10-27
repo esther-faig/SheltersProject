@@ -10,7 +10,7 @@ obj/
 # appsettings.json
 # *.user
 # *.suo
-
+backend/Images/
 
 # התעלמות מתיקיית התלויות של נהוד (נוצרת אוטומטית כשמריצים npm install)
 frontend/node_modules/

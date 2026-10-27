@@ -17,17 +17,20 @@ namespace BLL.Services
         private readonly IPreferenceRepository _preferenceRepository;
         private readonly IAlertZoneService _alertZoneService;
         private readonly IMapper _mapper;
+        private readonly IImageService _imageService;
+        private const int MaxImages = 5;
 
         public ShelterService(
             IShelterRepository repository,
             IPreferenceRepository preferenceRepository,
             IAlertZoneService alertZoneService,
-            IMapper mapper)
+            IMapper mapper,IImageService imageService)
         {
             _repository = repository;
             _preferenceRepository = preferenceRepository;
             _alertZoneService = alertZoneService;
             _mapper = mapper;
+            _imageService = imageService;
         }
 
         public List<ShelterSearchResultDTO> GetAll()
@@ -67,6 +70,8 @@ namespace BLL.Services
             var validIds = _preferenceRepository.GetAll().Select(p => p.PreferenceId).ToHashSet();
             if (features.Any(f => !validIds.Contains(f.PreferenceId)))
                 throw new InvalidOperationException("נשלחה העדפה שלא קיימת");
+            if (dto.ImageFiles.Count > MaxImages)
+                throw new ArgumentException($"אפשר להעלות עד {MaxImages} תמונות");
 
             var shelter = _mapper.Map<DAL.Shelter>(dto);
             shelter.ShelterFeatures = _mapper.Map<List<ShelterFeature>>(features);
@@ -74,8 +79,21 @@ namespace BLL.Services
             shelter.Status = ShelterStatus.Pending;
             shelter.IsActive = true;
             shelter.AlertZoneId = _alertZoneService.FindZoneIdByLocation(dto.Latitude, dto.Longitude);
+            var saved = new List<string>();
+            try
+            {
+                foreach (var file in dto.ImageFiles)
+                    saved.Add(_imageService.Save(file));
+                shelter.Files = saved;
 
-            return _mapper.Map<ShelterDetailsDTO>(_repository.Add(shelter));
+                return _mapper.Map<ShelterDetailsDTO>(_repository.Add(shelter));
+            }
+            catch
+            {
+                foreach (var name in saved) _imageService.Delete(name);   // לא משאירים קבצים יתומים
+                throw;
+            }
+            //return _mapper.Map<ShelterDetailsDTO>(_repository.Add(shelter));
         }
 
         public ShelterDetailsDTO? Update(int id, int userId, ShelterRequestDTO dto)
@@ -109,7 +127,29 @@ namespace BLL.Services
             shelter.Latitude = dto.Latitude;
             shelter.Longitude = dto.Longitude;
             shelter.MaxCapacity = dto.MaxCapacity;
-            shelter.Files = new List<string>(dto.Files);
+
+            // --- טיפול מתקדם בתמונות ---
+            var keep = dto.ExistingFiles.Where(f => shelter.Files.Contains(f)).Distinct().ToList();
+            var removed = shelter.Files.Except(keep).ToList();
+            if (keep.Count + dto.ImageFiles.Count > MaxImages)
+                throw new ArgumentException($"אפשר להעלות עד {MaxImages} תמונות");
+
+            var newFiles = new List<string>();
+            ShelterDetailsDTO result;
+            try
+            {
+                foreach (var file in dto.ImageFiles)
+                    newFiles.Add(_imageService.Save(file));
+
+                shelter.Files = keep.Concat(newFiles).ToList();   // שומרים את השילוב של הישנים שנשמרו והחדשים
+
+                result = _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
+            }
+            catch
+            {
+                foreach (var name in newFiles) _imageService.Delete(name);
+                throw;
+            }
 
             // מאפיינים: מסירים מה שנעלם, מעדכנים קיים, מוסיפים חדש
             var incomingIds = features.Select(f => f.PreferenceId).ToHashSet();
@@ -125,8 +165,10 @@ namespace BLL.Services
                 else
                     shelter.ShelterFeatures.Add(new ShelterFeature { PreferenceId = f.PreferenceId, IsAvailable = f.IsAvailable });
             }
+            // מוחקים את הישנים רק אחרי ששמירה במסד הצליחה
+            foreach (var name in removed) _imageService.Delete(name);
 
-            return _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
+            return result;
         }
 
         public ShelterDetailsDTO? UpdateAvailability(int id, int userId, UpdateShelterAvailabilityDTO dto)
@@ -146,8 +188,9 @@ namespace BLL.Services
             var shelter = _repository.GetOwned(id, userId);
             if (shelter == null)
                 return false;
-
+            var files = shelter.Files.ToList();
             _repository.Delete(id);
+            foreach (var f in files) _imageService.Delete(f);
             return true;
         }
 

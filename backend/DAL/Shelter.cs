@@ -50,7 +50,7 @@ namespace DAL
         public User User { get; set; } = null!;
 
 
-        public List<string> Files { get; set; } = new List<string>();
+        public List<string> Files { get; set; } = new List<string>();//the name of the image
         public List<ShelterFeature> ShelterFeatures { get; set; } = new List<ShelterFeature>();
 
 

@@ -8,10 +8,17 @@ using NetTopologySuite;
 using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 1. שליפה ובדיקה של מחרוזת החיבור למסד הנתונים
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is missing. " +
+        "Set it with User Secrets or an environment variable.");
+
 // הנתיב המלא לתיקיית התמונות, מתוך appsettings.json
 var ImagesFolder = Path.GetFullPath(Path.Combine(
     builder.Environment.ContentRootPath,
-    builder.Configuration["ImagesFolder"]));
+    builder.Configuration["ImagesFolder"]?? "../Images"));
 Directory.CreateDirectory(ImagesFolder);   // יוצר את התיקייה אם אינה קיימת
 
 
@@ -29,12 +36,11 @@ builder.Services.AddCors(options =>
 
 // ����� Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(); 
+builder.Services.AddSwaggerGen();
 
 // ����� ������
 builder.Services.AddDbContext<DB_Shelters>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-    x => x.UseNetTopologySuite()));
+    options.UseSqlServer(connStr, x => x.UseNetTopologySuite()));
 
 builder.Services.AddAutoMapper(cfg =>
 {
@@ -49,7 +55,6 @@ builder.Services.AddScoped<IShelterFeatureRepository, ShelterFeatureRepository>(
 builder.Services.AddScoped<IShelterRepository, ShelterRepository>();
 builder.Services.AddScoped<IUserPreferenceRepository, UserPreferenceRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddSingleton<IImageService>(new ImageService(ImagesFolder));
 
 // Services (BLL)
 builder.Services.AddScoped<IAlertZoneService, AlertZoneService>();
@@ -58,6 +63,8 @@ builder.Services.AddScoped<IProtectionTimeService, ProtectionTimeService>();
 builder.Services.AddScoped<IShelterService, ShelterService>();
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IImageService>(new ImageService(ImagesFolder));
+
 
 
 var app = builder.Build();

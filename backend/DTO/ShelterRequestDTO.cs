@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace DTO
 {
@@ -25,8 +26,11 @@ namespace DTO
         // פה נשתמש בDTO שמשנים בו על כל העדפה רק אם קימת
         //ואי אפשר לשנות פה את ההעדפה בעצמה
         public List<ShelterFeatureUpdateDTO> Features { get; set; } = new();
-        //מחרוזות שהם הניתוב של הקבצים
+        
+        // תמונות חדשות שהמשתמש מעלה
         public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>(); // רשימת הקבצים המועלים
 
+        // בעריכה: שמות של תמונות קיימות שרוצים לשמור (מה שלא נשלח יימחק)
+        public List<string> ExistingFiles { get; set; } = new();
     }
 }

@@ -41,7 +41,7 @@ namespace BLL.Services
 
         public void Delete(string fileName)
         {
-            var path = Path.Combine(_folder, fileName);
+            var path = Path.Combine(_folder, Path.GetFileName(fileName));
             if (File.Exists(path))
                 File.Delete(path);
         }
