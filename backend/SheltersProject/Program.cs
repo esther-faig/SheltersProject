@@ -5,8 +5,15 @@ using DAL;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
+// הנתיב המלא לתיקיית התמונות, מתוך appsettings.json
+var ImagesFolder = Path.GetFullPath(Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration["ImagesFolder"]));
+Directory.CreateDirectory(ImagesFolder);   // יוצר את התיקייה אם אינה קיימת
+
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -42,6 +49,7 @@ builder.Services.AddScoped<IShelterFeatureRepository, ShelterFeatureRepository>(
 builder.Services.AddScoped<IShelterRepository, ShelterRepository>();
 builder.Services.AddScoped<IUserPreferenceRepository, UserPreferenceRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<IImageService>(new ImageService(ImagesFolder));
 
 // Services (BLL)
 builder.Services.AddScoped<IAlertZoneService, AlertZoneService>();
@@ -51,7 +59,14 @@ builder.Services.AddScoped<IShelterService, ShelterService>();
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+
 var app = builder.Build();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(ImagesFolder),
+    RequestPath = "/Images"
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

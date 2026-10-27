@@ -32,6 +32,7 @@ namespace DAL
         public double Longitude { get; set; }
 
         public int MaxCapacity { get; set; }
+        public List<string> Images { get; set; } = new List<string>(); // רשימת שמות הקבצים 
 
         public ShelterStatus Status { get; set; } = ShelterStatus.Pending;
         public bool IsActive { get; set; }= true; // false = בעל המקלט ביטל אותו זמנית. מקלט לא פעיל לא מוצג בחיפוש בכלל

@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
+
 namespace DTO
 {
     public class ShelterDetailsDTO
     {
+
         //הצגת פרטי מקלט מלאים
         public int ShelterId { get; set; }
         public string Name { get; set; } = "";
@@ -17,8 +20,9 @@ namespace DTO
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public int MaxCapacity { get; set; }
+        
 
         public List<ShelterFeatureDTO> Features { get; set; } = new();
-        public List<string> Files { get; set; } = new(); // תמונות או קבצים של המקלט
+        public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>();
     }
 }

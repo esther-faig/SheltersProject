@@ -17,6 +17,7 @@ namespace SheltersProject.Controllers
             _service = service;
         }
 
+
         // GET: api/Shelter
         [HttpGet]
         public ActionResult<List<ShelterSearchResultDTO>> GetAll()
@@ -60,6 +61,18 @@ namespace SheltersProject.Controllers
         {
             // Ok ולא CreatedAtAction: מקלט חדש ממתין לאישור, ו-GetById מחזיר 404 למקלט כזה
             return Ok(_service.Add(userId, dto));
+        }
+        [HttpPost]
+        public IActionResult Add([FromForm] ShelterDetailsDTO dto)
+        {
+            try
+            {
+                return Ok(.Add(dto));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // PUT: api/Shelter/5

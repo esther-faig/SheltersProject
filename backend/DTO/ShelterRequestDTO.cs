@@ -25,8 +25,8 @@ namespace DTO
         // פה נשתמש בDTO שמשנים בו על כל העדפה רק אם קימת
         //ואי אפשר לשנות פה את ההעדפה בעצמה
         public List<ShelterFeatureUpdateDTO> Features { get; set; } = new();
-       //מחרוזות שהם הניתוב של הקבצים
-        public List<string> Files { get; set; } = new();
+        //מחרוזות שהם הניתוב של הקבצים
+        public List<IFormFile> ImageFiles { get; set; } = new List<IFormFile>(); // רשימת הקבצים המועלים
 
     }
 }
