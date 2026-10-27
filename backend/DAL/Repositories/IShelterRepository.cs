@@ -20,6 +20,7 @@ namespace DAL.Repositories
         
         //למשתמש-להצגת המקלטים שהוא שיתף
         List<Shelter> GetByUserId(int userId);
+        
         Shelter? GetById(int id);
         Shelter Add(Shelter entity);
         Shelter? Update(Shelter entity);

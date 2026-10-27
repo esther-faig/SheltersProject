@@ -15,6 +15,7 @@ namespace DTO
         public string ShelterType { get; set; } = "";
         public string City { get; set; } = "";
 
+
         //המרחק מהמקלט למשתמש במטרים
         public double DistanceMeters { get; set; }
         //זמן הנסיעה מהמקלט למשתמש בשניות

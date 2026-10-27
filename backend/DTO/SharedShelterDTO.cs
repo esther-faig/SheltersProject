@@ -15,5 +15,6 @@ namespace DTO
         public string ShelterType { get; set; } = "";
         public string Status { get; set; } = "";
         public bool IsActive { get; set; }
+
     }
 }
