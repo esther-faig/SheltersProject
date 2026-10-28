@@ -38,8 +38,26 @@ SheltersProject הוא אתר שיתופי למציאת מרחב מוגן מתא
 
 \### Frontend
 
-יש להיכנס לתיקיית ה-React ולהתקין את החבילות:
+1.יש להיכנס לתיקיית ה-React ולהתקין את החבילות:
 
 ```bash
 npm install
 
+2.**הגדרת מחרוזת החיבור למסד הנתונים.**
+   מחרוזת החיבור לא נשמרת בקוד, והיא נקראת ממשתנה סביבה בשם:
+
+   ```
+   ConnectionStrings__DefaultConnection
+   ```
+
+3. **יצירת מסד הנתונים** מתוך המיגרציות. בתיקיית `backend`:
+
+   או ב-Package Manager Console (Default project: `DAL`):
+
+   ```
+   Update-Database
+   ```
+
+4. הרצת הפרויקט עם `F5`. ה-API עולה בכתובת `https://localhost:7273`, ו-Swagger נפתח אוטומטית.
+
+- לאחר כל שינוי במחלקות ב-DAL יש ליצור מיגרציה חדשה: `Add-Migration <שם>` ואז `Update-Database`.
