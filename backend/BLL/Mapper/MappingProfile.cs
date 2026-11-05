@@ -57,15 +57,18 @@ namespace BLL.Mapper
             // DistanceMeters ו-TravelTimeSeconds מחושבים בשירות החיפוש (Google Maps), לא ממופים
             CreateMap<Shelter, ShelterSearchResultDTO>()
                 .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))
+                .ForMember(d => d.Files, o => o.MapFrom(s => s.Files))
                 .ForMember(d => d.DistanceMeters, o => o.Ignore())
                 .ForMember(d => d.TravelTimeSeconds, o => o.Ignore());
 
             CreateMap<Shelter, ShelterDetailsDTO>()
-                .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures));
+                .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))
+                .ForMember(d => d.Files, o => o.MapFrom(s => s.Files));;
 
             // Status (enum) -> string בהמרה אוטומטית
             CreateMap<Shelter, AdminShelterDTO>()
-                .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures));
+                .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))
+                    .ForMember(d => d.Files, o => o.MapFrom(s => s.Files));
 
             // IsActive ממופה לפי שם (דורש להוסיף IsActive ל-Shelter ב-DAL)
             CreateMap<Shelter, SharedShelterDTO>();

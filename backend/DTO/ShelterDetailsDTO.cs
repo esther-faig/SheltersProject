@@ -25,6 +25,6 @@ namespace DTO
         public List<ShelterFeatureDTO> Features { get; set; } = new();
 
         //משמש להצגה לקלינט ולכן נשמר פה רק השם
-        public List<string> ImageFiles { get; set; } = new();
+        public List<string> Files { get; set; } = new();
     }
 }
