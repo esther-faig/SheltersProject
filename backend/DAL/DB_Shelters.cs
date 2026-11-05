@@ -82,6 +82,52 @@ namespace DAL
                 .WithMany(p => p.ShelterFeatures)
                 .HasForeignKey(sf => sf.PreferenceId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ───────── נתוני התחלה: סוגי ההעדפות מהאפיון ─────────
+            // מזהים קבועים (1-6) ולעולם לא משתמשים בהם מחדש. העדפות שהמנהל יוסיף אחר כך יקבלו 7 ומעלה
+            modelBuilder.Entity<Preference>().HasData(
+                new Preference
+                {
+                    PreferenceId = 1,
+                    Name = "ללא מדרגות",
+                    Description = "הגעה למקלט ללא צורך בעלייה או בירידה במדרגות",
+                    Category = "נגישות"
+                },
+                new Preference
+                {
+                    PreferenceId = 2,
+                    Name = "נגיש לכיסא גלגלים",
+                    Description = "כניסה ותנועה בתוך המקלט מתאימות לכיסא גלגלים",
+                    Category = "נגישות"
+                },
+                new Preference
+                {
+                    PreferenceId = 3,
+                    Name = "מרחב גדול",
+                    Description = "מקלט מרווח, מתאים למי שזקוק ליותר מקום, למשל בגלל קוצר נשימה",
+                    Category = "מרחב"
+                },
+                new Preference
+                {
+                    PreferenceId = 4,
+                    Name = "אוורור טוב",
+                    Description = "אוורור או כניסת אוויר מספקים בתוך המקלט",
+                    Category = "נוחות"
+                },
+                new Preference
+                {
+                    PreferenceId = 5,
+                    Name = "צפיפות נמוכה",
+                    Description = "מקלט שבדרך כלל שוהים בו מעט אנשים ביחס לגודלו",
+                    Category = "מרחב"
+                },
+                new Preference
+                {
+                    PreferenceId = 6,
+                    Name = "מקומות ישיבה",
+                    Description = "במקלט יש מקומות ישיבה",
+                    Category = "נוחות"
+                });
         }
 
 

@@ -10,11 +10,13 @@ namespace DTO
     public class RegisterRequestDTO
     {
         //הלקוח שולח את טופס ההרשמה לשרת
-        [MaxLength(100)]
+        [MaxLength(100),Required]
         public string FullName { get; set; } = "";
-        [EmailAddress]
+        [EmailAddress,Required]
         public string Email { get; set; } = "";
-        [MinLength(6)]
+        [MinLength(6),Required]
         public string Password { get; set; } = "";
+
+        //אין ROLE אלא הוא תמיד נקבע מהשרת
     }
 }

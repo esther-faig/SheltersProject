@@ -35,9 +35,20 @@ namespace DAL.Repositories
 
         public Preference? Update(int id, Preference entity)
         {
-            _context.Preference.Update(entity);
+            // טוענים את ההעדפה הקיימת (עם מעקב) לפי ה-id מה-URL
+            var existing = _context.Preference
+                .FirstOrDefault(p => p.PreferenceId == id);
+
+            if (existing == null)
+                return null;   // ה-Service מחזיר null, והקונטרולר מחזיר NotFound
+
+            // מעתיקים רק את מה שמותר לשנות
+            existing.Name = entity.Name;
+            existing.Description = entity.Description;
+            existing.Category = entity.Category;
+
             _context.SaveChanges();
-            return entity;
+            return existing;
         }
 
         public bool Delete(int id)

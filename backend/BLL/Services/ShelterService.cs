@@ -73,6 +73,7 @@ namespace BLL.Services
             shelter.CreatedByUserId = userId;
             shelter.Status = ShelterStatus.Pending;
             shelter.IsActive = true;
+            shelter.IsImported = false;
             shelter.AlertZoneId = _alertZoneService.FindZoneIdByLocation(dto.Latitude, dto.Longitude);
 
             return _mapper.Map<ShelterDetailsDTO>(_repository.Add(shelter));
@@ -182,5 +183,39 @@ namespace BLL.Services
             // שומרים, טוענים מחדש עם Include וממפים ל-DTO
             return _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
         }
+
+        public ShelterDetailsDTO? UpdateImportedFeatures(int id, UpdateShelterFeaturesDTO dto)
+        {
+            var shelter = _repository.GetById(id);
+
+            // רק מקלט שנטען מראש, מאושר ופעיל. כל השאר: אותה תשובה כמו "לא קיים"
+            if (shelter == null || !shelter.IsImported
+                || shelter.Status != ShelterStatus.Approved || !shelter.IsActive)
+                return null;
+
+            var features = dto.Features
+                .GroupBy(f => f.PreferenceId)
+                .Select(g => g.Last())
+                .ToList();
+
+            var validIds = _preferenceRepository.GetAll().Select(p => p.PreferenceId).ToHashSet();
+            if (features.Any(f => !validIds.Contains(f.PreferenceId)))
+                throw new InvalidOperationException("נשלחה העדפה שלא קיימת");
+
+            // עדכון חלקי: משנים רק מה שנשלח. מאפיינים שלא נשלחו נשארים כמו שהם
+            foreach (var f in features)
+            {
+                var existing = shelter.ShelterFeatures.FirstOrDefault(x => x.PreferenceId == f.PreferenceId);
+                if (existing != null)
+                    existing.IsAvailable = f.IsAvailable;
+                else
+                    shelter.ShelterFeatures.Add(new ShelterFeature { PreferenceId = f.PreferenceId, IsAvailable = f.IsAvailable });
+            }
+
+            return _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
+        }
+
+
+
     }
 }
