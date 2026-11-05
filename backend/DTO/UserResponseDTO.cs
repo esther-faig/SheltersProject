@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    public class UserResponseDto
+    public class UserResponseDTO
     {
         //החזרת פרטי משתמש בסיסיים לאחר התחברות/הרשמה.
         public int UserId { get; set; }

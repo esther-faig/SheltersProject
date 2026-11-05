@@ -33,7 +33,8 @@ namespace BLL.Services
         ShelterDetailsDTO? UpdateStatus(int id, UpdateShelterStatusDTO dto);
 
 
+        // תיקון מאפיינים של מקלט שנטען מראש (כל משתמשת מחוברת). null = לא קיים או לא ניתן לתיקון
+        ShelterDetailsDTO? UpdateImportedFeatures(int id, UpdateShelterFeaturesDTO dto);
 
-          
     }
 }
