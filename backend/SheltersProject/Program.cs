@@ -10,9 +10,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NetTopologySuite;
+using Microsoft.Extensions.FileProviders;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 1. שליפה ובדיקה של מחרוזת החיבור למסד הנתונים
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is missing. " +
+        "Set it with User Secrets or an environment variable.");
+
+// הנתיב המלא לתיקיית התמונות, מתוך appsettings.json
+var ImagesFolder = Path.GetFullPath(Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration["ImagesFolder"]?? "../Images"));
+Directory.CreateDirectory(ImagesFolder);   // יוצר את התיקייה אם אינה קיימת
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
@@ -83,8 +96,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // ����� ������
 builder.Services.AddDbContext<DB_Shelters>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-    x => x.UseNetTopologySuite()));
+    options.UseSqlServer(connStr, x => x.UseNetTopologySuite()));
 
 builder.Services.AddAutoMapper(cfg =>
 {
@@ -108,11 +120,19 @@ builder.Services.AddScoped<IProtectionTimeService, ProtectionTimeService>();
 builder.Services.AddScoped<IShelterService, ShelterService>();
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IImageService>(new ImageService(ImagesFolder));
+
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 
 var app = builder.Build();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(ImagesFolder),
+    RequestPath = "/Images"
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

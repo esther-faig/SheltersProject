@@ -57,15 +57,18 @@ namespace BLL.Mapper
             // DistanceMeters ו-TravelTimeSeconds מחושבים בשירות החיפוש (Google Maps), לא ממופים
             CreateMap<Shelter, ShelterSearchResultDTO>()
                 .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))
+                .ForMember(d => d.Files, o => o.MapFrom(s => s.Files))
                 .ForMember(d => d.DistanceMeters, o => o.Ignore())
                 .ForMember(d => d.TravelTimeSeconds, o => o.Ignore());
 
             CreateMap<Shelter, ShelterDetailsDTO>()
-                .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures));
+                .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))
+                .ForMember(d => d.Files, o => o.MapFrom(s => s.Files));;
 
             // Status (enum) -> string בהמרה אוטומטית
             CreateMap<Shelter, AdminShelterDTO>()
-                .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures));
+                .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))
+                    .ForMember(d => d.Files, o => o.MapFrom(s => s.Files));
 
             // IsActive ממופה לפי שם (דורש להוסיף IsActive ל-Shelter ב-DAL)
             CreateMap<Shelter, SharedShelterDTO>();
@@ -79,6 +82,7 @@ namespace BLL.Mapper
                 .ForMember(d => d.AlertZone, o => o.Ignore())
                 .ForMember(d => d.CreatedByUserId, o => o.Ignore())           // נקבע מהמשתמש המחובר
                 .ForMember(d => d.IsActive, o => o.Ignore())              // נקבע ב-Service
+                .ForMember(d => d.Files, o => o.Ignore())   // נקבע ב-ShelterService אחרי השמירה בתיקייה
                 .ForMember(d => d.RejectionReason, o => o.Ignore())
                 .ForMember(d => d.IsImported, o => o.Ignore())// נקבע ע"י מנהל
                 .ForMember(d => d.User, o => o.Ignore());

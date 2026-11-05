@@ -18,7 +18,14 @@ namespace SheltersProject.Controllers
             _service = service;
         }
 
-        // ───────────── בעל המקלט: המקלטים שלי ─────────────
+// ------------------ בעל המקלט: המקלטים שלי ------------------
+        // GET: api/Shelter
+        [HttpGet]
+        public ActionResult<List<ShelterSearchResultDTO>> GetAll()
+        {
+            var shelters = _service.GetAll();
+            return Ok(shelters);
+        }
 
         // GET: api/Shelter/my
         [HttpGet("my")]
@@ -41,23 +48,36 @@ namespace SheltersProject.Controllers
         // POST: api/Shelter
         // שיתוף מקלט חדש. הבעלים הוא המשתמש המחובר, והמקלט ממתין לאישור מנהל
         [HttpPost]
-        public ActionResult<ShelterDetailsDTO> Add([FromBody] ShelterRequestDTO dto)
+        public ActionResult<ShelterDetailsDTO> Add([FromForm] ShelterRequestDTO dto)
         {
-            // Ok ולא CreatedAtAction: מקלט חדש ממתין לאישור, ו-GetById מחזיר 404 למקלט כזה
-            return Ok(_service.Add(User.GetUserId(), dto));
+        // מחזיר 404 למקלט כזה, מקלט חדש ממתין לאישור, ו-Ok ל-GetById
+        try 
+        { 
+            return Ok(_service.Add(User.GetUserId(), dto)); 
         }
+        catch (ArgumentException ex) 
+        { 
+        return BadRequest(ex.Message); 
+        }
+        }
+
 
         // PUT: api/Shelter/5
         // עריכה: רק הבעלים
         [HttpPut("{id:int}")]
-        public ActionResult<ShelterDetailsDTO> Update(int id,[FromBody] ShelterRequestDTO dto)
+        public ActionResult<ShelterDetailsDTO> Update(int id, [FromForm] ShelterRequestDTO dto)
         {
-            var updated = _service.Update(id, User.GetUserId(), dto);
-            if (updated == null)
-                return NotFound();   // לא קיים או לא שלך: אותה תשובה
-
-            return Ok(updated);
+            try
+            {
+                var updated = _service.Update(id, User.GetUserId(), dto);
+                return updated == null ? NotFound() : Ok(updated);
+            }
+            catch (ArgumentException ex) 
+            { 
+                return BadRequest(ex.Message); 
+            }
         }
+        
 
         // PUT: api/Shelter/5/availability
         // בעל המקלט מבטל או מפעיל אותו זמנית
