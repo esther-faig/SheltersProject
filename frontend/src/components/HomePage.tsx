@@ -1,49 +1,39 @@
-import React from 'react';
-import '../App.css';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
+const fullText = 'המקלט הקרוב אליך כבר מחכה';
 
 function HomePage() {
-    return (
-        <div className="home-wrapper">
-            {/* תפריט עליון */}
-            <header className="home-header">
-                <div className="logo-container">
-                    <span className="logo-icon">🛡️</span>
-                    <span className="logo-text">SafeZone</span>
-                </div>
-                <div className="nav-links">
-                    <span>התחברות | הרשמה</span>
-                </div>
-            </header>
+  const [count, setCount] = useState(0);
 
-            {/* תוכן מרכזי */}
-            <main className="home-main">
-                <h1 className="main-title">
-                    מצאי את המרחב המוגן<br />המתאים לך
-                </h1>
-                <p className="main-subtitle">
-                    מקלטים, ממ"דים ומרחבים מוגנים ברחבי הארץ<br />
-                    בזמן אמת, עם התאמה אישית לצרכים שלך.
-                </p>
-                
-                <div className="buttons-container">
-                    <button className="btn-primary">
-                        מציאת מקלט עכשיו <span className="icon">📍</span>
-                    </button>
-                    <button className="btn-secondary">
-                        התחברות / הרשמה <span className="icon">👤</span>
-                    </button>
-                    <button className="btn-tertiary">
-                        שיתוף מקלט פרטי <span className="icon">🏠</span>
-                    </button>
-                </div>
-            </main>
+  useEffect(() => {
+    document.title = 'SafeZone | בית';
+  }, []);
 
-            {/* כותרת תחתונה */}
-            <footer className="home-footer">
-                יחד מדווחים, יחד בטוחים <span className="heart-icon">💙</span>
-            </footer>
+  useEffect(() => {
+    if (count >= fullText.length) return;
+    const id = setTimeout(() => setCount(count + 1), 70);
+    return () => clearTimeout(id);
+  }, [count]);
+
+  return (
+    <div className="screen hero">
+      <div className="hero-text">
+        <h1 className="big-title">
+          {fullText.slice(0, count)}
+          <span className="cursor">|</span>
+        </h1>
+        <p className="lead">
+          מקלטים, ממ"דים ומרחבים מוגנים ברחבי הארץ, עם התאמה אישית לצרכים שלך.
+        </p>
+        <div className="btn-stack">
+          <Link to="/search" className="btn signal big">מציאת מקלט עכשיו 📍</Link>
+          <Link to="/register" className="btn">התחברות / הרשמה 👤</Link>
+          <Link to="/share" className="btn teal">שיתוף מקלט פרטי 🏠</Link>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 export default HomePage;
