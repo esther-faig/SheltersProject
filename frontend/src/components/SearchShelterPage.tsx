@@ -1,47 +1,69 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function SearchShelterPage() {
-    // הגדרת משתנה state לשמירת אופן ההגעה שנבחר (הליכה או רכב)
-    const [arrivalMethod, setArrivalMethod] = useState<string>('');
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<string>('walking');
+  const [locating, setLocating] = useState(false);
+  const [located, setLocated] = useState(false);
 
-    return (
-        <div>
-            <h2>חיפוש מקלט</h2>
-            
-            <button>שתף את המיקום שלי</button>
-            
-            {/* תיבה אפורה שתשמש כמקום שמור למפה עתידית */}
-            <div style={{ width: '100%', height: '200px', backgroundColor: '#e0e0e0', margin: '20px 0', border: '1px solid #ccc' }}>
-                <p style={{ textAlign: 'center', paddingTop: '80px' }}>כאן תוצג מפה</p>
-            </div>
+  useEffect(() => {
+    document.title = 'חיפוש מקלט';
+  }, []);
 
-            <div>
-                <h3>אופן ההגעה:</h3>
-                <label>
-                    <input 
-                        type="radio" 
-                        name="arrival" 
-                        value="walking" 
-                        onChange={(e) => setArrivalMethod(e.target.value)} 
-                    />
-                    הליכה
-                </label>
-                <br />
-                <label>
-                    <input 
-                        type="radio" 
-                        name="arrival" 
-                        value="car" 
-                        onChange={(e) => setArrivalMethod(e.target.value)} 
-                    />
-                    רכב
-                </label>
-            </div>
+  // סימולציה של איתור מיקום (בהמשך יחליף אותה חיבור אמיתי)
+  useEffect(() => {
+    if (!locating) return;
+    const id = setTimeout(() => {
+      setLocating(false);
+      setLocated(true);
+    }, 1500);
+    return () => clearTimeout(id);
+  }, [locating]);
 
-            <br />
-            <button>מצא לי מקלט</button>
-        </div>
-    );
+  return (
+    <div className="screen">
+      <h2 className="title">חיפוש מקלט</h2>
+
+      <div className={locating ? 'map-box scanning' : 'map-box'}>
+        {located && <div className="pin">📍</div>}
+        {locating && <div className="ripple"></div>}
+        <p className="map-note">
+          {located ? 'המיקום שלך נקלט' : locating ? 'מאתר מיקום...' : 'כאן תוצג המפה'}
+        </p>
+      </div>
+
+      <button className="btn" onClick={() => setLocating(true)} disabled={locating}>
+        שתף את המיקום שלי
+      </button>
+
+      <h3>איך מגיעים?</h3>
+      <div className="modes">
+        <button
+          className={mode === 'walking' ? 'mode-card on' : 'mode-card'}
+          onClick={() => setMode('walking')}
+        >
+          <span className="mode-icon">🚶</span>
+          הליכה
+        </button>
+        <button
+          className={mode === 'car' ? 'mode-card on' : 'mode-card'}
+          onClick={() => setMode('car')}
+        >
+          <span className="mode-icon">🚗</span>
+          רכב
+        </button>
+      </div>
+
+      <button
+        className="btn signal big"
+        disabled={!located}
+        onClick={() => navigate(`/results/${mode}`)}
+      >
+        מצא לי מקלט
+      </button>
+    </div>
+  );
 }
 
 export default SearchShelterPage;

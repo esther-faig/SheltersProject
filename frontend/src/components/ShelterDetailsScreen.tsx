@@ -1,45 +1,63 @@
-import React from 'react';
-// מסך שמתאר את המקלט שהמשתמש בחר ואת הניווט להגיע אליו,
-//  כל זה אחרי מסך התוצאות
+import { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import FeatureTag from './FeatureTag';
+import { shelters } from '../shelters';
 
 function ShelterDetailsScreen() {
-    // נתונים קבועים של המקלט והוראות ההגעה
-    const shelter = {
-        name: 'מקלט ציבורי 15 - רחוב הרצל',
-        distance: '200 מטר',
-        time: '2 דקות',
-        features: ['ללא מדרגות', 'מרחב גדול', 'אוורור'],
-        instructions: 'צאו מהבניין, פנו ימינה והמשיכו ישר עד לגינה הציבורית. המקלט נמצא מצד שמאל.'
-    };
+  const { id } = useParams();
+  const navigate = useNavigate();
 
+  // הערך מהכתובת חוזר כמחרוזת, לכן ממירים למספר
+  const shelter = shelters.filter((s) => s.id === Number(id))[0];
+
+  useEffect(() => {
+    document.title = shelter ? shelter.name : 'מקלט לא נמצא';
+  }, [id]);
+
+  if (!shelter) {
     return (
-        <div>
-            <h2>פרטי מקלט והוראות הגעה</h2>
-            
-            <div style={{ border: '1px solid #ccc', padding: '15px', marginBottom: '20px' }}>
-                <h3>{shelter.name}</h3>
-                <p><strong>מרחק:</strong> {shelter.distance}</p>
-                <p><strong>זמן הגעה משוער:</strong> {shelter.time}</p>
-                
-                <h4>מאפיינים:</h4>
-                <ul>
-                    {shelter.features.map((feature, index) => (
-                        <li key={index}>✓ {feature}</li>
-                    ))}
-                </ul>
-            </div>
-
-            <div style={{ backgroundColor: '#f9f9f9', padding: '15px', border: '1px solid #ddd' }}>
-                <h4>הוראות הגעה:</h4>
-                <p>{shelter.instructions}</p>
-                
-                {/* מקום שמור (Placeholder) למפה */}
-                <div style={{ width: '100%', height: '150px', backgroundColor: '#e0e0e0', marginTop: '10px', border: '1px solid #ccc' }}>
-                    <p style={{ textAlign: 'center', paddingTop: '65px' }}>כאן תוצג מפת הניווט</p>
-                </div>
-            </div>
-        </div>
+      <div className="screen alert-box">
+        <h2>המקלט לא נמצא</h2>
+        <button className="btn" onClick={() => navigate(-1)}>חזרה</button>
+      </div>
     );
+  }
+
+  return (
+    <div className="screen">
+      <button className="btn small" onClick={() => navigate(-1)}>→ חזרה לתוצאות</button>
+
+      <h2 className="title">{shelter.name}</h2>
+      <div className="stats big-stats">
+        <span>📏 {shelter.distance} מטר</span>
+        <span>🚶 {shelter.walkMin} דקות</span>
+        <span>🚗 {shelter.carMin} דקות</span>
+      </div>
+
+      <div className="tags">
+        {shelter.features.map((f) => (
+          <FeatureTag key={f} text={f} />
+        ))}
+      </div>
+
+      <div className="route-box">
+        <div className="route-end">🛡️</div>
+        <div className="route-line">
+          <div className="walker">🚶</div>
+        </div>
+        <div className="route-start">📍</div>
+      </div>
+
+      <div className="alert-box soft">
+        <h3>הוראות הגעה</h3>
+        <ol>
+          <li>צאו מהבניין ופנו ימינה.</li>
+          <li>המשיכו ישר עד לגינה הציבורית.</li>
+          <li>המקלט נמצא מצד שמאל.</li>
+        </ol>
+      </div>
+    </div>
+  );
 }
 
 export default ShelterDetailsScreen;

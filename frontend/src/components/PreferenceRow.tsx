@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface PreferenceRowProps {
   name: string;
@@ -9,11 +9,13 @@ function PreferenceRow(props: PreferenceRowProps) {
   const [isRequired, setIsRequired] = useState(false);
 
   return (
-    <div>
-      <input type="checkbox" checked={isChecked} onChange={() => setIsChecked(!isChecked)} />
-      <span>{props.name} </span>
+    <div className={isChecked ? 'pref-row on' : 'pref-row'}>
+      <label>
+        <input type="checkbox" checked={isChecked} onChange={() => setIsChecked(!isChecked)} />
+        {props.name}
+      </label>
       {isChecked && (
-        <button onClick={() => setIsRequired(!isRequired)}>
+        <button type="button" className="req-btn" onClick={() => setIsRequired(!isRequired)}>
           {isRequired ? 'חובה ✓' : 'סמן כחובה'}
         </button>
       )}
