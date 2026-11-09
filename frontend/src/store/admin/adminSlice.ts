@@ -7,6 +7,7 @@ const adminSlice = createSlice({
   name: 'admin',
   initialState,
   reducers: {},
+//   Reducer היא פונקציה שאחראית לעדכן את מצב הנתונים (State) של האפליקציה.
   extraReducers: (builder) => {
     builder
       .addCase(fetchPendingShelters.pending, (state) => { state.loading = true; state.error = null; })
@@ -27,5 +28,6 @@ const adminSlice = createSlice({
       .addCase(logout.fulfilled, () => initialState);
   },
 });
-
+// action – המידע שהגיע יחד עם הפעולה.
+// addCase היא פונקציה שמשתמשים בה בתוך extraReducers, כדי להגדיר מה יקרה כאשר פעולה מסוימת מתרחשת.
 export default adminSlice.reducer;

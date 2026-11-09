@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { selectIsLoggedIn, selectIsAdmin } from '../store/auth/authSelectors';
+import { logout } from '../store/auth/authThunks';
 
 function Layout() {
+  const dispatch = useAppDispatch();
+  const loggedIn = useAppSelector(selectIsLoggedIn);
+  const isAdmin = useAppSelector(selectIsAdmin);
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -26,10 +32,19 @@ function Layout() {
         </Link>
         <nav className="nav">
           <NavLink to="/search">חיפוש מקלט</NavLink>
-          <NavLink to="/share">שיתוף מקלט</NavLink>
-          <NavLink to="/profile">הפרופיל שלי</NavLink>
-          <NavLink to="/register">הרשמה</NavLink>
-          <NavLink to="/admin">ניהול</NavLink>
+          {loggedIn ? (
+            <>
+              <NavLink to="/share">שיתוף מקלט</NavLink>
+              <NavLink to="/profile">הפרופיל שלי</NavLink>
+              {isAdmin && <NavLink to="/admin">ניהול</NavLink>}
+              <button onClick={() => dispatch(logout())}>התנתקות</button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login">התחברות</NavLink>
+              <NavLink to="/register">הרשמה</NavLink>
+            </>
+          )}
         </nav>
         <div className="clock">{time.toLocaleTimeString()}</div>
       </header>

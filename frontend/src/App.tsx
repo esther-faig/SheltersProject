@@ -14,23 +14,29 @@ import ShelterCard from './components/ShelterCard';
 import ShelterDetailsScreen from './components/ShelterDetailsScreen';
 import FeatureTag from './components/FeatureTag';
 import NotFound from './components/NotFound';
-
+import RequireAuth from './components/RequireAuth';
+import LoginScreen from './components/LoginScreen';
 
 function App() {
     return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/search" element={<SearchShelterPage />} />
-        <Route path="/results/:mode" element={<ResultsScreen />} />
-        <Route path="/shelter/:id" element={<ShelterDetailsScreen />} />
-        <Route path="/register" element={<RegisterScreen />} />
-        <Route path="/share" element={<ShareShelterScreen />} />
-        <Route path="/profile" element={<ProfileScreen />} />
-        <Route path="/admin" element={<AdminScreen />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+<Route element={<Layout />}>
+  <Route path="/" element={<HomePage />} />
+  <Route path="/login" element={<LoginScreen />} />
+  <Route path="/register" element={<RegisterScreen />} />
+  <Route path="/search" element={<SearchShelterPage />} />
+  <Route path="/results/:mode" element={<ResultsScreen />} />
+  <Route path="/shelter/:id" element={<ShelterDetailsScreen />} />
+
+  <Route element={<RequireAuth />}>
+    <Route path="/share" element={<ShareShelterScreen />} />
+    <Route path="/profile" element={<ProfileScreen />} />
+  </Route>
+  <Route element={<RequireAuth admin />}>
+    <Route path="/admin" element={<AdminScreen />} />
+  </Route>
+
+  <Route path="*" element={<NotFound />} />
+</Route>
     );
 }
 
