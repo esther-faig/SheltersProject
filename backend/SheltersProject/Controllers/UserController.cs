@@ -29,7 +29,7 @@ namespace SheltersProject.Controllers
         // GET: api/User/5
         // הפרופיל שלי + ההעדפות שלי + המקלטים ששיתפתי (מסך 6)
         [HttpGet("me")]
-        public ActionResult<UserProfileDTO> GetMe(int id)
+        public ActionResult<UserProfileDTO> GetMe()
         {
             var user = _service.GetById(User.GetUserId());
             if (user == null)

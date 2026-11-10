@@ -18,7 +18,7 @@ namespace SheltersProject.Controllers
 
         // GET: api/UserPreference/me
         [HttpGet("me")]
-        public ActionResult<UserPreferenceDTO> GetMine()
+        public ActionResult<List<UserPreferenceDTO>> GetMine()
         {
         
             var preferences = _service.GetByUserId(User.GetUserId());
