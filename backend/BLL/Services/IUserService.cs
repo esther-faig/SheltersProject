@@ -7,8 +7,8 @@ namespace BLL.Services
         List<UserProfileDTO> GetAll();
         UserProfileDTO GetById(int id);                                   // לא קיים = NotFoundException
 
-        UserResponseDTO Register(RegisterRequestDTO dto);                 // מייל תפוס = ConflictException
-        UserResponseDTO? Login(LoginRequestDTO dto);                      // null = פרטים שגויים
+        bool Register(RegisterRequestDTO dto);                 // מייל תפוס = ConflictException
+        AuthResponseDTO? Login(LoginRequestDTO dto);                      // null = פרטים שגויים
 
         UserProfileDTO Update(int userId, UpdateUserRequestDTO dto);
     }

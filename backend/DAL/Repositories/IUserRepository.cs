@@ -14,6 +14,7 @@ namespace DAL.Repositories
         User? GetByEmail(string email);
         // בדיקה זולה לקיום משתמש (בלי לטעון העדפות ומקלטים)
         bool Exists(int id);
+        bool EmailExists(string email);
         //לצורך פונקצית ההרשמה
         User Add(User entity);
 

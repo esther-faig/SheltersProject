@@ -1,4 +1,5 @@
-﻿using DAL;
+﻿
+using DAL;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DAL.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository: IUserRepository
     {
         private readonly DB_Shelters _context;
 
@@ -36,17 +37,17 @@ namespace DAL.Repositories
                  .Include(u => u.Shelters)
                  .FirstOrDefault(u => u.UserId == id);
         }
-
-        public bool Exists(int id)
-        {
-            return _context.User.Any(u => u.UserId == id);
-        }
-
         public User? GetByEmail(string email)
         {
             return _context.User
                 .FirstOrDefault(u => u.Email == email);
         }
+        public bool Exists(int id)
+        {
+            return _context.User.Any(u => u.UserId == id);
+        }
+        public bool EmailExists(string email) =>
+        _context.User.Any(u => u.Email == email);
         public User Add(User entity)
         {
             _context.User.Add(entity);
@@ -60,6 +61,6 @@ namespace DAL.Repositories
             _context.SaveChanges();
             return GetById(entity.UserId)!;
         }
-
+      
     }
 }
