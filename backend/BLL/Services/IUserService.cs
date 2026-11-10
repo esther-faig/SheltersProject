@@ -1,22 +1,15 @@
 ﻿using DTO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL.Services
 {
     public interface IUserService
     {
-        public List<UserProfileDTO> GetAll();
-        public UserProfileDTO? GetById(int id);
+        List<UserProfileDTO> GetAll();
+        UserProfileDTO GetById(int id);                                   // לא קיים = NotFoundException
 
-        bool Register(RegisterRequestDTO dto);
-        AuthResponseDTO? Login(LoginRequestDTO dto);                     // null = פרטים שגויים
+        UserResponseDTO Register(RegisterRequestDTO dto);                 // מייל תפוס = ConflictException
+        UserResponseDTO? Login(LoginRequestDTO dto);                      // null = פרטים שגויים
 
-        UserProfileDTO? Update(int userId, UpdateUserRequestDTO dto);
-
-
+        UserProfileDTO Update(int userId, UpdateUserRequestDTO dto);
     }
 }

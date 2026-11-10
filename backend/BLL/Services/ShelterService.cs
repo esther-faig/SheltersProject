@@ -1,13 +1,8 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
+using BLL.Exceptions;
 using DAL;
 using DAL.Repositories;
 using DTO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL.Services
 {
@@ -15,6 +10,7 @@ namespace BLL.Services
     {
         private readonly IShelterRepository _repository;
         private readonly IPreferenceRepository _preferenceRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IAlertZoneService _alertZoneService;
         private readonly IMapper _mapper;
         private readonly IImageService _imageService;
@@ -23,11 +19,14 @@ namespace BLL.Services
         public ShelterService(
             IShelterRepository repository,
             IPreferenceRepository preferenceRepository,
+            IUserRepository userRepository,
             IAlertZoneService alertZoneService,
-            IMapper mapper,IImageService imageService)
+            IMapper mapper,
+            IImageService imageService)
         {
             _repository = repository;
             _preferenceRepository = preferenceRepository;
+            _userRepository = userRepository;
             _alertZoneService = alertZoneService;
             _mapper = mapper;
             _imageService = imageService;
@@ -39,11 +38,11 @@ namespace BLL.Services
             return _mapper.Map<List<ShelterSearchResultDTO>>(shelters);
         }
 
-        public ShelterSearchResultDTO? GetById(int id)
+        public ShelterSearchResultDTO GetById(int id)
         {
             var shelter = _repository.GetById(id);
             if (shelter == null || shelter.Status != ShelterStatus.Approved || !shelter.IsActive)
-                return null;
+                throw new NotFoundException($"מקלט {id} לא נמצא");
 
             return _mapper.Map<ShelterSearchResultDTO>(shelter);
         }
@@ -53,15 +52,17 @@ namespace BLL.Services
             return _mapper.Map<List<SharedShelterDTO>>(_repository.GetByUserId(userId));
         }
 
-        public ShelterDetailsDTO? GetMyShelter(int id, int userId)
+        public ShelterDetailsDTO GetMyShelter(int id, int userId)
         {
-            var shelter = _repository.GetOwned(id, userId);
-            return shelter == null ? null : _mapper.Map<ShelterDetailsDTO>(shelter);
+            // לא קיים או לא שלך: אותה תשובה
+            var shelter = _repository.GetOwned(id, userId)
+                ?? throw new NotFoundException($"מקלט {id} לא נמצא");
+            return _mapper.Map<ShelterDetailsDTO>(shelter);
         }
 
-        public ShelterDetailsDTO Add(int userId, ShelterRequestDTO dto)
+        // אם אותה העדפה נשלחה כמה פעמים האחרונה קובעת, וכל ההעדפות חייבות להיות קיימות
+        private List<ShelterFeatureUpdateDTO> GetValidFeatures(ShelterRequestDTO dto)
         {
-            // אם אותה העדפה נשלחה כמה פעמים, האחרונה קובעת
             var features = dto.Features
                 .GroupBy(f => f.PreferenceId)
                 .Select(g => g.Last())
@@ -69,18 +70,31 @@ namespace BLL.Services
 
             var validIds = _preferenceRepository.GetAll().Select(p => p.PreferenceId).ToHashSet();
             if (features.Any(f => !validIds.Contains(f.PreferenceId)))
-                throw new InvalidOperationException("נשלחה העדפה שלא קיימת");
+                throw new BusinessRuleException("נשלחה העדפה שלא קיימת");
+
+            return features;
+        }
+
+        public ShelterDetailsDTO Add(int userId, ShelterRequestDTO dto)
+        {
+            // כל הבדיקות לפני שמירת קבצים, כדי לא לשמור תמונות בשביל מקלט שלא יישמר
+            if (!_userRepository.Exists(userId))
+                throw new NotFoundException($"משתמש {userId} לא נמצא");
+
+            var features = GetValidFeatures(dto);
+
             if (dto.ImageFiles.Count > MaxImages)
-                throw new ArgumentException($"אפשר להעלות עד {MaxImages} תמונות");
+                throw new BusinessRuleException($"אפשר להעלות עד {MaxImages} תמונות");
 
             var shelter = _mapper.Map<DAL.Shelter>(dto);
             shelter.ShelterFeatures = _mapper.Map<List<ShelterFeature>>(features);
             shelter.CreatedByUserId = userId;
             shelter.Status = ShelterStatus.Pending;
             shelter.IsActive = true;
-            shelter.IsImported = false;
             shelter.AlertZoneId = _alertZoneService.FindZoneIdByLocation(dto.Latitude, dto.Longitude);
+
             var saved = new List<string>();
+            // try/catch מקומי: כאן עושים משהו עם השגיאה (מוחקים קבצים יתומים) וממשיכים לזרוק
             try
             {
                 foreach (var file in dto.ImageFiles)
@@ -94,23 +108,19 @@ namespace BLL.Services
                 foreach (var name in saved) _imageService.Delete(name);   // לא משאירים קבצים יתומים
                 throw;
             }
-            //return _mapper.Map<ShelterDetailsDTO>(_repository.Add(shelter));
         }
 
-        public ShelterDetailsDTO? Update(int id, int userId, ShelterRequestDTO dto)
+        public ShelterDetailsDTO Update(int id, int userId, ShelterRequestDTO dto)
         {
-            var shelter = _repository.GetOwned(id, userId);
-            if (shelter == null)
-                return null;   // לא קיים או לא שלו
+            var shelter = _repository.GetOwned(id, userId)
+                ?? throw new NotFoundException($"מקלט {id} לא נמצא");   // לא קיים או לא שלך
 
-            var features = dto.Features
-                .GroupBy(f => f.PreferenceId)
-                .Select(g => g.Last())
-                .ToList();
+            var features = GetValidFeatures(dto);
 
-            var validIds = _preferenceRepository.GetAll().Select(p => p.PreferenceId).ToHashSet();
-            if (features.Any(f => !validIds.Contains(f.PreferenceId)))
-                throw new InvalidOperationException("נשלחה העדפה שלא קיימת");
+            var keep = dto.ExistingFiles.Where(f => shelter.Files.Contains(f)).Distinct().ToList();
+            var removed = shelter.Files.Except(keep).ToList();
+            if (keep.Count + dto.ImageFiles.Count > MaxImages)
+                throw new BusinessRuleException($"אפשר להעלות עד {MaxImages} תמונות");
 
             // שינוי מיקום: מחשבים אזור מחדש, והמקלט חוזר לאישור
             if (shelter.Latitude != dto.Latitude || shelter.Longitude != dto.Longitude)
@@ -129,30 +139,8 @@ namespace BLL.Services
             shelter.Longitude = dto.Longitude;
             shelter.MaxCapacity = dto.MaxCapacity;
 
-            // --- טיפול מתקדם בתמונות ---
-            var keep = dto.ExistingFiles.Where(f => shelter.Files.Contains(f)).Distinct().ToList();
-            var removed = shelter.Files.Except(keep).ToList();
-            if (keep.Count + dto.ImageFiles.Count > MaxImages)
-                throw new ArgumentException($"אפשר להעלות עד {MaxImages} תמונות");
-
-            var newFiles = new List<string>();
-            ShelterDetailsDTO result;
-            try
-            {
-                foreach (var file in dto.ImageFiles)
-                    newFiles.Add(_imageService.Save(file));
-
-                shelter.Files = keep.Concat(newFiles).ToList();   // שומרים את השילוב של הישנים שנשמרו והחדשים
-
-                result = _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
-            }
-            catch
-            {
-                foreach (var name in newFiles) _imageService.Delete(name);
-                throw;
-            }
-
-            // מאפיינים: מסירים מה שנעלם, מעדכנים קיים, מוסיפים חדש
+            // מאפיינים: מסירים מה שנעלם, מעדכנים קיים, מוסיפים חדש.
+            // נעשה לפני השמירה, כדי שהכול יישמר באותה פעולה
             var incomingIds = features.Select(f => f.PreferenceId).ToHashSet();
 
             foreach (var old in shelter.ShelterFeatures.Where(f => !incomingIds.Contains(f.PreferenceId)).ToList())
@@ -166,38 +154,54 @@ namespace BLL.Services
                 else
                     shelter.ShelterFeatures.Add(new ShelterFeature { PreferenceId = f.PreferenceId, IsAvailable = f.IsAvailable });
             }
+
+            var newFiles = new List<string>();
+            ShelterDetailsDTO result;
+            try
+            {
+                foreach (var file in dto.ImageFiles)
+                    newFiles.Add(_imageService.Save(file));
+
+                shelter.Files = keep.Concat(newFiles).ToList();   // הישנים שנשמרו + החדשים
+
+                result = _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
+            }
+            catch
+            {
+                foreach (var name in newFiles) _imageService.Delete(name);   // השמירה נכשלה: מוחקים את החדשים
+                throw;
+            }
+
             // מוחקים את הישנים רק אחרי ששמירה במסד הצליחה
             foreach (var name in removed) _imageService.Delete(name);
 
             return result;
         }
 
-        public ShelterDetailsDTO? UpdateAvailability(int id, int userId, UpdateShelterAvailabilityDTO dto)
+        public ShelterDetailsDTO UpdateAvailability(int id, int userId, UpdateShelterAvailabilityDTO dto)
         {
-            var shelter = _repository.GetOwned(id, userId);
-            if (shelter == null)
-                return null;
+            var shelter = _repository.GetOwned(id, userId)
+                ?? throw new NotFoundException($"מקלט {id} לא נמצא");
 
             shelter.IsActive = dto.IsActive;
 
             return _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
         }
 
-        public bool Delete(int id, int userId)
+        public void Delete(int id, int userId)
         {
             // מחפשים מקלט עם המספר הזה *וגם* של המשתמש המחובר
-            var shelter = _repository.GetOwned(id, userId);
-            if (shelter == null)
-                return false;
+            var shelter = _repository.GetOwned(id, userId)
+                ?? throw new NotFoundException($"מקלט {id} לא נמצא");
+
             var files = shelter.Files.ToList();
             _repository.Delete(id);
             foreach (var f in files) _imageService.Delete(f);
-            return true;
         }
 
         public List<AdminShelterDTO> GetByStatus(string? status)
         {
-            // הערך כבר אומת ב-קונטרולר (RegularExpression), לכן ההמרה בטוחה
+            // הערך כבר אומת ב-Controller (RegularExpression), לכן ההמרה בטוחה
             ShelterStatus? parsed = string.IsNullOrWhiteSpace(status)
                 ? null
                 : Enum.Parse<ShelterStatus>(status);
@@ -205,60 +209,24 @@ namespace BLL.Services
             return _mapper.Map<List<AdminShelterDTO>>(_repository.Find(parsed, null));
         }
 
-        public ShelterDetailsDTO? UpdateStatus(int id, UpdateShelterStatusDTO dto)
+        public ShelterDetailsDTO UpdateStatus(int id, UpdateShelterStatusDTO dto)
         {
             // טוענים את המקלט (עם מעקב) כדי שאפשר יהיה לשנות אותו ולשמור
-            var shelter = _repository.GetById(id);
-            if (shelter == null)
-                return null;   // ה-Controller מחזיר NotFound
+            var shelter = _repository.GetById(id)
+                ?? throw new NotFoundException($"מקלט {id} לא נמצא");
+
+            // כלל עסקי (בודקים לפני המיפוי): דחייה חייבת סיבה
+            if (dto.Status == nameof(ShelterStatus.Rejected) && string.IsNullOrWhiteSpace(dto.RejectionReason))
+                throw new BusinessRuleException("בדחיית מקלט חובה לציין סיבה");
 
             // AutoMapper ממיר את הטקסט לסטטוס ומעתיק גם את סיבת הדחייה על המקלט הקיים
             _mapper.Map(dto, shelter);
-
-            // כלל עסקי: דחייה חייבת סיבה
-            if (shelter.Status == ShelterStatus.Rejected && string.IsNullOrWhiteSpace(shelter.RejectionReason))
-                throw new InvalidOperationException("בדחיית מקלט חובה לציין סיבה");
 
             // סיבת דחייה נשמרת רק למקלט שנדחה (אישור או חזרה להמתנה מנקים אותה)
             if (shelter.Status != ShelterStatus.Rejected)
                 shelter.RejectionReason = null;
 
-            // שומרים, טוענים מחדש עם Include וממפים ל-DTO
             return _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
         }
-
-        public ShelterDetailsDTO? UpdateImportedFeatures(int id, UpdateShelterFeaturesDTO dto)
-        {
-            var shelter = _repository.GetById(id);
-
-            // רק מקלט שנטען מראש, מאושר ופעיל. כל השאר: אותה תשובה כמו "לא קיים"
-            if (shelter == null || !shelter.IsImported
-                || shelter.Status != ShelterStatus.Approved || !shelter.IsActive)
-                return null;
-
-            var features = dto.Features
-                .GroupBy(f => f.PreferenceId)
-                .Select(g => g.Last())
-                .ToList();
-
-            var validIds = _preferenceRepository.GetAll().Select(p => p.PreferenceId).ToHashSet();
-            if (features.Any(f => !validIds.Contains(f.PreferenceId)))
-                throw new InvalidOperationException("נשלחה העדפה שלא קיימת");
-
-            // עדכון חלקי: משנים רק מה שנשלח. מאפיינים שלא נשלחו נשארים כמו שהם
-            foreach (var f in features)
-            {
-                var existing = shelter.ShelterFeatures.FirstOrDefault(x => x.PreferenceId == f.PreferenceId);
-                if (existing != null)
-                    existing.IsAvailable = f.IsAvailable;
-                else
-                    shelter.ShelterFeatures.Add(new ShelterFeature { PreferenceId = f.PreferenceId, IsAvailable = f.IsAvailable });
-            }
-
-            return _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
-        }
-
-
-
     }
 }

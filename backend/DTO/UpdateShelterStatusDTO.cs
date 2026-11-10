@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace DTO
 {
     //החלטת המנהל אם לאשר את המקלט ששותף
     public class UpdateShelterStatusDTO
     {
-        [RegularExpression("^(Pending|Approved|Rejected)$")]
+        [Required(ErrorMessage = "יש לציין סטטוס")]
+        [RegularExpression("^(Pending|Approved|Rejected)$", ErrorMessage = "סטטוס לא תקין")]
         public string Status { get; set; } = "";
+
+        [StringLength(500, ErrorMessage = "סיבת הדחייה ארוכה מדי (עד 500 תווים)")]
         public string? RejectionReason { get; set; }
     }
 }

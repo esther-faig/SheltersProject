@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace BLL.Exceptions
 {
-    internal class NotFoundException
+    // המבוקש לא נמצא: מקלט, משתמש, העדפה וכדומה  (ה-Filter מחזיר 404)
+    public class NotFoundException : Exception
     {
+        public NotFoundException(string message) : base(message) { }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using BLL.Services;
 using DTO;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SheltersProject.Controllers
@@ -17,64 +16,27 @@ namespace SheltersProject.Controllers
         }
 
         // GET: api/User
-        [Authorize(Roles ="Admin")]
         [HttpGet]
         public ActionResult<List<UserProfileDTO>> GetAll()
         {
-            var users = _service.GetAll();
-            return Ok(users);
+            return Ok(_service.GetAll());
         }
-
 
         // GET: api/User/5
-        // הפרופיל שלי + ההעדפות שלי + המקלטים ששיתפתי (מסך 6)
-        [HttpGet("me")]
-        public ActionResult<UserProfileDTO> GetMe(int id)
+        // פרופיל משתמש (מסך 6)
+        [HttpGet("{id:int}")]
+        public ActionResult<UserProfileDTO> GetById(int id)
         {
-            var user = _service.GetById(User.GetUserId());
-            if (user == null)
-                return NotFound();
-
-            return Ok(user);
+            return Ok(_service.GetById(id));
         }
 
-        // PUT: api/User/me
-        // עדכון שם ומייל של עצמי
-        [HttpPut("me")]
-        public ActionResult<UserProfileDTO> UpdateMe([FromBody] UpdateUserRequestDTO dto)
+        // כאן יתווספו בהמשך: הרשמה (Register) והתחברות (Login), כשיהיו ב-IUserService
+
+        // PUT: api/User/5
+        [HttpPut("{id:int}")]
+        public ActionResult<UserProfileDTO> Update(int id, [FromBody] UpdateUserRequestDTO dto)
         {
-            var updated = _service.Update(User.GetUserId(), dto);
-            if (updated == null)
-                return NotFound();
-
-            return Ok(updated);
+            return Ok(_service.Update(id, dto));
         }
-
-        //הרשמה והתחברות    
-        // POST api/user/register
-        [AllowAnonymous]
-        [HttpPost("register")]
-        public IActionResult Register(RegisterRequestDTO dto)
-        {
-            if (!_service.Register(dto))
-                return Conflict("Email is already registered.");
-
-            // ההרשמה רק יוצרת את המשתמש. את הטוקן מקבלים בהתחברות
-            return Ok();
-        }
-
-        // POST api/user/login
-        [AllowAnonymous]
-        [HttpPost("login")]
-        public ActionResult<AuthResponseDTO> Login(LoginRequestDTO dto)
-        {
-            var result = _service.Login(dto);
-            if (result is null)
-                return Unauthorized("Wrong email or password.");
-
-            return Ok(result);
-        }
-
-
     }
 }
