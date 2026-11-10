@@ -1,5 +1,6 @@
 ﻿using BLL.Services;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SheltersProject.Controllers
@@ -15,50 +16,35 @@ namespace SheltersProject.Controllers
             _service = service;
         }
 
-        // GET: api/UserPreference
+        // GET: api/UserPreference  (מנהל בלבד: ההעדפות של כל המשתמשים)
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<List<UserPreferenceDTO>> GetAll()
         {
             return Ok(_service.GetAll());
         }
 
-        // GET: api/UserPreference/me
+        // GET: api/UserPreference/me  (ההעדפות של המשתמש המחובר, מסך 6)
         [HttpGet("me")]
         public ActionResult<List<UserPreferenceDTO>> GetMine()
         {
-            var preferences = _service.GetMine(User.GetUserId());
-            return Ok(preferences);
+            return Ok(_service.GetByUserId(User.GetUserId()));
         }
 
-        // GET: api/UserPreference/5
+        // PUT: api/UserPreference/me  (מסך 4 חלק שני, ומסך 6 "עריכת העדפות")
+        [HttpPut("me")]
+        public IActionResult SaveMine([FromBody] SaveUserPreferencesRequestDTO dto)
+        {
+            _service.SaveUserPreferences(User.GetUserId(), dto);
+            return NoContent();
+        }
+
+        // GET: api/UserPreference/5  (מנהל בלבד)
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id:int}")]
         public ActionResult<UserPreferenceDTO> GetById(int id)
         {
-            var preference = _service.GetById(id);
-            if (preference == null)
-                return NotFound();
-
-            return Ok(preference);
-        }
-        {
             return Ok(_service.GetById(id));
-        }
-
-        // GET: api/UserPreference/user/5
-        // ההעדפות של משתמש מסוים (מסך 6)
-        [HttpGet("user/{userId:int}")]
-        public ActionResult<List<UserPreferenceDTO>> GetByUserId(int userId)
-        {
-            return Ok(_service.GetByUserId(userId));
-        }
-
-        // PUT: api/UserPreference/user/5
-        // שמירת ההעדפות של המשתמש (מסך 4 חלק שני, ומסך 6 "עריכת העדפות")
-        [HttpPut("user/{userId:int}")]
-        public IActionResult SaveUserPreferences(int userId, [FromBody] SaveUserPreferencesRequestDTO dto)
-        {
-            _service.SaveUserPreferences(userId, dto);
-            return NoContent();
         }
     }
 }

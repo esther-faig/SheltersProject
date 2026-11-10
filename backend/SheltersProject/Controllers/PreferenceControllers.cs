@@ -1,5 +1,6 @@
 ﻿using BLL.Services;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SheltersProject.Controllers
@@ -16,7 +17,7 @@ namespace SheltersProject.Controllers
         }
 
         // GET: api/Preferences
-        // מחזיר את כל ההעדפות במערכת
+        // מחזיר את כל ההעדפות במערכת (פתוח גם לאורח, כי מסך ההרשמה צריך אותן)
         [AllowAnonymous]
         [HttpGet]
         public ActionResult<List<PreferenceDTO>> GetAll()
@@ -31,7 +32,8 @@ namespace SheltersProject.Controllers
             return Ok(_service.GetById(id));
         }
 
-        // POST: api/Preferences  (שם חובה נבדק ב-DTO ע"י [Required])
+        // POST: api/Preferences  (מנהל בלבד; שם חובה נבדק ב-DTO ע"י [Required])
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public ActionResult<PreferenceDTO> Add([FromBody] PreferenceDTO dto)
         {
@@ -44,14 +46,16 @@ namespace SheltersProject.Controllers
             );
         }
 
-        // PUT: api/Preferences/5
+        // PUT: api/Preferences/5  (מנהל בלבד)
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id:int}")]
         public ActionResult<PreferenceDTO> Update(int id, [FromBody] PreferenceDTO dto)
         {
             return Ok(_service.Update(id, dto));
         }
 
-        // DELETE: api/Preferences/5  (בשימוש: 409, לא קיימת: 404)
+        // DELETE: api/Preferences/5  (מנהל בלבד; בשימוש: 409, לא קיימת: 404)
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id:int}")]
         public IActionResult Delete(int id)
         {
