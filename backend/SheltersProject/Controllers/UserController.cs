@@ -1,6 +1,5 @@
-﻿using BLL.Services;
+using BLL.Services;
 using DTO;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SheltersProject.Controllers
@@ -17,16 +16,13 @@ namespace SheltersProject.Controllers
         }
 
         // GET: api/User
-        [Authorize(Roles ="Admin")]
         [HttpGet]
         public ActionResult<List<UserProfileDTO>> GetAll()
         {
-            var users = _service.GetAll();
-            return Ok(users);
+            return Ok(_service.GetAll());
         }
 
-
-        // GET: api/User/5
+        // GET: api/User/me
         // הפרופיל שלי + ההעדפות שלי + המקלטים ששיתפתי (מסך 6)
         [HttpGet("me")]
         public ActionResult<UserProfileDTO> GetMe()
@@ -50,31 +46,26 @@ namespace SheltersProject.Controllers
             return Ok(updated);
         }
 
-        //הרשמה והתחברות    
-        // POST api/user/register
-        [AllowAnonymous]
-        [HttpPost("register")]
-        public IActionResult Register(RegisterRequestDTO dto)
+        // GET: api/User/5 - פרופיל משתמש לפי מזהה (מסך 6 / כללי)
+        [HttpGet("{id:int}")]
+        public ActionResult<UserProfileDTO> GetById(int id)
         {
-            if (!_service.Register(dto))
-                return Conflict("Email is already registered.");
+            var user = _service.GetById(id);
+            if (user == null)
+                return NotFound();
 
-            // ההרשמה רק יוצרת את המשתמש. את הטוקן מקבלים בהתחברות
-            return Ok();
+            return Ok(user);
         }
 
-        // POST api/user/login
-        [AllowAnonymous]
-        [HttpPost("login")]
-        public ActionResult<AuthResponseDTO> Login(LoginRequestDTO dto)
+        // PUT: api/User/5
+        [HttpPut("{id:int}")]
+        public ActionResult<UserProfileDTO> Update(int id, [FromBody] UpdateUserRequestDTO dto)
         {
-            var result = _service.Login(dto);
-            if (result is null)
-                return Unauthorized("Wrong email or password.");
+            var updated = _service.Update(id, dto);
+            if (updated == null)
+                return NotFound();
 
-            return Ok(result);
+            return Ok(updated);
         }
-
-
     }
 }

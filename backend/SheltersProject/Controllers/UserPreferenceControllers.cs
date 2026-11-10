@@ -15,32 +15,50 @@ namespace SheltersProject.Controllers
             _service = service;
         }
 
+        // GET: api/UserPreference
+        [HttpGet]
+        public ActionResult<List<UserPreferenceDTO>> GetAll()
+        {
+            return Ok(_service.GetAll());
+        }
 
         // GET: api/UserPreference/me
         [HttpGet("me")]
         public ActionResult<List<UserPreferenceDTO>> GetMine()
         {
-        
-            var preferences = _service.GetByUserId(User.GetUserId());
+            var preferences = _service.GetMine(User.GetUserId());
             return Ok(preferences);
         }
 
-
-        // PUT: api/UserPreference/me
-        // שמירת ההעדפות של המשתמש (מסך 4 חלק שני, ומסך 6 "עריכת העדפות")
-        // אפשר לשנות בכל זמן, למשל אחרי ביקור במקלט
-
-        [HttpPut("me")]
-        public IActionResult SaveMine([FromBody] SaveUserPreferencesRequestDTO dto)
+        // GET: api/UserPreference/5
+        [HttpGet("{id:int}")]
+        public ActionResult<UserPreferenceDTO> GetById(int id)
         {
-            _service.SaveUserPreferences(User.GetUserId(), dto);
-            return NoContent();
+            var preference = _service.GetById(id);
+            if (preference == null)
+                return NotFound();
+
+            return Ok(preference);
+        }
+        {
+            return Ok(_service.GetById(id));
         }
 
+        // GET: api/UserPreference/user/5
+        // ההעדפות של משתמש מסוים (מסך 6)
+        [HttpGet("user/{userId:int}")]
+        public ActionResult<List<UserPreferenceDTO>> GetByUserId(int userId)
+        {
+            return Ok(_service.GetByUserId(userId));
+        }
 
-
-        // בכוונה אין כאן GetAll / GetById / user/{userId}:
-        // הם חשפו העדפות (כולל צרכי נגישות ובריאות) של כל המשתמשים.
-        // המנהל רואה העדפות של משתמשים דרך GET api/User
+        // PUT: api/UserPreference/user/5
+        // שמירת ההעדפות של המשתמש (מסך 4 חלק שני, ומסך 6 "עריכת העדפות")
+        [HttpPut("user/{userId:int}")]
+        public IActionResult SaveUserPreferences(int userId, [FromBody] SaveUserPreferencesRequestDTO dto)
+        {
+            _service.SaveUserPreferences(userId, dto);
+            return NoContent();
+        }
     }
 }

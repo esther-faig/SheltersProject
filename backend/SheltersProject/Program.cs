@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using NetTopologySuite;
 using Microsoft.Extensions.FileProviders;
 using System.Text;
+using SheltersProject.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,9 +62,12 @@ builder.Services.AddAuthorization(options =>
 
 //images
 
-// Add services to the container.
-builder.Services.AddControllers();
-//CORS- לאפשר את ריאקט
+
+// Filter מרכזי לתפיסת שגיאות: מחליף try/catch בכל Controller
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});//CORS- לאפשר את ריאקט
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("React", policy => policy

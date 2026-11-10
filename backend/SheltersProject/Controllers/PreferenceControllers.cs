@@ -1,6 +1,5 @@
 ﻿using BLL.Services;
 using DTO;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SheltersProject.Controllers
@@ -22,36 +21,20 @@ namespace SheltersProject.Controllers
         [HttpGet]
         public ActionResult<List<PreferenceDTO>> GetAll()
         {
-            var preferences = _service.GetAll();
-            return Ok(preferences);
+            return Ok(_service.GetAll());
         }
 
-        // GET: api/Preferences/5
-        // מחזיר העדפה לפי מזהה
-        [Authorize(Roles = "Admin")]
+        // GET: api/Preferences/5  (לא קיימת: 404 מה-Filter)
         [HttpGet("{id:int}")]
         public ActionResult<PreferenceDTO> GetById(int id)
         {
-            var preference = _service.GetById(id);
-            if (preference == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(preference);
+            return Ok(_service.GetById(id));
         }
 
-        // POST: api/Preferences
-        // רק מנהל מוסיף סוג העדפה חדש
-        [Authorize(Roles = "Admin")]
+        // POST: api/Preferences  (שם חובה נבדק ב-DTO ע"י [Required])
         [HttpPost]
         public ActionResult<PreferenceDTO> Add([FromBody] PreferenceDTO dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
-            {
-                return BadRequest("יש להזין שם להעדפה.");
-            }
-
             var newPreference = _service.Add(dto);
 
             return CreatedAtAction(
@@ -62,37 +45,17 @@ namespace SheltersProject.Controllers
         }
 
         // PUT: api/Preferences/5
-        // מעדכן העדפה קיימת
-        [Authorize(Roles = "Admin")]
         [HttpPut("{id:int}")]
         public ActionResult<PreferenceDTO> Update(int id, [FromBody] PreferenceDTO dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
-            {
-                return BadRequest("יש להזין שם להעדפה.");
-            }
-
-            var updatedPreference = _service.Update(id, dto);
-            if (updatedPreference == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(updatedPreference);
+            return Ok(_service.Update(id, dto));
         }
 
-        // DELETE: api/Preferences/5
-        // מוחק העדפה לפי מזהה
-        [Authorize(Roles = "Admin")]
+        // DELETE: api/Preferences/5  (בשימוש: 409, לא קיימת: 404)
         [HttpDelete("{id:int}")]
         public IActionResult Delete(int id)
         {
-            bool deleted = _service.Delete(id);
-            if (!deleted)
-            {
-                return NotFound();
-            }
-
+            _service.Delete(id);
             return NoContent();
         }
     }

@@ -1,13 +1,7 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
+using BLL.Exceptions;
 using DAL.Repositories;
 using DTO;
-using DAL;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL.Services
 {
@@ -24,14 +18,14 @@ namespace BLL.Services
 
         public List<PreferenceDTO> GetAll()
         {
-            var entities = _repository.GetAll();
-            return _mapper.Map<List<PreferenceDTO>>(entities);
+            return _mapper.Map<List<PreferenceDTO>>(_repository.GetAll());
         }
 
-        public PreferenceDTO? GetById(int id)
+        public PreferenceDTO GetById(int id)
         {
-            var preference = _repository.GetById(id);
-            return preference == null ? null : _mapper.Map<PreferenceDTO>(preference);
+            var preference = _repository.GetById(id)
+                ?? throw new NotFoundException($"העדפה {id} לא נמצאה");
+            return _mapper.Map<PreferenceDTO>(preference);
         }
 
         public PreferenceDTO Add(PreferenceDTO dto)
@@ -40,7 +34,7 @@ namespace BLL.Services
 
             // לא מוסיפים שוב העדפה שכבר קיימת בשם הזה
             if (_repository.GetAll().Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)))
-                throw new InvalidOperationException("כבר קיימת העדפה בשם הזה");
+                throw new ConflictException("כבר קיימת העדפה בשם הזה");
 
             var preference = _mapper.Map<DAL.Preference>(dto);
             preference.PreferenceId = 0;                    // המפתח נקבע ע"י ה-DB
@@ -51,35 +45,35 @@ namespace BLL.Services
             return _mapper.Map<PreferenceDTO>(_repository.Add(preference));
         }
 
-        public PreferenceDTO? Update(int id, PreferenceDTO dto)
+        public PreferenceDTO Update(int id, PreferenceDTO dto)
         {
+            // טוענים את ההעדפה הקיימת (עם מעקב) ומעדכנים אותה, במקום ליצור ישות חדשה עם מזהה 0
+            var existing = _repository.GetById(id)
+                ?? throw new NotFoundException($"העדפה {id} לא נמצאה");
+
             var name = dto.Name.Trim();
 
             // שם כפול אצל העדפה אחרת - אותה העדפה יכולה לשמור על השם שלה
             if (_repository.GetAll().Any(p => p.PreferenceId != id &&
                                               string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)))
-                throw new InvalidOperationException("כבר קיימת העדפה אחרת בשם הזה");
+                throw new ConflictException("כבר קיימת העדפה אחרת בשם הזה");
 
-            var entity = _mapper.Map<DAL.Preference>(dto);
-            entity.Name = name;
-            entity.Description = dto.Description ?? "";
-            entity.Category = dto.Category ?? "";
+            existing.Name = name;
+            existing.Description = dto.Description ?? "";
+            existing.Category = dto.Category ?? "";
 
-            // ה-רפוסיטורי מעתיק רק שם, תיאור וקטגוריה. null = ההעדפה לא קיימת
-            var updated = _repository.Update(id, entity);
-            return updated == null ? null : _mapper.Map<PreferenceDTO>(updated);
+            return _mapper.Map<PreferenceDTO>(_repository.Update(id, existing));
         }
 
-        public bool Delete(int id)
+        public void Delete(int id)
         {
             if (_repository.GetById(id) == null)
-                return false;   // לא קיימת: ה-Controller מחזיר NotFound
+                throw new NotFoundException($"העדפה {id} לא נמצאה");
 
             if (_repository.IsInUse(id))
-                throw new InvalidOperationException("אי אפשר למחוק העדפה שנמצאת בשימוש אצל משתמשים או במקלטים");
+                throw new ConflictException("אי אפשר למחוק העדפה שנמצאת בשימוש אצל משתמשים או במקלטים");
 
-            return _repository.Delete(id);
+            _repository.Delete(id);
         }
     }
 }
-

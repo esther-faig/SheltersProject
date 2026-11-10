@@ -12,9 +12,11 @@ namespace DAL.Repositories
         List<User> GetAll();
         User? GetById(int id);
         User? GetByEmail(string email);
+        // בדיקה זולה לקיום משתמש (בלי לטעון העדפות ומקלטים)
+        bool Exists(int id);
         //לצורך פונקצית ההרשמה
         User Add(User entity);
-        bool EmailExists(string email);
+
         User? Update(User entity);
         //אין אפשרות למחוק משתמשים, לכן אין פונקצית מחיקה
         //bool Delete(int id);
