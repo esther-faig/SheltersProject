@@ -18,6 +18,7 @@ namespace SheltersProject.Controllers
 
         // GET: api/Preferences
         // מחזיר את כל ההעדפות במערכת
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult<List<PreferenceDTO>> GetAll()
         {

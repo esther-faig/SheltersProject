@@ -11,6 +11,7 @@ export interface SharedShelter {
   shelterType: string;
   status: string;      // Pending | Approved | Rejected
   isActive: boolean;
+  files: string[];  
 }
 export interface UserProfile {
   userId: number;
