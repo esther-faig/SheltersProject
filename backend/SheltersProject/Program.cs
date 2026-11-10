@@ -144,9 +144,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger(); 
     app.UseSwaggerUI(); 
 }
-
-app.UseHttpsRedirection();
-app.UseCors("React");
+else
+{
+    // הפניה ל-HTTPS רק בפרודקשן. בפיתוח היא שוברת את הקריאות של React
+    app.UseHttpsRedirection();
+}
+app.UseCors("React");         
 
 app.UseAuthentication();
 app.UseAuthorization();

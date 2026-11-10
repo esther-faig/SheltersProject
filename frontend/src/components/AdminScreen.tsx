@@ -1,41 +1,37 @@
-import { useState, useEffect } from 'react';
-
-type PendingShelter = { id: number; name: string; type: string; address: string };
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchPendingShelters, reviewShelter } from '../store/admin/adminThunks';
 
 function AdminScreen() {
-  const [pending, setPending] = useState<PendingShelter[]>([
-    { id: 1, name: 'ממ"ד משפחת לוי', type: 'ממ"ד פרטי', address: 'רחוב הרצל 5' },
-    { id: 2, name: 'מקלט בניין 4', type: 'מקלט פרטי', address: 'רחוב ויצמן 12' },
-  ]);
+  const dispatch = useAppDispatch();
+  const { items, loading, error } = useAppSelector((state) => state.admin);
 
   useEffect(() => {
-    document.title = 'ניהול מקלטים';
-  }, []);
+    dispatch(fetchPendingShelters());
+  }, [dispatch]);
 
-  function handleAction(id: number) {
-    setPending(pending.filter((s) => s.id !== id));
+  function reject(id: number) {
+    const reason = window.prompt('סיבת הדחייה:');
+    if (!reason) return;       // השרת דורש סיבה בדחייה
+    dispatch(reviewShelter({ id, status: 'Rejected', rejectionReason: reason }));
   }
 
-  return (
-    <div className="screen">
-      <h2 className="title">ניהול ואישור מקלטים</h2>
-      <p className="lead">ממתינים לאישור: {pending.length}</p>
+  if (loading) return <p>טוען...</p>;
+  if (error) return <p>שגיאה: {error}</p>;
 
-      {pending.length === 0 ? (
-        <p>אין מקלטים הממתינים לאישור 🎉</p>
-      ) : (
-        pending.map((s) => (
-          <div key={s.id} className="shelter-card">
-            <h3>{s.name}</h3>
-            <p>סוג: {s.type}</p>
-            <p>כתובת: {s.address}</p>
-            <button className="btn teal small" onClick={() => handleAction(s.id)}>אישור</button>
-            <button className="btn signal small" onClick={() => handleAction(s.id)}>דחייה</button>
-          </div>
-        ))
-      )}
+  return (
+    <div>
+      <h2>ניהול ואישור מקלטים</h2>
+      {items.length === 0 ? <p>אין מקלטים הממתינים לאישור.</p> : items.map((s) => (
+        <div key={s.shelterId} style={{ border: '1px solid #ccc', padding: 10, marginBottom: 10 }}>
+          <h3>{s.name}</h3>
+          <p><strong>סוג:</strong> {s.shelterType}</p>
+          <p><strong>כתובת:</strong> {s.address}</p>
+          <button onClick={() => dispatch(reviewShelter({ id: s.shelterId, status: 'Approved' }))}>אישור</button>
+          <button onClick={() => reject(s.shelterId)}>דחייה</button>
+        </div>
+      ))}
     </div>
   );
 }
-
 export default AdminScreen;

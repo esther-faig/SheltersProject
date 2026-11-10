@@ -22,9 +22,24 @@ namespace SheltersProject.Controllers
             return Ok(_service.GetAll());
         }
 
+        // GET: api/UserPreference/me
+        [HttpGet("me")]
+        public ActionResult<List<UserPreferenceDTO>> GetMine()
+        {
+            var preferences = _service.GetMine(User.GetUserId());
+            return Ok(preferences);
+        }
+
         // GET: api/UserPreference/5
         [HttpGet("{id:int}")]
         public ActionResult<UserPreferenceDTO> GetById(int id)
+        {
+            var preference = _service.GetById(id);
+            if (preference == null)
+                return NotFound();
+
+            return Ok(preference);
+        }
         {
             return Ok(_service.GetById(id));
         }

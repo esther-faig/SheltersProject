@@ -1,25 +1,40 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+type Coords = { lat: number; lng: number };
+
 function SearchShelterPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<string>('walking');
   const [locating, setLocating] = useState(false);
-  const [located, setLocated] = useState(false);
+  const [coords, setCoords] = useState<Coords | null>(null);
+  const [locError, setLocError] = useState('');
 
   useEffect(() => {
     document.title = 'חיפוש מקלט';
   }, []);
 
-  // סימולציה של איתור מיקום (בהמשך יחליף אותה חיבור אמיתי)
-  useEffect(() => {
-    if (!locating) return;
-    const id = setTimeout(() => {
-      setLocating(false);
-      setLocated(true);
-    }, 1500);
-    return () => clearTimeout(id);
-  }, [locating]);
+  function handleLocate() {
+    if (!navigator.geolocation) {
+      setLocError('הדפדפן לא תומך באיתור מיקום');
+      return;
+    }
+    setLocating(true);
+    setLocError('');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
+      },
+      () => {
+        setLocError('לא הצלחנו לאתר את המיקום. אשרי גישה למיקום בדפדפן ונסי שוב');
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  const located = coords !== null;
 
   return (
     <div className="screen">
@@ -29,13 +44,18 @@ function SearchShelterPage() {
         {located && <div className="pin">📍</div>}
         {locating && <div className="ripple"></div>}
         <p className="map-note">
-          {located ? 'המיקום שלך נקלט' : locating ? 'מאתר מיקום...' : 'כאן תוצג המפה'}
+          {located
+            ? `המיקום שלך נקלט (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`
+            : locating
+            ? 'מאתר מיקום...'
+            : 'כאן תוצג המפה'}
         </p>
       </div>
 
-      <button className="btn" onClick={() => setLocating(true)} disabled={locating}>
+      <button className="btn" onClick={handleLocate} disabled={locating}>
         שתף את המיקום שלי
       </button>
+      {locError && <p>{locError}</p>}
 
       <h3>איך מגיעים?</h3>
       <div className="modes">
@@ -58,7 +78,7 @@ function SearchShelterPage() {
       <button
         className="btn signal big"
         disabled={!located}
-        onClick={() => navigate(`/results/${mode}`)}
+        onClick={() => navigate(`/results/${mode}`, { state: coords })}
       >
         מצא לי מקלט
       </button>

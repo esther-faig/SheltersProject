@@ -1,22 +1,24 @@
 import { useState } from 'react';
 
 interface PreferenceRowProps {
-  name: string;
+name: string;
+  checked: boolean;
+  required: boolean;
+  onChange: (checked: boolean, required: boolean) => void;
 }
 
-function PreferenceRow(props: PreferenceRowProps) {
-  const [isChecked, setIsChecked] = useState(false);
-  const [isRequired, setIsRequired] = useState(false);
+function PreferenceRow({ name, checked, required, onChange }: PreferenceRowProps) {
+
 
   return (
-    <div className={isChecked ? 'pref-row on' : 'pref-row'}>
+    <div className={checked ? 'pref-row on' : 'pref-row'}>
       <label>
-        <input type="checkbox" checked={isChecked} onChange={() => setIsChecked(!isChecked)} />
-        {props.name}
+        <input type="checkbox" checked={checked} onChange={() => onChange(!checked, false)} />
+        {name}
       </label>
-      {isChecked && (
-        <button type="button" className="req-btn" onClick={() => setIsRequired(!isRequired)}>
-          {isRequired ? 'חובה ✓' : 'סמן כחובה'}
+      {checked && (
+        <button type="button" className="req-btn" onClick={() => onChange(true, !required)}>
+          {required ? 'חובה ✓' : 'סמן כחובה'}
         </button>
       )}
     </div>
