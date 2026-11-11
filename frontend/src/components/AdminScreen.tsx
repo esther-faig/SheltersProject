@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPendingShelters, reviewShelter } from '../store/admin/adminThunks';
@@ -12,26 +13,107 @@ function AdminScreen() {
 
   function reject(id: number) {
     const reason = window.prompt('סיבת הדחייה:');
-    if (!reason) return;       // השרת דורש סיבה בדחייה
-    dispatch(reviewShelter({ id, status: 'Rejected', rejectionReason: reason }));
+    if (!reason) return;
+
+    dispatch(
+      reviewShelter({
+        id,
+        status: 'Rejected',
+        rejectionReason: reason,
+      })
+    );
   }
 
-  if (loading) return <p>טוען...</p>;
-  if (error) return <p>שגיאה: {error}</p>;
+  if (loading) {
+    return <div className="admin-message">טוען מקלטים...</div>;
+  }
+
+  if (error) {
+    return <div className="admin-message admin-error">שגיאה: {error}</div>;
+  }
 
   return (
-    <div>
-      <h2>ניהול ואישור מקלטים</h2>
-      {items.length === 0 ? <p>אין מקלטים הממתינים לאישור.</p> : items.map((s) => (
-        <div key={s.shelterId} style={{ border: '1px solid #ccc', padding: 10, marginBottom: 10 }}>
-          <h3>{s.name}</h3>
-          <p><strong>סוג:</strong> {s.shelterType}</p>
-          <p><strong>כתובת:</strong> {s.address}</p>
-          <button onClick={() => dispatch(reviewShelter({ id: s.shelterId, status: 'Approved' }))}>אישור</button>
-          <button onClick={() => reject(s.shelterId)}>דחייה</button>
+    <div className="screen admin-screen">
+      <div className="admin-header">
+        <div>
+          <h2 className="title">ניהול ואישור מקלטים</h2>
+          <p className="admin-subtitle">
+            מקלט מופיע בתוצאות החיפוש רק אחרי שאישרתם אותו.
+          </p>
         </div>
-      ))}
+      </div>
+
+      <div className="admin-list">
+        {items.length > 0 ? (
+          items.map((shelter) => (
+            <div className="admin-pending-card" key={shelter.shelterId}>
+              <div className="admin-thumb">
+                {shelter.files?.length > 0 ? (
+                  <img src={shelter.files[0]} alt={shelter.name} />
+                ) : (
+                  <span>🏠</span>
+                )}
+              </div>
+
+              <div className="admin-shelter-info">
+                <h3>{shelter.name}</h3>
+
+                <div className="admin-meta">
+                  <span>🛡️ {shelter.shelterType}</span>
+                  <span>📍 {shelter.address}</span>
+                </div>
+
+                <div className="admin-features">
+                  {shelter.features?.length > 0 ? (
+                    shelter.features
+                      .filter((feature) => feature.isAvailable)
+                      .map((feature) => (
+                        <span className="admin-feature-chip" key={feature.preferenceId}>
+                          {feature.name}
+                        </span>
+                      ))
+                  ) : (
+                    <span className="admin-no-features">
+                      לא סומנו מאפיינים
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="admin-actions">
+                <button
+                  className="admin-approve-btn"
+                  onClick={() =>
+                    dispatch(
+                      reviewShelter({
+                        id: shelter.shelterId,
+                        status: 'Approved',
+                      })
+                    )
+                  }
+                >
+                  ✓ אישור
+                </button>
+
+                <button
+                  className="admin-reject-btn"
+                  onClick={() => reject(shelter.shelterId)}
+                >
+                  ✕ דחייה
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="admin-empty-card">
+            <div className="admin-empty-icon">🛡️</div>
+            <h3>אין מקלטים שממתינים לאישור</h3>
+            <p>הכל מעודכן. כל הכבוד!</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
 export default AdminScreen;
