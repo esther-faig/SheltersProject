@@ -67,6 +67,23 @@ namespace BLL.Agent
             // שליפת התוצאה הראשונה מהרשימה (אם קיימת)
             var first = results?.FirstOrDefault();
             if (first == null) return null;
+            if (!double.TryParse(
+        first.Lat,
+        NumberStyles.Float,
+        CultureInfo.InvariantCulture,
+        out double latitude))
+            {
+                return null;
+            }
+
+            if (!double.TryParse(
+                    first.Lon,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double longitude))
+            {
+                return null;
+            }
 
             // יצירת והחזרת אובייקט ה-GeoPoint:
             // המרת המחרוזות של קו הרוחב והאורך למספרים עשרוניים (double) תוך שימוש ב-InvariantCulture,
