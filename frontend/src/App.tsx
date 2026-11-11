@@ -11,7 +11,7 @@ import ProfileScreen from './components/ProfileScreen';
 import AdminScreen from './components/AdminScreen';
 import RequireAuth from './components/RequireAuth';
 import NotFound from './components/NotFound';
-
+import ChatScreen from './components/ChatScreen';
 function App() {
   return (
     <Routes>
@@ -22,7 +22,9 @@ function App() {
         <Route path="/search" element={<SearchShelterPage />} />
         <Route path="/results/:mode" element={<ResultsScreen />} />
         <Route path="/shelter/:id" element={<ShelterDetailsScreen />} />
-
+        
+        <Route path="/chat" element={<ChatScreen />} />
+        
         {/* מסכים שדורשים התחברות */}
         <Route element={<RequireAuth />}>
           <Route path="/share" element={<ShareShelterScreen />} />

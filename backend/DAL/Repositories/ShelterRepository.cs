@@ -33,6 +33,17 @@ namespace DAL.Repositories
 
             return query.ToList();
         }
+        //לאייגנט
+        public List<Shelter> SearchByCity(string city, int max)   // במימוש
+        {
+            return _context.Shelter
+                .AsNoTracking()
+                .Include(s => s.ShelterFeatures).ThenInclude(sf => sf.Preference)
+                .Where(s => s.Status == ShelterStatus.Approved && s.IsActive && s.City.Contains(city))
+                .OrderBy(s => s.Name)
+                .Take(max)
+                .ToList();
+        }
 
         public List<Shelter> GetByUserId(int userId)
         {

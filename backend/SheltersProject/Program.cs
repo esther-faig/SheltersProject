@@ -13,6 +13,10 @@ using NetTopologySuite;
 using Microsoft.Extensions.FileProviders;
 using System.Text;
 using SheltersProject.Filters;
+using System.ClientModel;
+using Microsoft.Extensions.AI;
+using OpenAI;
+using BLL.Agent;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,10 +26,28 @@ var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
         "Connection string 'DefaultConnection' is missing. " +
         "Set it with User Secrets or an environment variable.");
 
+var geminiKey = builder.Configuration["Gemini:ApiKey"]
+    ?? throw new InvalidOperationException("Gemini:ApiKey is missing");
+
+var openAiOptions = new OpenAIClientOptions
+{
+    Endpoint = new Uri(
+        "https://generativelanguage.googleapis.com/v1beta/openai/"
+    )
+};
+
+IChatClient innerClient =
+    new OpenAIClient(
+        new ApiKeyCredential(geminiKey),
+        openAiOptions
+    )
+    .GetChatClient("gemini-2.5-flash")
+    .AsIChatClient();
+
 // הנתיב המלא לתיקיית התמונות, מתוך appsettings.json
 var ImagesFolder = Path.GetFullPath(Path.Combine(
     builder.Environment.ContentRootPath,
-    builder.Configuration["ImagesFolder"]?? "../Images"));
+    builder.Configuration["ImagesFolder"] ?? "../Images"));
 Directory.CreateDirectory(ImagesFolder);   // יוצר את התיקייה אם אינה קיימת
 
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -60,14 +82,13 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser().Build();
 });
 
-//images
-
-
 // Filter מרכזי לתפיסת שגיאות: מחליף try/catch בכל Controller
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<GlobalExceptionFilter>();
-});//CORS- לאפשר את ריאקט
+});
+
+// CORS - לאפשר את ריאקט
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("React", policy => policy
@@ -76,10 +97,9 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod());
 });
 
-
-// ����� Swagger
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
-//I can check in swagger the tokens
+// אפשר לבדוק טוקנים ב-Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -98,7 +118,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ����� ������
+// מסד נתונים
 builder.Services.AddDbContext<DB_Shelters>(options =>
     options.UseSqlServer(connStr, x => x.UseNetTopologySuite()));
 
@@ -106,7 +126,6 @@ builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<MappingProfile>();
 });
-
 
 // Repositories (DAL)
 builder.Services.AddScoped<IAlertZoneRepository, AlertZoneRepository>();
@@ -125,10 +144,25 @@ builder.Services.AddScoped<IShelterService, ShelterService>();
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<IImageService>(new ImageService(ImagesFolder));
-
+builder.Services.AddScoped<IAgentService, AgentService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
+// === כלים של ה-Agent ===
+builder.Services.AddScoped<ShelterTools>();
+
+// גיאוקודינג דרך Nominatim (OpenStreetMap): בלי מפתח API
+builder.Services.AddHttpClient<GeocodingTools>(client =>
+{
+    client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+    // חובה לפי כללי השימוש של Nominatim: שם מזהה לאפליקציה
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "SheltersProject-StudentApp/1.0 (your-email@example.com)");
+});
+
+// === רישום ה-ChatClient ב-DI Container ===
+builder.Services.AddChatClient(innerClient)
+    .UseFunctionInvocation();
 
 var app = builder.Build();
 
@@ -141,15 +175,15 @@ app.UseStaticFiles(new StaticFileOptions
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(); 
-    app.UseSwaggerUI(); 
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 else
 {
     // הפניה ל-HTTPS רק בפרודקשן. בפיתוח היא שוברת את הקריאות של React
     app.UseHttpsRedirection();
 }
-app.UseCors("React");         
+app.UseCors("React");
 
 app.UseAuthentication();
 app.UseAuthorization();

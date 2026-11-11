@@ -228,5 +228,10 @@ namespace BLL.Services
 
             return _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
         }
+
+
+
+        public List<ShelterSearchResultDTO> SearchByCity(string city, int max)
+    => _mapper.Map<List<ShelterSearchResultDTO>>(_repository.SearchByCity(city, max));
     }
 }

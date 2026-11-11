@@ -20,5 +20,9 @@ namespace BLL.Services
         // למנהל
         List<AdminShelterDTO> GetByStatus(string? status);
         ShelterDetailsDTO UpdateStatus(int id, UpdateShelterStatusDTO dto);
+
+        //לאיגנט
+        List<ShelterSearchResultDTO> SearchByCity(string city, int max);   // בממשק
+
     }
 }
