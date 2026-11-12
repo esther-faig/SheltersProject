@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
 import { addShelter } from '../store/shelters/sheltersThunks';
+import Icon, { featureIcon } from './Icon';
+import ShelterMap from './ShelterMap';
 
 const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -109,104 +111,219 @@ function ShareShelterScreen() {
   }
 
   return (
-    <div className="screen">
-      <h2 className="title">שיתוף מקלט פרטי</h2>
-
-      <form className="form" onSubmit={handleSubmit}>
-        <label className="field">
-          שם המקלט
-          <input value={shelterName} onChange={(e) => setShelterName(e.target.value)} />
-        </label>
-
-        <label className="field">
-          סוג המקום
-          <select value={shelterType} onChange={(e) => setShelterType(e.target.value)}>
-            <option value="">בחר סוג...</option>
-            <option value='ממ"ד פרטי'>ממ"ד פרטי</option>
-            <option value="מקלט פרטי">מקלט פרטי</option>
-            <option value="מרחב מוגן אחר">מרחב מוגן אחר</option>
-          </select>
-        </label>
-
-        <label className="field">
-          כתובת
-          <input value={address} onChange={(e) => setAddress(e.target.value)} />
-        </label>
-
-        <label className="field">
-          עיר
-          <input value={city} onChange={(e) => setCity(e.target.value)} />
-        </label>
-
-        <label className="field">
-          קיבולת מקסימלית (מספר אנשים)
-          <input
-            type="number"
-            min="0"
-            value={maxCapacity}
-            onChange={(e) => setMaxCapacity(e.target.value)}
-          />
-        </label>
-
-        <h3>מיקום המקלט על המפה</h3>
-        <label className="field">
-          קו רוחב (Latitude)
-          <input value={lat} onChange={(e) => setLat(e.target.value)} placeholder="למשל 32.080000" />
-        </label>
-        <label className="field">
-          קו אורך (Longitude)
-          <input value={lng} onChange={(e) => setLng(e.target.value)} placeholder="למשל 34.780000" />
-        </label>
-        <button type="button" className="btn small" onClick={handleLocate} disabled={locating}>
-          {locating ? 'מאתר...' : '📍 השתמש במיקום שלי'}
-        </button>
-
-        <h3>מאפיינים</h3>
-        {prefsLoading && <p>טוען מאפיינים...</p>}
-        {prefsError && <p>שגיאה בטעינת מאפיינים: {prefsError}</p>}
-        <div className="prefs">
-          {prefs.map((p) => (
-            <label key={p.preferenceId} className="pref-row">
-              <input
-                type="checkbox"
-                checked={available[p.preferenceId] ?? false}
-                onChange={() => togglePref(p.preferenceId)}
-              />{' '}
-              {p.name}
-            </label>
-          ))}
+    <section className="screen active">
+      <div className="wrap inner" style={{ maxWidth: 980 }}>
+        <div className="phead">
+          <button
+            className="iconbtn"
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label="חזרה"
+          >
+            <Icon name="arrow-r" />
+          </button>
+          <div>
+            <h2>שיתוף מקלט פרטי</h2>
+            <div className="sub">
+              מציעים את הממ״ד או המרחב המוגן שלכם לאנשים בסביבה.
+            </div>
+          </div>
         </div>
 
-        <label className="field">
-          תמונות (עד {MAX_IMAGES}, jpg / png / webp)
-          <input type="file" multiple accept=".jpg,.jpeg,.png,.webp" onChange={handleFiles} />
-        </label>
-        {files.length > 0 && (
-          <div className="tags">
-            {files.map((f) => (
-              <span key={f.name} className="chip">{f.name}</span>
-            ))}
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="cols">
+            <div className="stack">
+              <div className="card stack">
+                <div>
+                  <label className="lbl" htmlFor="shName">שם המקלט</label>
+                  <div className="field">
+                    <Icon name="home" />
+                    <input
+                      id="shName"
+                      type="text"
+                      value={shelterName}
+                      onChange={(e) => setShelterName(e.target.value)}
+                      placeholder="למשל: ממ״ד ברחוב התמר 4"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <span className="lbl">סוג המקום</span>
+                  {['ממ"ד פרטי', 'מקלט פרטי', 'מרחב מוגן אחר'].map((type) => (
+                    <label className="chk radio" key={type}>
+                      <input
+                        type="radio"
+                        name="shType"
+                        value={type}
+                        checked={shelterType === type}
+                        onChange={() => setShelterType(type)}
+                      />
+                      <span className="box"></span>
+                      <span className="lt">{type}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="lbl" htmlFor="shCap">
+                    קיבולת מקסימלית (מספר אנשים)
+                  </label>
+                  <div className="field">
+                    <Icon name="users" />
+                    <input
+                      id="shCap"
+                      type="number"
+                      min="0"
+                      value={maxCapacity}
+                      onChange={(e) => setMaxCapacity(e.target.value)}
+                      placeholder="10"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <span className="lbl">מיקום / כתובת</span>
+
+                <div className="field" style={{ marginBottom: 12 }}>
+                  <Icon name="pin" />
+                  <input
+                    id="shAddr"
+                    type="text"
+                    placeholder="כתובת (רחוב ומספר בית)"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                </div>
+
+                <div className="field" style={{ marginBottom: 12 }}>
+                  <Icon name="pin" />
+                  <input
+                    id="shCity"
+                    type="text"
+                    placeholder="עיר"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
+                </div>
+
+                <ShelterMap id="shareMap" caption="מפה להמחשה בלבד" />
+
+                <div className="hint">מיקום המקלט על המפה (קו רוחב וקו אורך):</div>
+
+                <div className="field" style={{ marginTop: 10 }}>
+                  <Icon name="locate" />
+                  <input
+                    type="text"
+                    value={lat}
+                    onChange={(e) => setLat(e.target.value)}
+                    placeholder="קו רוחב (Latitude) — למשל 32.080000"
+                  />
+                </div>
+                <div className="field" style={{ marginTop: 10 }}>
+                  <Icon name="locate" />
+                  <input
+                    type="text"
+                    value={lng}
+                    onChange={(e) => setLng(e.target.value)}
+                    placeholder="קו אורך (Longitude) — למשל 34.780000"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="btn small soft"
+                  style={{ marginTop: 12 }}
+                  onClick={handleLocate}
+                  disabled={locating}
+                >
+                  <span className="sh"><Icon name="locate" /></span>
+                  {locating ? 'מאתר...' : 'השתמש במיקום שלי'}
+                </button>
+              </div>
+            </div>
+
+            <div className="stack">
+              <div className="card">
+                <span className="lbl">מאפיינים</span>
+                {prefsLoading && <div className="hint">טוען מאפיינים...</div>}
+                {prefsError && (
+                  <div className="err">שגיאה בטעינת מאפיינים: {prefsError}</div>
+                )}
+                <div id="shFeats">
+                  {prefs.map((p) => (
+                    <label key={p.preferenceId} className="chk">
+                      <input
+                        type="checkbox"
+                        checked={available[p.preferenceId] ?? false}
+                        onChange={() => togglePref(p.preferenceId)}
+                      />
+                      <span className="box"><Icon name="check" /></span>
+                      <span className="lt">
+                        <Icon name={featureIcon(p.name)} />
+                        {p.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card">
+                <span className="lbl">
+                  תמונות (עד {MAX_IMAGES}, jpg / png / webp)
+                </span>
+                <label className="upload" id="upLabel">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={handleFiles}
+                  />
+                  <span id="upIn">
+                    <Icon name="camera" style={{ width: 34, height: 34 }} />
+                    <br />
+                    העלאת תמונות
+                  </span>
+                </label>
+                {files.length > 0 && (
+                  <div className="chips file-chips">
+                    {files.map((f) => (
+                      <span key={f.name} className="chip">{f.name}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {message && (
+                <div className="err" id="shErr" role="alert">{message}</div>
+              )}
+
+              <button
+                type="submit"
+                className="btn primary block"
+                disabled={
+                  sharing ||
+                  shelterName.trim() === '' ||
+                  address.trim() === '' ||
+                  city.trim() === '' ||
+                  shelterType === '' ||
+                  !coordsValid
+                }
+              >
+                <span className="sh"><Icon name="heart" /></span>
+                {sharing ? 'שולח...' : 'שיתוף המקלט'}
+              </button>
+
+              <div className="info">
+                <Icon name="info" />
+                המקלט יופיע בחיפוש רק אחרי אישור של מנהל המערכת.
+              </div>
+            </div>
           </div>
-        )}
-
-        {message && <p>{message}</p>}
-
-        <button
-          type="submit"
-          className="btn signal"
-          disabled={
-            sharing ||
-            shelterName.trim() === '' ||
-            address.trim() === '' ||
-            city.trim() === '' ||
-            shelterType === '' ||
-            !coordsValid
-          }
-        >
-          {sharing ? 'שולח...' : 'שיתוף המקלט'}
-        </button>
-      </form>
-    </div>
+        </form>
+      </div>
+    </section>
   );
 }
 

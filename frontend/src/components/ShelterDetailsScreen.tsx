@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { shelters } from '../shelters';
+import Icon from './Icon';
+import ShelterMap, { pinAt } from './ShelterMap';
 
 function ShelterDetailsScreen() {
   const { id } = useParams();
@@ -22,21 +24,24 @@ function ShelterDetailsScreen() {
 
   if (!shelter) {
     return (
-      <main className="screen details-page" dir="rtl">
-        <div className="details-inner">
-          <div className="details-not-found">
-            <h2>המקלט לא נמצא</h2>
+      <section className="screen active">
+        <div className="wrap inner">
+          <div className="card empty">
+            <h2 style={{ fontSize: 26 }}>המקלט לא נמצא</h2>
             <p>לא הצלחנו למצוא את פרטי המקלט המבוקש.</p>
-            <button
-              className="details-primary-button"
-              onClick={() => navigate(-1)}
-              type="button"
-            >
-              חזרה
-            </button>
+            <div className="actions" style={{ justifyContent: 'center', marginTop: 16 }}>
+              <button
+                className="btn primary"
+                onClick={() => navigate(-1)}
+                type="button"
+              >
+                <span className="sh"><Icon name="arrow-r" /></span>
+                חזרה
+              </button>
+            </div>
           </div>
         </div>
-      </main>
+      </section>
     );
   }
 
@@ -49,121 +54,78 @@ function ShelterDetailsScreen() {
     'המקלט נמצא ביעד המסומן במפה.',
   ];
 
+  const pin = pinAt(shelters.findIndex((item) => item.id === shelter.id));
+  const route = `M300 170 L${pin.x} 170 L${pin.x} ${pin.y}`;
+
   return (
-    <main className="screen details-page" dir="rtl">
-      <div className="details-inner">
-        <header className="details-page-head">
+    <section className="screen active">
+      <div className="wrap inner">
+        <div className="phead">
           <button
-            className="details-back-button"
+            className="iconbtn"
             type="button"
             onClick={() => navigate(-1)}
             aria-label="חזרה"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
+            <Icon name="arrow-r" />
           </button>
-
           <div>
             <h2>{shelter.name}</h2>
-            <p>פרטי המקלט והוראות הגעה</p>
+            <div className="sub">פרטי המקלט והוראות הגעה</div>
           </div>
-        </header>
+        </div>
 
-        <div className="details-columns">
-          <div className="details-content">
-            <section className="details-card">
-              <div className="details-stats">
-                <div className="details-stat">
-                  <span className="details-stat-icon">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z" />
-                      <circle cx="12" cy="10" r="2.5" />
-                    </svg>
-                  </span>
-                  <strong>{shelter.distance} מטר</strong>
-                  <small>מרחק</small>
-                </div>
-
-                <div className="details-stat">
-                  <span className="details-stat-icon">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <circle cx="12" cy="12" r="9" />
-                      <path d="M12 7v5l3 2" />
-                    </svg>
-                  </span>
-                  <strong>{shelter.walkMin} דקות</strong>
-                  <small>הליכה</small>
-                </div>
-
-                <div className="details-stat">
-                  <span className="details-stat-icon">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M5 11l1.5-5h11L19 11l2 2v6h-3v-2H6v2H3v-6l2-2Z" />
-                      <path d="M6 11h12M7 14h.01M17 14h.01" />
-                    </svg>
-                  </span>
-                  <strong>{shelter.carMin} דקות</strong>
-                  <small>רכב</small>
-                </div>
+        <div className="cols">
+          <div className="stack">
+            <div className="card">
+              <div className="meta" style={{ fontSize: 15 }}>
+                <span><Icon name="pin" />{shelter.distance} מטר</span>
+                <span><Icon name="walk" />הליכה {shelter.walkMin} דקות</span>
+                <span><Icon name="car" />רכב {shelter.carMin} דקות</span>
               </div>
 
-              <div className="details-divider" />
-
-              <span className="details-label">מאפיינים</span>
-
-              <div className="details-features">
+              <span className="lbl">מאפיינים</span>
+              <div className="chips">
                 {shelter.features.map((feature) => (
-                  <span className="details-feature" key={feature}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="m5 12 4 4L19 6" />
-                    </svg>
+                  <span className="chip ok" key={feature}>
+                    <Icon name="check" />
                     {feature}
                   </span>
                 ))}
               </div>
-            </section>
+            </div>
 
-            <section className="details-card">
-              <span className="details-label">הוראות הגעה</span>
+            <div className="card">
+              <span className="lbl">הוראות הגעה</span>
 
-              <ol className="details-step-list">
+              <ol className="step-list">
                 {directions.map((direction, index) => (
-                  <li key={index}>
-                    <span className="details-step-number">{index + 1}</span>
-                    <span>{direction}</span>
-                  </li>
+                  <li key={index}>{direction}</li>
                 ))}
               </ol>
 
-              <div className="details-hint">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 11v5M12 7h.01" />
-                </svg>
+              <div className="hint">
                 הוראות לדוגמה בלבד — בהמשך יתחבר שירות ניווט אמיתי.
               </div>
-            </section>
+            </div>
 
             <button
-              className="details-navigation-button"
+              className="btn primary block"
               type="button"
               onClick={() => setNavigationMessage(true)}
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m3 11 18-8-8 18-2-8-8-2Z" />
-                <path d="m11 13 5-5" />
-              </svg>
+              <span className="sh"><Icon name="nav" /></span>
               התחל ניווט
             </button>
 
             {navigationMessage && (
-              <p className="details-navigation-message" role="status">
+              <div className="info green" role="status">
+                <Icon name="shieldcheck" />
                 הניווט יתחבר בהמשך — זוהי הדגמה בלבד.
-              </p>
+              </div>
             )}
 
-            <div className="details-mode-note">
+            <div className="hint" style={{ textAlign: 'center' }}>
               זמן ההגעה המוצג לפי הבחירה הקודמת:{' '}
               <strong>{mode === 'car' ? 'רכב' : 'הליכה'}</strong>
               {' · '}
@@ -171,114 +133,22 @@ function ShelterDetailsScreen() {
             </div>
           </div>
 
-          <aside className="details-map-column">
-            <div className="details-map">
-              <svg
-                viewBox="0 0 600 420"
-                className="details-map-drawing"
-                role="img"
-                aria-label="מפה סכמטית עם מסלול למקלט"
-              >
-                <rect width="600" height="420" fill="#eef3f4" />
-
-                {[
-                  [20, 20, 90, 55],
-                  [150, 20, 130, 55],
-                  [320, 20, 120, 55],
-                  [480, 20, 100, 55],
-                  [20, 115, 90, 65],
-                  [150, 115, 130, 65],
-                  [320, 115, 120, 65],
-                  [480, 115, 100, 65],
-                  [20, 220, 90, 65],
-                  [150, 220, 130, 65],
-                  [320, 220, 120, 65],
-                  [480, 220, 100, 65],
-                  [20, 330, 90, 65],
-                  [150, 330, 130, 65],
-                  [320, 330, 120, 65],
-                  [480, 330, 100, 65],
-                ].map(([x, y, width, height], index) => (
-                  <rect
-                    key={index}
-                    x={x}
-                    y={y}
-                    width={width}
-                    height={height}
-                    rx="9"
-                    fill="#dfe9eb"
-                  />
-                ))}
-
-                {[
-                  'M0 90 H600',
-                  'M0 195 H600',
-                  'M0 305 H600',
-                  'M130 0 V420',
-                  'M300 0 V420',
-                  'M460 0 V420',
-                ].map((street, index) => (
-                  <g key={index}>
-                    <path
-                      d={street}
-                      fill="none"
-                      stroke="#c3d2d6"
-                      strokeWidth="20"
-                    />
-                    <path
-                      d={street}
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="14"
-                    />
-                  </g>
-                ))}
-
-                <path
-                  d="M300 195 L300 120 L420 120 L420 245"
-                  fill="none"
-                  stroke="#b75c63"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeDasharray="9 8"
-                />
-
-                <g transform="translate(300 195)">
-                  <circle r="19" fill="#fff" stroke="#263d49" strokeWidth="2.5" />
-                  <circle r="8" fill="#3d6b7a" />
-                </g>
-
-                <g transform="translate(420 245)">
-                  <path
-                    d="M0 20C-4 12-15 4-15-5a15 15 0 1 1 30 0c0 9-11 17-15 25Z"
-                    fill="#b75c63"
-                    stroke="#263d49"
-                    strokeWidth="2"
-                  />
-                  <circle cy="-5" r="5" fill="#fff" />
-                </g>
-              </svg>
-
-              <div className="details-map-legend">
-                <span>
-                  <i className="details-legend-user" />
-                  המיקום שלך
-                </span>
-                <span>
-                  <i className="details-legend-shelter" />
-                  המקלט
-                </span>
-              </div>
-            </div>
-
-            <div className="details-map-caption">
-              מסלול הגעה להמחשה בלבד
-            </div>
-          </aside>
+          <ShelterMap
+            user
+            pins={[{ id: shelter.id, ...pin }]}
+            route={route}
+            hl={shelter.id}
+            caption={
+              <>
+                <span className="lg"><i style={{ background: '#3d6b7a' }} />המיקום שלך</span>
+                <span className="lg"><i style={{ background: '#b75c63' }} />המקלט</span>
+                {' · '}מסלול הגעה להמחשה בלבד
+              </>
+            }
+          />
         </div>
       </div>
-    </main>
+    </section>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Icon from './Icon';
 import { streamChat, type ChatMessage } from '../services/chatService';
 
 function ChatScreen() {
@@ -42,32 +43,45 @@ function ChatScreen() {
   }
 
   return (
-    <div dir="rtl">
-      <h2>עוזר היערכות</h2>
+    <section className="screen active">
+      <div className="wrap inner" style={{ maxWidth: 850 }} dir="rtl">
+        <div className="phead">
+          <div className="bubble"><Icon name="shieldcheck" /></div>
+          <div><h2>עוזר היערכות</h2></div>
+        </div>
 
-      {/* הרצת מפת הודעות והצגתן */}
-      {messages.map((m, i) => (
-        <p key={i}>
-          <strong>{m.role === 'user' ? 'את/ה' : 'עוזר'}: </strong>
-          {/* אם הודעת ה-assistant עדיין ריקה והשרת בטעינה, נציג חיווי 'חושב...' */}
-          {m.text || (loading ? 'חושב...' : '')}
-        </p>
-      ))}
+        <div className="card">
+          {/* הרצת מפת הודעות והצגתן */}
+          <div className="chat-log">
+            {messages.map((m, i) => (
+              <div key={i} className={`chat-msg ${m.role === 'user' ? 'user' : 'bot'}`}>
+                <b>{m.role === 'user' ? 'את/ה' : 'עוזר'}</b>
+                {/* אם הודעת ה-assistant עדיין ריקה והשרת בטעינה, נציג חיווי 'חושב...' */}
+                {m.text || (loading ? 'חושב...' : '')}
+              </div>
+            ))}
+          </div>
 
-      {/* הצגת שגיאה באדום במידה וקיימת */}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+          {/* הצגת שגיאה במידה וקיימת */}
+          {error && <div className="err" role="alert">{error}</div>}
 
-      {/* תיבת הקלט וכפתור השליחה */}
-      <input 
-        value={input} 
-        onChange={e => setInput(e.target.value)} 
-        onKeyDown={e => e.key === 'Enter' && send()} // שיפור נוחות: שליחה בלחיצה על Enter
-        placeholder="שאל/י שאלה על מקלטים..."
-      />
-      <button onClick={send} disabled={loading}>
-        {loading ? 'שולח...' : 'שליחה'}
-      </button>
-    </div>
+          {/* תיבת הקלט וכפתור השליחה */}
+          <div className="chat-row">
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && send()} // שיפור נוחות: שליחה בלחיצה על Enter
+              placeholder="שאל/י שאלה על מקלטים..."
+            />
+            <button className="btn primary" onClick={send} disabled={loading}>
+              <span className="sh"><Icon name="arrow-l" /></span>
+              {loading ? 'שולח...' : 'שליחה'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

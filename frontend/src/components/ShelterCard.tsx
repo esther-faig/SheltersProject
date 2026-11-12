@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import FeatureTag from './FeatureTag';
+import Icon from './Icon';
+import ShelterIllustration from './ShelterIllustration';
 
 interface ShelterCardProps {
   id: number;
@@ -13,23 +15,35 @@ interface ShelterCardProps {
 
 function ShelterCard(props: ShelterCardProps) {
   return (
-    <div
-      className={props.isRecommended ? 'shelter-card star' : 'shelter-card'}
+    <article
+      className={props.isRecommended ? 'card reco' : 'card'}
       style={{ animationDelay: `${props.delay * 0.15}s` }}
     >
-      {props.isRecommended && <div className="star-badge">★ המומלץ ביותר</div>}
-      <h3>{props.name}</h3>
-      <div className="stats">
-        <span>📏 {props.distance} מטר</span>
-        <span>⏱ {props.minutes} דקות</span>
+      {props.isRecommended && (
+        <div className="ribbon"><Icon name="star" />המומלץ ביותר</div>
+      )}
+      <div className="sh-card">
+        <div className="thumb"><ShelterIllustration /></div>
+        <div className="sh-body">
+          <h3>{props.name}</h3>
+          <div className="meta">
+            <span><Icon name="pin" />{props.distance} מטר</span>
+            <span><Icon name="clock" />{props.minutes} דקות</span>
+          </div>
+          <div className="chips">
+            {props.features.map((feature) => (
+              <FeatureTag key={feature} text={feature} />
+            ))}
+          </div>
+          <div className="sh-actions">
+            <Link className="btn primary small" to={`/shelter/${props.id}`}>
+              <span className="sh"><Icon name="nav" /></span>
+              ניווט
+            </Link>
+          </div>
+        </div>
       </div>
-      <div className="tags">
-        {props.features.map((feature) => (
-          <FeatureTag key={feature} text={feature} />
-        ))}
-      </div>
-      <Link className="btn" to={`/shelter/${props.id}`}>ניווט ←</Link>
-    </div>
+    </article>
   );
 }
 
