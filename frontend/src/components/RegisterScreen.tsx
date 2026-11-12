@@ -2,6 +2,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PreferenceRow from './PreferenceRow';
+import Icon from './Icon';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
 import { register, login } from '../store/auth/authThunks';
@@ -85,50 +86,52 @@ function RegisterScreen() {
 
   if (loading) {
     return (
-      <main className="screen auth-page" dir="rtl">
-        <div className="auth-loading">טוען העדפות...</div>
-      </main>
+      <section className="screen active">
+        <div className="wrap inner">
+          <div className="card empty">טוען העדפות...</div>
+        </div>
+      </section>
     );
   }
 
   if (error) {
     return (
-      <main className="screen auth-page" dir="rtl">
-        <div className="auth-loading">שגיאה בטעינת ההעדפות: {error}</div>
-      </main>
+      <section className="screen active">
+        <div className="wrap inner">
+          <div className="card empty">שגיאה בטעינת ההעדפות: {error}</div>
+        </div>
+      </section>
     );
   }
 
   return (
-    <main className="screen auth-page" dir="rtl">
-      <div className="auth-inner">
-        <header className="auth-page-head">
+    <section className="screen active">
+      <div className="wrap inner" style={{ maxWidth: 920 }}>
+        <div className="phead">
           <button
-            className="auth-back-button"
+            className="iconbtn"
             type="button"
             onClick={() => navigate(-1)}
             aria-label="חזרה"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
+            <Icon name="arrow-r" />
           </button>
 
           <div>
             <h2>הרשמה והגדרת העדפות</h2>
-            <p>פותחים חשבון ומגדירים מה חשוב לכם במקלט.</p>
+            <div className="sub">פותחים חשבון ומגדירים מה חשוב לכם במקלט.</div>
           </div>
-        </header>
+        </div>
 
-        <div className="auth-columns">
-          <section className="auth-card">
-            <div className="auth-tabs">
-              <button className="auth-tab active" type="button">
+        <div className="cols" id="authCols">
+          <div className="card" id="authCard">
+            <div className="tabs" role="tablist">
+              <button className="tab on" type="button">
                 הרשמה
               </button>
 
               <button
-                className="auth-tab"
+                className="tab"
                 type="button"
                 onClick={() => navigate('/login')}
               >
@@ -136,16 +139,13 @@ function RegisterScreen() {
               </button>
             </div>
 
-            <form className="auth-form" onSubmit={handleSubmit}>
+            <form className="stack" onSubmit={handleSubmit}>
               <div>
-                <label className="auth-label" htmlFor="register-name">
+                <label className="lbl" htmlFor="register-name">
                   שם
                 </label>
-                <div className="auth-field">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 21c0-4 3-7 8-7s8 3 8 7" />
-                  </svg>
+                <div className="field">
+                  <Icon name="user" />
                   <input
                     id="register-name"
                     type="text"
@@ -159,18 +159,16 @@ function RegisterScreen() {
               </div>
 
               <div>
-                <label className="auth-label" htmlFor="register-email">
+                <label className="lbl" htmlFor="register-email">
                   מייל
                 </label>
-                <div className="auth-field">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <rect x="3" y="5" width="18" height="14" rx="2" />
-                    <path d="m3 7 9 6 9-6" />
-                  </svg>
+                <div className="field">
+                  <Icon name="mail" />
                   <input
                     id="register-email"
                     type="email"
                     dir="ltr"
+                    style={{ textAlign: 'right' }}
                     autoComplete="email"
                     placeholder="name@example.com"
                     value={email}
@@ -181,14 +179,11 @@ function RegisterScreen() {
               </div>
 
               <div>
-                <label className="auth-label" htmlFor="register-password">
+                <label className="lbl" htmlFor="register-password">
                   סיסמה
                 </label>
-                <div className="auth-field">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <rect x="4" y="10" width="16" height="11" rx="2" />
-                    <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" />
-                  </svg>
+                <div className="field">
+                  <Icon name="lock" />
                   <input
                     id="register-password"
                     type="password"
@@ -203,13 +198,13 @@ function RegisterScreen() {
               </div>
 
               {submitError && (
-                <div className="auth-error" role="alert">
+                <div className="err" role="alert">
                   {submitError}
                 </div>
               )}
 
               <button
-                className="auth-submit-button"
+                className="btn primary block"
                 type="submit"
                 disabled={
                   saving ||
@@ -218,48 +213,47 @@ function RegisterScreen() {
                   password.length < 6
                 }
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
+                <span className="sh"><Icon name="shieldcheck" /></span>
                 {saving ? 'נרשמים...' : 'הרשמה'}
               </button>
             </form>
-          </section>
+          </div>
 
-          <section className="auth-card auth-preferences-card">
-            <h3>מה חשוב לך במקלט?</h3>
+          <div className="card" id="prefCard">
+            <h3 style={{ fontSize: 22, marginBottom: 4 }}>מה חשוב לך במקלט?</h3>
 
-            <p className="auth-hint">
-              מסמנים מה מתאים לך, ואפשר לקבוע מה <strong>חובה</strong> —
-              מקלט שלא עומד בזה לא יוצג.
-            </p>
-
-            <div className="auth-preferences">
-              {prefs.map((preference) => (
-                <PreferenceRow
-                  key={preference.preferenceId}
-                  name={preference.name}
-                  checked={preference.preferenceId in chosen}
-                  required={chosen[preference.preferenceId] ?? false}
-                  onChange={(checked, required) =>
-                    handlePrefChange(
-                      preference.preferenceId,
-                      checked,
-                      required
-                    )
-                  }
-                />
-              ))}
+            <div className="hint" style={{ margin: '0 0 12px' }}>
+              מסמנים מה מתאים לך, ואפשר לקבוע מה <b>חובה</b> — מקלט שלא עומד
+              בזה לא יוצג.
             </div>
 
-            <div className="auth-preferences-note">
+            <div id="prefRows">
+              <div className="plist">
+                {prefs.map((preference) => (
+                  <PreferenceRow
+                    key={preference.preferenceId}
+                    name={preference.name}
+                    checked={preference.preferenceId in chosen}
+                    required={chosen[preference.preferenceId] ?? false}
+                    onChange={(checked, required) =>
+                      handlePrefChange(
+                        preference.preferenceId,
+                        checked,
+                        required
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="hint" style={{ marginTop: 14 }}>
               ההעדפות יישמרו יחד עם החשבון לאחר ההרשמה.
             </div>
-          </section>
+          </div>
         </div>
       </div>
-    </main>
+    </section>
   );
 }
 

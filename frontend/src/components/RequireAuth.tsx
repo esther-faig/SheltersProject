@@ -11,4 +11,4 @@ function RequireAuth({ admin = false }: { admin?: boolean }) {
   if (admin && !isAdmin) return <Navigate to="/" replace />;
   return <Outlet />;
 }
-export default RequireAuth;
+export default RequireAuth;
