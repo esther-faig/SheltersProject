@@ -52,11 +52,25 @@ namespace BLL.Agent
             return messages;
         }
 
+        //public async Task<string> AskAsync(List<ChatMessageDTO> history, CancellationToken ct)
+        //{
+        //    // העברת ה-BuildOptions() כדי שה-AI יוכל להשתמש בכלים
+        //    var response = await _chatClient.GetResponseAsync(BuildMessages(history), BuildOptions(), cancellationToken: ct);
+        //    return response.Text ?? string.Empty;
+        //}
+
         public async Task<string> AskAsync(List<ChatMessageDTO> history, CancellationToken ct)
         {
-            // העברת ה-BuildOptions() כדי שה-AI יוכל להשתמש בכלים
-            var response = await _chatClient.GetResponseAsync(BuildMessages(history), BuildOptions(), cancellationToken: ct);
-            return response.Text ?? string.Empty;
+            try
+            {
+                var response = await _chatClient.GetResponseAsync(BuildMessages(history), BuildOptions(), cancellationToken: ct);
+                return response.Text ?? string.Empty;
+            }
+            catch (System.ClientModel.ClientResultException ex)
+            {
+                var body = ex.GetRawResponse()?.Content?.ToString();
+                throw new InvalidOperationException($"AI failed. Status {ex.Status}. Body: {body}", ex);
+            }
         }
 
         public async IAsyncEnumerable<string> AskStreamingAsync(

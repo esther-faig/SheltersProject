@@ -1,6 +1,7 @@
 ﻿using BLL.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Diagnostics;
 
 namespace SheltersProject.Filters
 {
@@ -32,10 +33,16 @@ namespace SheltersProject.Filters
                 status >= 500 ? LogLevel.Error : LogLevel.Warning,
                 ex, "Exception at {Path}", context.HttpContext.Request.Path);
 
+            string message = ex.ToString();
+
+    //        string message = (status == 500 && !Debugger.IsAttached)
+    //? "אירעה שגיאה לא צפויה. נא לנסות שוב מאוחר יותר."
+    //: ex.ToString(); // יציג את ה-StackTrace המלא ישירות לתוך ה-Swagger!
+
             // 3. בשגיאה לא צפויה לא חושפים פרטים פנימיים ללקוח
-            string message = status == 500
-                ? "אירעה שגיאה לא צפויה. נא לנסות שוב מאוחר יותר."
-                : ex.Message;
+            //string message = status == 500
+            //    ? "אירעה שגיאה לא צפויה. נא לנסות שוב מאוחר יותר."
+            //    : ex.Message;
 
             // 4. תשובה במבנה אחיד (ProblemDetails), כמו שגיאות הוולידציה
             context.Result = new ObjectResult(new ProblemDetails
