@@ -41,7 +41,7 @@ IChatClient innerClient =
         new ApiKeyCredential(geminiKey),
         openAiOptions
     )
-    .GetChatClient("gemini-1.5-flash")
+    .GetChatClient("gemini-3.8-flash")
     .AsIChatClient();
 
 // הנתיב המלא לתיקיית התמונות, מתוך appsettings.json
