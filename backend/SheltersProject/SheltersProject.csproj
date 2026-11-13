@@ -9,6 +9,13 @@
 
   <ItemGroup>
     <None Remove="Controllers\UserPreferenceControllers.cs~RF4bda65.TMP" />
+    <None Remove="Data\JerusalemShelters_ImportReady.geojson" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Data\JerusalemShelters_ImportReady.geojson">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

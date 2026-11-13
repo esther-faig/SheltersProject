@@ -17,6 +17,7 @@ using System.ClientModel;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using BLL.Agent;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -165,6 +166,149 @@ builder.Services.AddChatClient(innerClient)
     .UseFunctionInvocation();
 
 var app = builder.Build();
+
+//זמני
+// ייבוא ראשוני של מקלטים ציבוריים מירושלים
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider
+        .GetRequiredService<DB_Shelters>();
+
+    // 1. מציאת משתמש המנהל
+    string adminEmail = "estherfaig865@gmail.com";
+
+    var admin = await context.User
+        .FirstOrDefaultAsync(u =>
+            u.Email == adminEmail &&
+            u.Role == UserRole.Admin);
+
+    if (admin == null)
+    {
+        throw new Exception(
+            "מנהל המערכת לא נמצא במסד הנתונים."
+        );
+    }
+
+    // 2. איתור קובץ הנתונים
+    string filePath = Path.Combine(
+        app.Environment.ContentRootPath,
+        "Data",
+        "JerusalemShelters_ImportReady.geojson"
+    );
+
+    if (!File.Exists(filePath))
+    {
+        throw new FileNotFoundException(
+            "קובץ נתוני המקלטים לא נמצא.",
+            filePath
+        );
+    }
+
+    // 3. קריאת קובץ ה-JSON
+    string json = await File.ReadAllTextAsync(filePath);
+
+    using JsonDocument document = JsonDocument.Parse(json);
+
+    JsonElement features =
+        document.RootElement.GetProperty("features");
+
+    // 4. שליפת המקלטים שכבר יובאו
+    var existingShelters = await context.Shelter
+        .Where(s =>
+            s.IsImported &&
+            s.City == "ירושלים" &&
+            s.ShelterType == "PublicShelter")
+        .Select(s => new
+        {
+            s.Latitude,
+            s.Longitude
+        })
+        .ToListAsync();
+
+    // 5. מניעת ייבוא כפול לפי מיקום
+    var existingLocations =
+        new HashSet<(double Latitude, double Longitude)>(
+            existingShelters.Select(s =>
+                (
+                    Math.Round(s.Latitude, 7),
+                    Math.Round(s.Longitude, 7)
+                )
+            )
+        );
+
+    var newShelters = new List<Shelter>();
+
+    // 6. מעבר על כל המקלטים בקובץ
+    foreach (JsonElement feature in features.EnumerateArray())
+    {
+        JsonElement properties =
+            feature.GetProperty("properties");
+
+        JsonElement coordinates =
+            feature.GetProperty("geometry")
+                   .GetProperty("coordinates");
+
+        string name =
+      "מקלט ציבורי ירושלים " +
+      properties.GetProperty("SourceShelterNumber").ToString();
+
+        double longitude = coordinates[0].GetDouble();
+        double latitude = coordinates[1].GetDouble();
+
+        var locationKey = (
+            Math.Round(latitude, 7),
+            Math.Round(longitude, 7)
+        );
+
+        // אם המקלט כבר קיים, מדלגים עליו
+        if (!existingLocations.Add(locationKey))
+        {
+            continue;
+        }
+
+        // 7. יצירת אובייקט Shelter
+        var shelter = new Shelter
+        {
+            Name = name,
+
+            ShelterType = "מקלט ציבורי",
+
+            Address = null,
+
+            City = "ירושלים",
+
+            Latitude = latitude,
+
+            Longitude = longitude,
+
+            MaxCapacity = null,
+
+            Status = ShelterStatus.Approved,
+
+            IsActive = true,
+
+            IsImported = true,
+
+            AlertZoneId = null,
+
+            CreatedByUserId = admin.UserId
+        };
+
+        newShelters.Add(shelter);
+    }
+
+    // 8. שמירת המקלטים החדשים במסד הנתונים
+    if (newShelters.Count > 0)
+    {
+        context.Shelter.AddRange(newShelters);
+
+        await context.SaveChangesAsync();
+    }
+
+    Console.WriteLine(
+        $"נוספו {newShelters.Count} מקלטים חדשים לירושלים."
+    );
+}
 
 app.UseStaticFiles(new StaticFileOptions
 {

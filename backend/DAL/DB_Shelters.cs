@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL
 {
-    public class DB_Shelters: DbContext
+    public class DB_Shelters : DbContext
     {
         //בנאי שמקבל את המידע על החיבור למסד הנתונים
         public DB_Shelters(DbContextOptions<DB_Shelters> options) : base(options)
@@ -22,7 +22,7 @@ namespace DAL
         public DbSet<AlertZone> AlertZone { get; set; }
         public DbSet<ProtectionTime> ProtectionTime { get; set; }
 
-
+        //יצירת המסד נתונים
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -53,6 +53,11 @@ namespace DAL
             // אינדקסים לחיפוש
             modelBuilder.Entity<Shelter>()
                 .HasIndex(s => new { s.Status, s.IsActive });
+
+            // ◄ אינדקס החדש לסינון הריבוע הגיאוגרפי לפי  ו־:
+            // אינדקס לסינון הריבוע הגיאוגרפי)
+            modelBuilder.Entity<Shelter>()
+                .HasIndex(s => new { s.Latitude, s.Longitude });
 
             modelBuilder.Entity<ProtectionTime>()
                 .HasIndex(p => new { p.AlertZoneId, p.AlertType, p.EffectiveFrom });
@@ -129,7 +134,5 @@ namespace DAL
                     Category = "נוחות"
                 });
         }
-
-
     }
 }

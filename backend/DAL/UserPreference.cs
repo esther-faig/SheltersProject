@@ -17,7 +17,8 @@ namespace DAL
         public int PreferenceId { get; set; }
         public Preference Preference { get; set; }
 
-        public int Priority { get; set; }
+        //דירוג
+        public int? Priority { get; set; }
         public bool IsRequired { get; set; }
     }
 }

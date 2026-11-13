@@ -31,8 +31,7 @@ namespace DAL
         public double Latitude { get; set; }
         public double Longitude { get; set; }
 
-        public int MaxCapacity { get; set; }
-        public List<string> Images { get; set; } = new List<string>(); // רשימת שמות הקבצים 
+        public int? MaxCapacity { get; set; }
 
         public ShelterStatus Status { get; set; } = ShelterStatus.Pending;
         public bool IsActive { get; set; }= true; // false = בעל המקלט ביטל אותו זמנית. מקלט לא פעיל לא מוצג בחיפוש בכלל
@@ -53,7 +52,6 @@ namespace DAL
 
         [ForeignKey(nameof(CreatedByUserId))]
         public User User { get; set; } = null!;
-
 
         public List<string> Files { get; set; } = new List<string>();//the name of the image
         public List<ShelterFeature> ShelterFeatures { get; set; } = new List<ShelterFeature>();

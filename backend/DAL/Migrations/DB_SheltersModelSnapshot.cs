@@ -186,10 +186,6 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.PrimitiveCollection<string>("Images")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -202,7 +198,7 @@ namespace DAL.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("float");
 
-                    b.Property<int>("MaxCapacity")
+                    b.Property<int?>("MaxCapacity")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -225,6 +221,8 @@ namespace DAL.Migrations
                     b.HasIndex("AlertZoneId");
 
                     b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("Latitude", "Longitude");
 
                     b.HasIndex("Status", "IsActive");
 
@@ -309,7 +307,7 @@ namespace DAL.Migrations
                     b.Property<int>("PreferenceId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Priority")
+                    b.Property<int?>("Priority")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")

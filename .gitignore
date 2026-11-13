@@ -12,6 +12,8 @@ backend/Images/
 # *.user
 # *.suo
 backend/Images/
+backend/SheltersProject/Data/
+backend/SheltersProject/Data/JerusalemShelters_ImportReady.geojson
 
 # התעלמות מתיקיית התלויות של נהוד (נוצרת אוטומטית כשמריצים npm install)
 frontend/node_modules/
