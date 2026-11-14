@@ -45,12 +45,7 @@ function ShelterDetailsScreen() {
 
   const minutes = mode === 'car' ? shelter.carMin : shelter.walkMin;
 
-  const directions = [
-    'צאו מהמיקום שלכם ופנו לכיוון המקלט.',
-    `המשיכו בדרך כ־${Math.round(shelter.distance * 0.6)} מטר.`,
-    `המשיכו עוד כ־${Math.round(shelter.distance * 0.4)} מטר.`,
-    'המקלט נמצא ביעד המסומן במפה.',
-  ];
+
 
   const pin = pinAt(shelters.findIndex((item) => item.id === shelter.id));
   const route = `M300 170 L${pin.x} 170 L${pin.x} ${pin.y}`;
@@ -93,19 +88,6 @@ function ShelterDetailsScreen() {
               </div>
             </div>
 
-            <div className="card">
-              <span className="lbl">הוראות הגעה</span>
-
-              <ol className="step-list">
-                {directions.map((direction, index) => (
-                  <li key={index}>{direction}</li>
-                ))}
-              </ol>
-
-              <div className="hint">
-                הוראות כלליות להמחשה. לניווט מדויק השתמשו בכפתורי הניווט.
-              </div>
-            </div>
 
             <a
               className="btn primary block"
