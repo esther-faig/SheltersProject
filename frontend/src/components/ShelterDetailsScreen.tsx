@@ -1,16 +1,14 @@
-
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { shelters } from '../shelters';
 import Icon from './Icon';
 import ShelterMap, { pinAt } from './ShelterMap';
+import { googleMapsUrl, wazeUrl } from '../navigation';
 
 function ShelterDetailsScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [navigationMessage, setNavigationMessage] = useState(false);
 
   const shelter = shelters.find((item) => item.id === Number(id));
   const mode =
@@ -105,24 +103,30 @@ function ShelterDetailsScreen() {
               </ol>
 
               <div className="hint">
-                הוראות לדוגמה בלבד — בהמשך יתחבר שירות ניווט אמיתי.
+                הוראות כלליות להמחשה. לניווט מדויק השתמשו בכפתורי הניווט.
               </div>
             </div>
 
-            <button
+            <a
               className="btn primary block"
-              type="button"
-              onClick={() => setNavigationMessage(true)}
+              href={googleMapsUrl(shelter.lat, shelter.lng, mode)}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               <span className="sh"><Icon name="nav" /></span>
-              התחל ניווט
-            </button>
+              ניווט ב-Google Maps
+            </a>
 
-            {navigationMessage && (
-              <div className="info green" role="status">
-                <Icon name="shieldcheck" />
-                הניווט יתחבר בהמשך — זוהי הדגמה בלבד.
-              </div>
+            {mode === 'car' && (
+              <a
+                className="btn block"
+                href={wazeUrl(shelter.lat, shelter.lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="sh"><Icon name="car" /></span>
+                ניווט ב-Waze
+              </a>
             )}
 
             <div className="hint" style={{ textAlign: 'center' }}>
