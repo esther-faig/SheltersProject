@@ -10,6 +10,7 @@ namespace DAL.Repositories
 {
     public interface IAlertZoneRepository
     {
+        AlertZone? GetByOfficialCode(string officialCode);
 
         // האזור שמכיל את הנקודה, יחד עם זמני ההתגוננות שתקפים ברגע atTime
         AlertZone? GetContainingPoint(Point point, DateTime atTime);

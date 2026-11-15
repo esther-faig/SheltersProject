@@ -1,5 +1,7 @@
 using BLL;
+using BLL.Agent;
 using BLL.Mapper;
+using BLL.Search;
 using BLL.Services;
 using DAL;
 using DAL.Repositories;
@@ -7,16 +9,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NetTopologySuite;
-using Microsoft.Extensions.FileProviders;
-using System.Text;
+using OpenAI;
 using SheltersProject.Filters;
 using System.ClientModel;
-using Microsoft.Extensions.AI;
-using OpenAI;
-using BLL.Agent;
+using System.Text;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -151,6 +152,28 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // === כלים של ה-Agent ===
 builder.Services.AddScoped<ShelterTools>();
+// === חיפוש מקלטים ===
+builder.Services.Configure<ShelterSearchOptions>(
+    builder.Configuration.GetSection(ShelterSearchOptions.SectionName));
+builder.Services.AddScoped<IShelterEligibilityService, ShelterEligibilityService>();
+builder.Services.AddScoped<IShelterRankingService, ShelterRankingService>();
+builder.Services.AddScoped<IEmergencyGuidanceService, EmergencyGuidanceService>();
+builder.Services.AddScoped<IShelterSearchService, ShelterSearchService>();
+
+// Google Routes. Timeout קצר: בזמן אזעקה עדיף הערכה מהירה מהמתנה
+builder.Services.AddHttpClient<IDistanceService, GoogleMapsDistanceService>(client =>
+{
+    client.BaseAddress = new Uri("https://routes.googleapis.com/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+
+// שרת הפייתון המדומה (ייבוא זמני התגוננות)
+builder.Services.AddHttpClient<IProtectionTimeSource, MockProtectionTimeSource>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["ProtectionTimeServer:BaseUrl"] ?? "http://localhost:8000/");
+});
+builder.Services.AddScoped<IProtectionTimeImportService, ProtectionTimeImportService>();
 
 // גיאוקודינג דרך Nominatim (OpenStreetMap): בלי מפתח API
 builder.Services.AddHttpClient<GeocodingTools>(client =>

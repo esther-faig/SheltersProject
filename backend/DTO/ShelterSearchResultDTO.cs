@@ -23,10 +23,13 @@ namespace DTO
         //רק למידע
         public int MaxCapacity { get; set; }
 
-        //public double MatchScore { get; set; }
+        public double MatchScore { get; set; }  //0-100
+        public bool IsRecommended { get; set; }             // הראשון ברשימה
+        public bool IsEstimate { get; set; }                // true = הזמן הוא הערכה (Google לא היה זמין)
+
+        public List<string> MatchReasons { get; set; } = new();  // הסברים למה זה מתאים
         //המאפינים שיש במקלט
         public List<ShelterFeatureDTO> Features { get; set; }
-        //public List<string> MatchReasons { get; set; } = new();
 
         // האם אפשר לתקן את מאפייני המקלט -מקלט שנטען מראש
         public bool IsImported { get; set; }

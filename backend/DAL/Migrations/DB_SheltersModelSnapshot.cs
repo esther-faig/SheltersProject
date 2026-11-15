@@ -307,7 +307,7 @@ namespace DAL.Migrations
                     b.Property<int>("PreferenceId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Priority")
+                    b.Property<int>("Priority")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")

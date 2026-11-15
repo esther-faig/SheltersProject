@@ -59,7 +59,11 @@ namespace BLL.Mapper
                 .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))
                 .ForMember(d => d.Files, o => o.MapFrom(s => s.Files))
                 .ForMember(d => d.DistanceMeters, o => o.Ignore())
-                .ForMember(d => d.TravelTimeSeconds, o => o.Ignore());
+                .ForMember(d => d.TravelTimeSeconds, o => o.Ignore())
+                .ForMember(d => d.MatchScore, o => o.Ignore())
+                .ForMember(d => d.IsRecommended, o => o.Ignore())
+                .ForMember(d => d.IsEstimate, o => o.Ignore())
+                .ForMember(d => d.MatchReasons, o => o.Ignore());
 
             CreateMap<Shelter, ShelterDetailsDTO>()
                 .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))

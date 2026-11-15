@@ -12,8 +12,12 @@ namespace DTO
         public double Longitude { get; set; }
 
         [RegularExpression("^(WALKING|DRIVING)$", ErrorMessage = "אופן ההגעה חייב להיות WALKING או DRIVING")]
-        public string TravelMode { get; set; } = "WALKING";//ברירת מחדל
+        public string TravelMode { get; set; } = "WALKING";
 
-        public int? UserId { get; set; } // null עבור משתמש אורח
+        // אזעקה (Alarm) או התראה מוקדמת (Warning). לא נשלח = ברירת מחדל מהקונפיגורציה
+        [RegularExpression("^(Alarm|Warning)$", ErrorMessage = "סוג ההתרעה חייב להיות Alarm או Warning")]
+        public string? AlertType { get; set; }
+
+        // אין כאן UserId: המשתמש נקרא מה-JWT בשרת. בלי טוקן = אורח
     }
 }
