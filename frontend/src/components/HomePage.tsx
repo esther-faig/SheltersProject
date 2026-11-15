@@ -45,11 +45,15 @@ function HomePage() {
             </div>
           </div>
 
-          {/* הכפתור השלישי הקיים בפרויקט: חיפוש מקלט */}
+         {/* הכפתור השלישי הקיים בפרויקט: חיפוש מקלט */}
           <div className="hero-beacon">
             <Link to="/search" className="beacon" aria-label="מציאת מקלט עכשיו">
               <span className="sh"><Icon name="pin" /></span>
-              מציאת מקלט<br />עכשיו
+              <span style={{ display: 'block', lineHeight: 1.15, textAlign: 'center' }}>
+                מציאת מקלט
+                <br />
+                עכשיו
+              </span>
             </Link>
           </div>
         </div>

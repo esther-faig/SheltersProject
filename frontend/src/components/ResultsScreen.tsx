@@ -1,14 +1,19 @@
-
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { shelters } from '../shelters';
 import Icon from './Icon';
-import ShelterMap, { pinAt } from './ShelterMap';
+import RealMap, { type MapPoint } from './RealMap';
 import ShelterIllustration from './ShelterIllustration';
 
 function ResultsScreen() {
   const { mode } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // המיקום שנקלט בדף החיפוש
+  const userCoords =
+    (location.state as { coords?: { lat: number; lng: number } | null } | null)
+      ?.coords ?? null;
 
   const [showEmptyDemo, setShowEmptyDemo] = useState(false);
 
@@ -21,6 +26,14 @@ function ResultsScreen() {
   const results = showEmptyDemo
     ? []
     : [...shelters].sort((a, b) => a.distance - b.distance);
+
+  // מקלטים שיש להם קואורדינטות אמיתיות (lat / lng) יוצגו כסמנים על המפה
+  const markers: MapPoint[] = results.flatMap((s) => {
+    const a = s as unknown as { lat?: number; lng?: number; name?: string };
+    return a.lat != null && a.lng != null
+      ? [{ id: s.id, lat: a.lat, lng: a.lng, title: a.name }]
+      : [];
+  });
 
   function getMinutes(shelter: (typeof shelters)[number]) {
     return byCar ? shelter.carMin : shelter.walkMin;
@@ -129,11 +142,11 @@ function ResultsScreen() {
           </div>
 
           <div className="sticky">
-            <ShelterMap
-              id="resMap"
-              user
-              pins={results.map((s, i) => ({ id: s.id, ...pinAt(i) }))}
-              hl={results.length ? results[0].id : null}
+            <RealMap
+              center={userCoords}
+              userPos={userCoords}
+              markers={markers}
+              height={460}
               caption={
                 results.length === 0
                   ? 'אין מקלטים להצגה'

@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
 import { addShelter } from '../store/shelters/sheltersThunks';
 import Icon, { featureIcon } from './Icon';
-import ShelterMap from './ShelterMap';
+import RealMap from './RealMap';
 
 const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -208,7 +208,17 @@ function ShareShelterScreen() {
                   />
                 </div>
 
-                <ShelterMap id="shareMap" caption="מפה להמחשה בלבד" />
+                <RealMap
+  pickable
+  height={320}
+  picked={coordsValid ? { lat: latNum, lng: lngNum } : null}
+  center={coordsValid ? { lat: latNum, lng: lngNum } : null}
+  onPick={(la, ln) => {
+    setLat(la.toFixed(6));
+    setLng(ln.toFixed(6));
+  }}
+  caption="לחצו על המפה או גררו את הסמן כדי לסמן את מיקום המקלט"
+/>
 
                 <div className="hint">מיקום המקלט על המפה (קו רוחב וקו אורך):</div>
 

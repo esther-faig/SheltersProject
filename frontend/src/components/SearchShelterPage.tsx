@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Icon from './Icon';
-import ShelterMap, { pinAt } from './ShelterMap';
+import RealMap, { type MapPoint } from './RealMap';
 import { shelters } from '../shelters';
 
 type Coords = {
@@ -87,8 +86,13 @@ function SearchShelterPage() {
     });
   }
 
-  const pins = located
-    ? shelters.map((s, i) => ({ id: s.id, ...pinAt(i) }))
+  const markers: MapPoint[] = located
+    ? shelters.flatMap((s) => {
+        const a = s as unknown as { lat?: number; lng?: number; name?: string };
+        return a.lat != null && a.lng != null
+          ? [{ id: s.id, lat: a.lat, lng: a.lng, title: a.name }]
+          : [];
+      })
     : [];
 
   return (
@@ -112,10 +116,11 @@ function SearchShelterPage() {
         </div>
 
         <div className="cols" id="searchCols">
-          <ShelterMap
-            id="searchMap"
-            user={located}
-            pins={pins}
+          <RealMap
+            center={coords}
+            userPos={coords}
+            markers={markers}
+            height={460}
             caption={
               located
                 ? 'המקלטים הקרובים אליך'
