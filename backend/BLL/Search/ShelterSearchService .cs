@@ -10,12 +10,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using AutoMapper;
-using DAL;
-using DAL.Repositories;
-using DTO;
-using Microsoft.Extensions.Options;
-
 namespace BLL.Services
 {
     public class ShelterSearchService : IShelterSearchService

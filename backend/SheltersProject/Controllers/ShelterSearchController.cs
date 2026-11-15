@@ -1,4 +1,5 @@
 ﻿using BLL.Services;
+using BLL.Search;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

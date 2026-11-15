@@ -13,7 +13,6 @@ function LoginScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [googleMessage, setGoogleMessage] = useState('');
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -107,22 +106,8 @@ function LoginScreen() {
                 {loading ? 'מתחבר...' : 'התחברות'}
               </button>
 
-              <button
-                type="button"
-                className="btn block"
-                onClick={() =>
-                  setGoogleMessage('התחברות עם Google תתווסף בהמשך')
-                }
-              >
-                <span className="sh"><Icon name="mail" /></span>
-                התחברות עם Google
-              </button>
 
-              {googleMessage && (
-                <div className="hint" style={{ textAlign: 'center' }}>
-                  {googleMessage}
-                </div>
-              )}
+
             </form>
 
             <div className="hint" style={{ textAlign: 'center', marginTop: 18 }}>
