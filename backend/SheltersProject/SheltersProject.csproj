@@ -8,14 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Controllers\UserPreferenceControllers.cs~RF4bda65.TMP" />
-    <None Remove="Data\JerusalemShelters_ImportReady.geojson" />
+    <Compile Remove="Data\**" />
+    <Content Remove="Data\**" />
+    <EmbeddedResource Remove="Data\**" />
+    <None Remove="Data\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Data\JerusalemShelters_ImportReady.geojson">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <None Remove="Controllers\UserPreferenceControllers.cs~RF4bda65.TMP" />
   </ItemGroup>
 
   <ItemGroup>

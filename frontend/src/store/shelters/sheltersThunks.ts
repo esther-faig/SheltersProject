@@ -21,3 +21,9 @@ export const setShelterActive = createAsyncThunk(
     return data;
   }
 );
+
+// מחיקת מקלט שלי: השרת מחזיר 204 בלי גוף, ולכן מחזירים את ה-id כדי להסיר אותו מהרשימה
+export const deleteShelter = createAsyncThunk('shelters/deleteShelter', async (id: number) => {
+  await request(`/Shelter/${id}`, { method: 'DELETE' });
+  return id;
+});

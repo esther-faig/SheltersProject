@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { initialState } from './sheltersState';
-import { fetchMyShelters, addShelter, setShelterActive } from './sheltersThunks';
+import { fetchMyShelters, addShelter, setShelterActive, deleteShelter } from './sheltersThunks';
 import { logout } from '../auth/authThunks';
 
 const sheltersSlice = createSlice({
@@ -27,6 +27,9 @@ const sheltersSlice = createSlice({
       .addCase(setShelterActive.fulfilled, (state, action) => {
         const index = state.items.findIndex((s) => s.shelterId === action.payload.id);
         if (index !== -1) state.items[index].isActive = action.payload.isActive;
+      })
+      .addCase(deleteShelter.fulfilled, (state, action) => {
+        state.items = state.items.filter((s) => s.shelterId !== action.payload);
       })
       .addCase(logout.fulfilled, () => initialState);
   },

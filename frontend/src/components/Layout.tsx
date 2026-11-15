@@ -6,6 +6,7 @@ import {
 } from '../store/auth/authSelectors';
 import { logout } from '../store/auth/authThunks';
 import Icon, { IconSprite } from './Icon';
+import AgentChat from './AgentChat';
 
 const TICKER_ITEMS = [
   'מוכנים יותר. בטוחים יותר.',
@@ -112,10 +113,17 @@ function Layout() {
             {loggedIn ? (
               <>
                 {isAdmin && (
-                  <NavLink to="/admin" className={navClass}>
-                    <Icon name="shieldcheck" />
-                    <span className="tx">ניהול</span>
-                  </NavLink>
+                  <>
+                    <NavLink to="/admin" end className={navClass}>
+                      <Icon name="shieldcheck" />
+                      <span className="tx">ניהול</span>
+                    </NavLink>
+
+                    <NavLink to="/admin/users" className={navClass}>
+                      <Icon name="user" />
+                      <span className="tx">משתמשים</span>
+                    </NavLink>
+                  </>
                 )}
 
                 <NavLink to="/profile" className={navClass}>
@@ -151,6 +159,8 @@ function Layout() {
       <main>
         <Outlet />
       </main>
+
+      <AgentChat />
     </div>
   );
 }

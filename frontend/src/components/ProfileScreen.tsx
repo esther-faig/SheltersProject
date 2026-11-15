@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PreferenceRow from './PreferenceRow';
@@ -8,7 +7,7 @@ import { selectIsAdmin } from '../store/auth/authSelectors';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchMe, saveMyPreferences } from '../store/profile/profileThunks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
-import { fetchMyShelters, setShelterActive } from '../store/shelters/sheltersThunks';
+import { fetchMyShelters, setShelterActive, deleteShelter } from '../store/shelters/sheltersThunks';
 
 const IMAGES_URL = import.meta.env.VITE_IMAGES_URL as string;
 
@@ -30,6 +29,7 @@ function ProfileScreen() {
   const [editing, setEditing] = useState(false);
   const [chosen, setChosen] = useState<Record<number, boolean>>({});
   const [saveError, setSaveError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     document.title = 'הפרופיל שלי';
@@ -104,6 +104,18 @@ function ProfileScreen() {
         user.preferences.filter((p) => p.preferenceId !== id)
       )
     );
+  }
+
+  async function handleDelete(id: number, name: string) {
+    if (!window.confirm(`למחוק את המקלט "${name}"? אי אפשר לשחזר אחרי המחיקה.`)) return;
+
+    setDeleteError('');
+
+    try {
+      await dispatch(deleteShelter(id)).unwrap();
+    } catch (err) {
+      setDeleteError((err as { message: string }).message);
+    }
   }
 
   if (loading || !user) {
@@ -262,6 +274,8 @@ function ProfileScreen() {
               </Link>
             </div>
 
+            {deleteError && <div className="err">{deleteError}</div>}
+
             {shelters.length > 0 ? (
               shelters.map((s) => {
                 const status = STATUS[s.status] ?? {
@@ -310,6 +324,14 @@ function ProfileScreen() {
                         <Icon name={s.isActive ? 'clock' : 'check'} />
                       </span>
                       {s.isActive ? 'השבתה זמנית' : 'הפעלה'}
+                    </button>
+
+                    <button
+                      className="btn small"
+                      onClick={() => handleDelete(s.shelterId, s.name)}
+                    >
+                      <span className="sh"><Icon name="x" /></span>
+                      מחיקה
                     </button>
                   </div>
                 );

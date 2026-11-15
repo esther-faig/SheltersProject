@@ -1,30 +1,33 @@
+import { getToken } from '../api/http';
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   text: string;
 }
 
-const URL = 'https://localhost:7273/api/chat/stream';
+// אותה כתובת בסיס כמו שאר האתר (VITE_API_URL ב-.env), במקום כתובת קבועה בקוד
+const URL = `${import.meta.env.VITE_API_URL}/chat/stream`;
 
 /**
  * פונקציה לביצוע Streaming של הודעות צ'אט מהשרת (Server-Sent Events / Chunked Response).
  * @param messages רשימת ההודעות ההיסטוריות בשיחה
  * @param onChunk קולבק המופעל בכל פעם שמגיע חלקיק טקסט (Chunk) חדש מהשרת
- * @param token טוקן ההזדהות של המשתמש (Bearer Token)
+ * @param token טוקן ההזדהות (לא חובה). אם לא נשלח, לוקחים את הטוקן השמור של המשתמש המחובר
  */
 export async function streamChat(
   messages: ChatMessage[],
   onChunk: (text: string) => void,
-  token: string // קבלת הטוקן כפרמטר לצורך ההזדהות בבקשה
+  token: string | null = getToken()
 ): Promise<void> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   const res = await fetch(URL, {
     method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // הוספת כותרת ההזדהות הידנית כיוון ש-fetch אינו עובר דרך interceptors
-    },
+    headers,
     body: JSON.stringify({ messages }),
   });
-  
+
   // בדיקה האם הבקשה הצליחה ויש גוף נתונים (Stream) לקריאה
   if (!res.ok || !res.body) {
     const err = await res.json().catch(() => null);
@@ -38,19 +41,19 @@ export async function streamChat(
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
-    
+
     buffer += value;
     const blocks = buffer.split('\n\n');
     buffer = blocks.pop()!;
-    
+
     // מעבר על הבלוקים שהתקבלו ופענוח נתוני ה-Stream
     for (const block of blocks) {
       const data = block.split('\n').find(l => l.startsWith('data: '))?.slice(6);
       if (!data || data === '[DONE]') continue;
-      
+
       const payload = JSON.parse(data);
       if (block.startsWith('event: error')) throw new Error(payload.title);
-      
+
       // הפעלת הקולבק עם הטקסט שהתקבל
       onChunk(payload.text);
     }

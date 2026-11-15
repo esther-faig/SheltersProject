@@ -6,6 +6,7 @@ import preferencesReducer from './preferences/preferencesSlice';
 import profileReducer from './profile/profileSlice';
 import sheltersReducer from './shelters/sheltersSlice';
 import adminReducer from './admin/adminSlice';
+import usersReducer from './users/usersSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     profile: profileReducer,
     shelters: sheltersReducer,
     admin: adminReducer,
+    users: usersReducer,
   },
 });
 

@@ -1,5 +1,6 @@
 ﻿using BLL.Agent;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -7,6 +8,7 @@ namespace SheltersProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AllowAnonymous]
     public class ChatController : ControllerBase
     {
         private readonly IAgentService _agentService;
