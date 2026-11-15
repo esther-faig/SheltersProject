@@ -10,11 +10,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using AutoMapper;
+using DAL;
+using DAL.Repositories;
+using DTO;
+using Microsoft.Extensions.Options;
+
 namespace BLL.Services
 {
     public class ShelterSearchService : IShelterSearchService
     {
         private readonly IAlertZoneService _alertZoneService;
+        private readonly IActiveAlertSource _activeAlerts;
         private readonly IShelterRepository _shelterRepository;
         private readonly IUserPreferenceRepository _userPreferenceRepository;
         private readonly IShelterEligibilityService _eligibility;
@@ -26,6 +33,7 @@ namespace BLL.Services
 
         public ShelterSearchService(
             IAlertZoneService alertZoneService,
+            IActiveAlertSource activeAlerts,
             IShelterRepository shelterRepository,
             IUserPreferenceRepository userPreferenceRepository,
             IShelterEligibilityService eligibility,
@@ -36,6 +44,7 @@ namespace BLL.Services
             IOptions<ShelterSearchOptions> options)
         {
             _alertZoneService = alertZoneService;
+            _activeAlerts = activeAlerts;
             _shelterRepository = shelterRepository;
             _userPreferenceRepository = userPreferenceRepository;
             _eligibility = eligibility;
@@ -50,24 +59,29 @@ namespace BLL.Services
             ShelterSearchRequestDTO request, int? userId, CancellationToken ct)
         {
             bool byCar = request.TravelMode == TravelModes.Driving;
-            string alertType = AlertTypes.Normalize(request.AlertType, _options.DefaultAlertType);
 
             // ── שלב 1: אזור התרעה לפי מיקום המשתמש (Point-in-Polygon) ──
             var zone = _alertZoneService.FindByLocation(request.Latitude, request.Longitude);
             if (zone == null)
-                return NoResults(byCar, alertType, 0, offerDriving: false,
+            {
+                var fallbackType = AlertTypes.Normalize(request.AlertType, _options.DefaultAlertType);
+                return NoResults(byCar, "", fallbackType, "Default", 0, false,
                     "לא זוהה אזור התרעה עבור המיקום שלך.");
+            }
+
+            // ── שלב 1ב: סוג ההתרעה. התרעה חיה בשרת > מה שהלקוח שלח > ברירת מחדל ──
+            var (alertType, alertSource) = await ResolveAlertTypeAsync(zone, request.AlertType, ct);
 
             // ── שלב 2: זמן התגוננות לפי אזור + סוג התרעה. אם אין, לא ממציאים ──
             int? duration = _alertZoneService.GetDurationSeconds(zone, alertType);
             if (duration == null)
-                return NoResults(byCar, alertType, 0, offerDriving: false,
+                return NoResults(byCar, zone.AreaName, alertType, alertSource, 0, false,
                     $"אין נתון זמן התגוננות עבור {zone.AreaName}.");
 
             // ── שלב 3: זמן הגעה מרבי ──
             int maxSeconds = duration.Value - _options.SafetyMarginSeconds;
             if (maxSeconds <= 0)
-                return NoResults(byCar, alertType, 0, offerDriving: false,
+                return NoResults(byCar, zone.AreaName, alertType, alertSource, 0, false,
                     "זמן ההתגוננות באזור קצר מדי להגעה למקלט.");
 
             bool offerDriving = !byCar;
@@ -100,7 +114,8 @@ namespace BLL.Services
                 .ToList();
 
             if (nearby.Count == 0)
-                return NoResults(byCar, alertType, maxSeconds, offerDriving, "לא נמצא מקלט מתאים בטווח ההגעה.");
+                return NoResults(byCar, zone.AreaName, alertType, alertSource, maxSeconds, offerDriving,
+                    "לא נמצא מקלט מתאים בטווח ההגעה.");
 
             // ── שלב 6: Google Routes: מרחק וזמן אמיתיים ──
             var routes = await _distance.GetRoutesAsync(
@@ -119,7 +134,8 @@ namespace BLL.Services
                 .ToList();
 
             if (routed.Count == 0)
-                return NoResults(byCar, alertType, maxSeconds, offerDriving, "לא נמצא מקלט שאפשר להגיע אליו בזמן.");
+                return NoResults(byCar, zone.AreaName, alertType, alertSource, maxSeconds, offerDriving,
+                    "לא נמצא מקלט שאפשר להגיע אליו בזמן.");
 
             // ── שלבים 8-9: ציון + ערימת מקסימום ──
             var ranked = _ranking.Rank(routed, optional, maxSeconds, _options.MaxResults);
@@ -142,20 +158,39 @@ namespace BLL.Services
                 Results = results,
                 HasResults = true,
                 Message = "נמצא מקלט מומלץ",
+                AreaName = zone.AreaName,
                 AlertType = alertType,
+                AlertSource = alertSource,
                 MaxSecondsToReach = maxSeconds,
                 OfferDrivingSearch = offerDriving
             };
         }
 
+        // התרעה חיה שחלה על האזור קובעת. אחרת מה שהלקוח ביקש (לבדיקות), ואחרת ברירת המחדל
+        private async Task<(string Type, string Source)> ResolveAlertTypeAsync(
+            AlertZone zone, string? requested, CancellationToken ct)
+        {
+            var live = await _activeAlerts.GetCurrentAsync(ct);
+            if (live != null && live.Covers(zone.AreaName))
+                return (live.AlertType, "Live");
+
+            if (!string.IsNullOrWhiteSpace(requested))
+                return (AlertTypes.Normalize(requested, _options.DefaultAlertType), "Requested");
+
+            return (_options.DefaultAlertType, "Default");
+        }
+
         private ShelterSearchResponseDTO NoResults(
-            bool byCar, string alertType, int maxSeconds, bool offerDriving, string message)
+            bool byCar, string areaName, string alertType, string alertSource,
+            int maxSeconds, bool offerDriving, string message)
         {
             return new ShelterSearchResponseDTO
             {
                 HasResults = false,
                 Message = message,
+                AreaName = areaName,
                 AlertType = alertType,
+                AlertSource = alertSource,
                 MaxSecondsToReach = maxSeconds,
                 OfferDrivingSearch = offerDriving,
                 EmergencyGuidance = _guidance.Get(byCar)

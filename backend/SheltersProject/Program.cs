@@ -166,14 +166,15 @@ builder.Services.AddHttpClient<IDistanceService, GoogleMapsDistanceService>(clie
     client.BaseAddress = new Uri("https://routes.googleapis.com/");
     client.Timeout = TimeSpan.FromSeconds(5);
 });
-
-// שרת הפייתון המדומה (ייבוא זמני התגוננות)
-builder.Services.AddHttpClient<IProtectionTimeSource, MockProtectionTimeSource>(client =>
+// שרת ההתרעות (המדומה כרגע). בהמשך מחליפים את ה-BaseUrl בקונפיגורציה
+builder.Services.AddHttpClient<IActiveAlertSource, OrefActiveAlertSource>(client =>
 {
-    client.BaseAddress = new Uri(
-        builder.Configuration["ProtectionTimeServer:BaseUrl"] ?? "http://localhost:8000/");
+    client.BaseAddress = new Uri(builder.Configuration["AlertServer:BaseUrl"] ?? "http://localhost:8000/");
+    client.Timeout = TimeSpan.FromSeconds(2);   // בזמן אזעקה לא מחכים
+    // השרת האמיתי דורש את הכותרות האלה. לשרת המדומה הן לא מפריעות
+    client.DefaultRequestHeaders.Add("Referer", "https://www.oref.org.il/");
+    client.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
 });
-builder.Services.AddScoped<IProtectionTimeImportService, ProtectionTimeImportService>();
 
 // גיאוקודינג דרך Nominatim (OpenStreetMap): בלי מפתח API
 builder.Services.AddHttpClient<GeocodingTools>(client =>
