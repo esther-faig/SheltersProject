@@ -1,4 +1,4 @@
-export interface AdminFeature { preferenceId: number; name: string; isAvailable: boolean; }
+export interface AdminFeature { preferenceId: number; name: string; isAvailable: boolean | null; }
 export interface AdminShelter {
   shelterId: number;
   name: string;

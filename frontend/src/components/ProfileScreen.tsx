@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import PreferenceRow from './PreferenceRow';
-import Icon, { featureIcon } from './Icon';
+import PreferencePicker from './PreferencePicker';
+import {
+  fromUserPreferences,
+  toPriorityList,
+  type PickedPreference,
+} from '../utils/pickedPreferences';import Icon, { featureIcon } from './Icon';
 import ShelterIllustration from './ShelterIllustration';
 import { selectIsAdmin } from '../store/auth/authSelectors';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -27,7 +31,7 @@ function ProfileScreen() {
   const allPrefs = useAppSelector((state) => state.preferences.items);
 
   const [editing, setEditing] = useState(false);
-  const [chosen, setChosen] = useState<Record<number, boolean>>({});
+  const [picked, setPicked] = useState<PickedPreference[]>([]);
   const [saveError, setSaveError] = useState('');
   const [deleteError, setDeleteError] = useState('');
 
@@ -41,54 +45,18 @@ function ProfileScreen() {
   function startEdit() {
     if (!user) return;
 
-    const current: Record<number, boolean> = {};
-
-    user.preferences.forEach((p) => {
-      current[p.preferenceId] = p.isRequired;
-    });
-
-    setChosen(current);
+    setPicked(fromUserPreferences(user.preferences));
     setSaveError('');
     setEditing(true);
   }
 
-  function handlePrefChange(
-    id: number,
-    checked: boolean,
-    required: boolean
-  ) {
-    const next = { ...chosen };
 
-    if (checked) next[id] = required;
-    else delete next[id];
-
-    setChosen(next);
-  }
 
   async function handleSave() {
-    if (!user) return;
-
     setSaveError('');
 
-    const oldPriority = new Map(
-      user.preferences.map((p) => [p.preferenceId, p.priority])
-    );
-
-    let nextPriority =
-      Math.max(0, ...user.preferences.map((p) => p.priority)) + 1;
-
-    const list = Object.entries(chosen).map(([id, isRequired]) => {
-      const preferenceId = Number(id);
-
-      return {
-        preferenceId,
-        priority: oldPriority.get(preferenceId) ?? nextPriority++,
-        isRequired,
-      };
-    });
-
     try {
-      await dispatch(saveMyPreferences(list)).unwrap();
+      await dispatch(saveMyPreferences(toPriorityList(picked))).unwrap();
       await dispatch(fetchMe()).unwrap();
       setEditing(false);
     } catch (err) {
@@ -99,11 +67,11 @@ function ProfileScreen() {
   function removePref(id: number) {
     if (!user) return;
 
-    dispatch(
-      saveMyPreferences(
-        user.preferences.filter((p) => p.preferenceId !== id)
-      )
-    );
+    const remaining = user.preferences
+      .filter((p) => p.preferenceId !== id)
+      .sort((a, b) => a.priority - b.priority);
+
+    dispatch(saveMyPreferences(toPriorityList(remaining)));
   }
 
   async function handleDelete(id: number, name: string) {
@@ -117,7 +85,6 @@ function ProfileScreen() {
       setDeleteError((err as { message: string }).message);
     }
   }
-
   if (loading || !user) {
     return (
       <section className="screen active">
@@ -139,9 +106,9 @@ function ProfileScreen() {
   }
 
   const requiredPrefs = user.preferences.filter((p) => p.isRequired);
-  const preferredPrefs = user.preferences.filter((p) => !p.isRequired);
-
-  const prefList = (list: typeof user.preferences) =>
+  const preferredPrefs = user.preferences
+    .filter((p) => !p.isRequired)
+    .sort((a, b) => a.priority - b.priority);  const prefList = (list: typeof user.preferences) =>
     list.length > 0 ? (
       list.map((p) => (
         <div className="pref-line" key={p.preferenceId}>
@@ -213,18 +180,8 @@ function ProfileScreen() {
 
             {editing ? (
               <>
-                <div className="plist" style={{ marginBottom: 18 }}>
-                  {allPrefs.map((p) => (
-                    <PreferenceRow
-                      key={p.preferenceId}
-                      name={p.name}
-                      checked={p.preferenceId in chosen}
-                      required={chosen[p.preferenceId] ?? false}
-                      onChange={(checked, required) =>
-                        handlePrefChange(p.preferenceId, checked, required)
-                      }
-                    />
-                  ))}
+                <div style={{ marginBottom: 18 }}>
+                  <PreferencePicker all={allPrefs} value={picked} onChange={setPicked} />
                 </div>
 
                 {saveError && <div className="err">{saveError}</div>}

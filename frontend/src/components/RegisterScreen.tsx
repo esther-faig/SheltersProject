@@ -1,7 +1,7 @@
-
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PreferenceRow from './PreferenceRow';
+import PreferencePicker from './PreferencePicker';
+import { toPriorityList, type PickedPreference } from '../utils/pickedPreferences';
 import Icon from './Icon';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
@@ -19,7 +19,7 @@ function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [chosen, setChosen] = useState<Record<number, boolean>>({});
+  const [picked, setPicked] = useState<PickedPreference[]>([]);
   const [submitError, setSubmitError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -27,24 +27,6 @@ function RegisterScreen() {
     document.title = 'הרשמה';
     dispatch(fetchPreferences());
   }, [dispatch]);
-
-  function handlePrefChange(
-    id: number,
-    checked: boolean,
-    required: boolean
-  ) {
-    setChosen((current) => {
-      const next = { ...current };
-
-      if (checked) {
-        next[id] = required;
-      } else {
-        delete next[id];
-      }
-
-      return next;
-    });
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,13 +44,7 @@ function RegisterScreen() {
 
       await dispatch(login({ email: email.trim(), password })).unwrap();
 
-      const preferenceList = Object.entries(chosen).map(
-        ([id, isRequired], index) => ({
-          preferenceId: Number(id),
-          priority: index + 1,
-          isRequired,
-        })
-      );
+      const preferenceList = toPriorityList(picked);
 
       await dispatch(saveMyPreferences(preferenceList)).unwrap();
       navigate('/profile');
@@ -223,28 +199,12 @@ function RegisterScreen() {
             <h3 style={{ fontSize: 22, marginBottom: 4 }}>מה חשוב לך במקלט?</h3>
 
             <div className="hint" style={{ margin: '0 0 12px' }}>
-              מסמנים מה מתאים לך, ואפשר לקבוע מה <b>חובה</b> — מקלט שלא עומד
-              בזה לא יוצג.
+              מסמנים מה מתאים לך, ואפשר לקבוע מה <b>חובה</b> — מקלט שבוודאות
+              לא עומד בזה לא יוצג. מקלט שאין עליו מידע יוצג עם הערה "לא ידוע".
             </div>
 
             <div id="prefRows">
-              <div className="plist">
-                {prefs.map((preference) => (
-                  <PreferenceRow
-                    key={preference.preferenceId}
-                    name={preference.name}
-                    checked={preference.preferenceId in chosen}
-                    required={chosen[preference.preferenceId] ?? false}
-                    onChange={(checked, required) =>
-                      handlePrefChange(
-                        preference.preferenceId,
-                        checked,
-                        required
-                      )
-                    }
-                  />
-                ))}
-              </div>
+              <PreferencePicker all={prefs} value={picked} onChange={setPicked} />
             </div>
 
             <div className="hint" style={{ marginTop: 14 }}>

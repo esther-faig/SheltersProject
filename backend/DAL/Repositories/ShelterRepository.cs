@@ -86,6 +86,21 @@ namespace DAL.Repositories
                 .First(s => s.ShelterId == entity.ShelterId);
         }
 
+
+        // שלב 4 באלגוריתם: רק Approved ו-IsActive, בתוך הריבוע. משתמש באינדקס (Latitude, Longitude)
+        public List<Shelter> FindCandidates(double minLat, double maxLat, double minLon, double maxLon)
+        {
+            return _context.Shelter
+                .AsNoTracking()
+                .Include(s => s.ShelterFeatures)
+                    .ThenInclude(sf => sf.Preference)
+                .Where(s => s.Status == ShelterStatus.Approved
+                         && s.IsActive
+                         && s.Latitude >= minLat && s.Latitude <= maxLat
+                         && s.Longitude >= minLon && s.Longitude <= maxLon)
+                .ToList();
+        }
+
         public bool Delete(int id)
         {
             var shelter = _context.Shelter

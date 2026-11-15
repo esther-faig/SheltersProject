@@ -21,8 +21,9 @@ namespace DAL.Repositories
         //למשתמש-להצגת המקלטים שהוא שיתף
         List<Shelter> GetByUserId(int userId);
 
-        List<Shelter> SearchByCity(string city, int max);   
-
+        List<Shelter> SearchByCity(string city, int max);
+        // מועמדים לחיפוש: מאושרים ופעילים בתוך ריבוע גיאוגרפי
+        List<Shelter> FindCandidates(double minLat, double maxLat, double minLon, double maxLon);
         Shelter? GetById(int id);
         Shelter Add(Shelter entity);
         Shelter? Update(Shelter entity);

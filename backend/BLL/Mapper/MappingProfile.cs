@@ -27,9 +27,7 @@ namespace BLL.Mapper
             CreateMap<ShelterFeature, ShelterFeatureDTO>()
                 .ForMember(d => d.Name, o => o.MapFrom(s => s.Preference.Name))
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.Preference.Description))
-                .ForMember(d => d.Category, o => o.MapFrom(s => s.Preference.Category))
-                .ForMember(d => d.IsAvailable, o => o.MapFrom(s => s.IsAvailable ?? false));
-
+                .ForMember(d => d.Category, o => o.MapFrom(s => s.Preference.Category));
             CreateMap<ShelterFeatureDTO, ShelterFeature>()
                 .ForMember(d => d.ShelterFeatureId, o => o.Ignore())
                 .ForMember(d => d.ShelterId, o => o.Ignore())                 // לא קיים ב-DTO, נקבע ב-Repository
@@ -59,7 +57,11 @@ namespace BLL.Mapper
                 .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))
                 .ForMember(d => d.Files, o => o.MapFrom(s => s.Files))
                 .ForMember(d => d.DistanceMeters, o => o.Ignore())
-                .ForMember(d => d.TravelTimeSeconds, o => o.Ignore());
+                .ForMember(d => d.TravelTimeSeconds, o => o.Ignore())
+                .ForMember(d => d.MatchScore, o => o.Ignore())
+                .ForMember(d => d.IsRecommended, o => o.Ignore())
+                .ForMember(d => d.IsEstimate, o => o.Ignore())
+                .ForMember(d => d.MatchReasons, o => o.Ignore());
 
             CreateMap<Shelter, ShelterDetailsDTO>()
                 .ForMember(d => d.Features, o => o.MapFrom(s => s.ShelterFeatures))

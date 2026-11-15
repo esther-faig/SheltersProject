@@ -3,7 +3,7 @@ import type { SVGProps } from 'react';
 export type IconName =
   | 'shield' | 'shieldcheck' | 'pin' | 'walk' | 'car' | 'home' | 'user' | 'users'
   | 'heart' | 'wheelchair' | 'ramp' | 'wind' | 'expand' | 'chair' | 'camera'
-  | 'check' | 'arrow-l' | 'arrow-r' | 'nav' | 'star' | 'edit' | 'clock' | 'info'
+  | 'check' | 'arrow-l' | 'arrow-r' | 'arrow-up' | 'arrow-down' | 'nav' | 'star' | 'edit' | 'clock' | 'info'
   | 'lock' | 'mail' | 'sliders' | 'locate' | 'x' | 'phone' | 'alert' | 'plus'
   | 'list' | 'logout' | 'key';
 
@@ -60,6 +60,8 @@ export function IconSprite() {
     <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.4 h11 M9 12 h11 M9 17.6 h11 M4.6 6.4 h.2 M4.6 12 h.2 M4.6 17.6 h.2"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4.6 H5.4 v14.8 H10 M9.6 12 h10 M15.6 8 l4 4 l-4 4"/></symbol>
     <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="3.6"/><path d="M11.6 12 H21 M17 12 v3.4 M20.6 12 v2.4"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 20.4 V4.8 M6 10.8 l6 -6 l6 6"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 3.6 V19.2 M6 13.2 l6 6 l6 -6"/></symbol>
   </defs>
 </svg>
   );
