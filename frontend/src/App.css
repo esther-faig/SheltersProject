@@ -563,3 +563,18 @@ h1{-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
   .agent-fab::after, .agent-panel, .agent-msg { animation: none; }
 }.order-box{margin-top:18px;padding-top:14px;border-top:2px dotted #263d4930}
 .iconx[disabled]{opacity:.35;pointer-events:none}
+
+/* ===== אזור ניהול: שלושת הכרטיסים ===== */
+.admin-tile{display:block;color:inherit;transition:transform .15s}
+.admin-tile:hover{background:var(--paper2)}
+.admin-tile:nth-child(1):hover,.admin-tile:nth-child(3):hover{transform:translateY(-3px)}
+.admin-tile:nth-child(2):hover{transform:translateY(23px)}
+.admin-tiles{padding-bottom:30px}
+@media(max-width:860px){.admin-tile:nth-child(2),.admin-tile:nth-child(2):hover{transform:none}}
+
+/* ===== ניהול העדפות ===== */
+.pref-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pref-wide{grid-column:1/-1}
+.pref-edit{align-items:flex-start;flex-wrap:wrap}
+.my-sh .actions{display:flex;gap:8px;flex:none}
+@media(max-width:560px){.pref-grid{grid-template-columns:1fr}}

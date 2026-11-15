@@ -69,7 +69,7 @@ function AdminScreen() {
               <button
                 type="button"
                 className="btn primary"
-                onClick={() => dispatch(fetchPendingShelters())}
+                onClick={() => navigate('/admin')}
               >
                 <span className="sh"><Icon name="check" /></span>
                 נסי שוב

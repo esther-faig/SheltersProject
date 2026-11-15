@@ -1,6 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { initialState } from './preferencesState';
-import { fetchPreferences } from './preferencesThunks';
+import {
+  fetchPreferences,
+  createPreference,
+  updatePreference,
+  deletePreference,
+} from './preferencesThunks';
 
 const preferencesSlice = createSlice({
   name: 'preferences',
@@ -16,6 +21,17 @@ const preferencesSlice = createSlice({
       .addCase(fetchPreferences.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message ?? 'Error';
+      })
+      .addCase(createPreference.fulfilled, (state, action) => {
+        state.items.push(action.payload);
+      })
+      .addCase(updatePreference.fulfilled, (state, action) => {
+        state.items = state.items.map((p) =>
+          p.preferenceId === action.payload.preferenceId ? action.payload : p
+        );
+      })
+      .addCase(deletePreference.fulfilled, (state, action) => {
+        state.items = state.items.filter((p) => p.preferenceId !== action.payload);
       });
   },
 });

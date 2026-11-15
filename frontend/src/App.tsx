@@ -10,6 +10,8 @@ import ShareShelterScreen from './components/ShareShelterScreen';
 import ProfileScreen from './components/ProfileScreen';
 import AdminScreen from './components/AdminScreen';
 import UsersScreen from './components/UsersScreen';
+import AdminHubScreen from './components/AdminHubScreen';
+import PreferencesAdminScreen from './components/PreferencesAdminScreen';
 import RequireAuth from './components/RequireAuth';
 import NotFound from './components/NotFound';
 import ChatScreen from './components/ChatScreen';
@@ -35,8 +37,10 @@ function App() {
 
         {/* מסכי מנהל */}
         <Route element={<RequireAuth admin />}>
-          <Route path="/admin" element={<AdminScreen />} />
+          <Route path="/admin" element={<AdminHubScreen />} />
+          <Route path="/admin/shelters" element={<AdminScreen />} />
           <Route path="/admin/users" element={<UsersScreen />} />
+          <Route path="/admin/preferences" element={<PreferencesAdminScreen />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

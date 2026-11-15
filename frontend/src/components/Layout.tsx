@@ -113,17 +113,10 @@ function Layout() {
             {loggedIn ? (
               <>
                 {isAdmin && (
-                  <>
-                    <NavLink to="/admin" end className={navClass}>
-                      <Icon name="shieldcheck" />
-                      <span className="tx">ניהול</span>
-                    </NavLink>
-
-                    <NavLink to="/admin/users" className={navClass}>
-                      <Icon name="user" />
-                      <span className="tx">משתמשים</span>
-                    </NavLink>
-                  </>
+                  <NavLink to="/admin" className={navClass}>
+                    <Icon name="shieldcheck" />
+                    <span className="tx">ניהול</span>
+                  </NavLink>
                 )}
 
                 <NavLink to="/profile" className={navClass}>

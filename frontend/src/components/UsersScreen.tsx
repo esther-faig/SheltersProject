@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Icon from './Icon';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchUsers } from '../store/users/usersThunks';
 
 function UsersScreen() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { items, loading, error } = useAppSelector((state) => state.users);
 
   useEffect(() => {
@@ -13,6 +16,14 @@ function UsersScreen() {
   return (
     <div className="wrap inner" style={{ maxWidth: 900 }}>
       <div className="phead">
+        <button
+          className="iconbtn"
+          type="button"
+          onClick={() => navigate('/admin')}
+          aria-label="חזרה לאזור הניהול"
+        >
+          <Icon name="arrow-r" />
+        </button>
         <div>
           <h2>משתמשי המערכת</h2>
           <div className="sub">{loading ? 'טוען...' : `${items.length} משתמשים רשומים`}</div>
