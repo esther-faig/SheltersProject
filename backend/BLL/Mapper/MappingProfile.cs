@@ -27,9 +27,7 @@ namespace BLL.Mapper
             CreateMap<ShelterFeature, ShelterFeatureDTO>()
                 .ForMember(d => d.Name, o => o.MapFrom(s => s.Preference.Name))
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.Preference.Description))
-                .ForMember(d => d.Category, o => o.MapFrom(s => s.Preference.Category))
-                .ForMember(d => d.IsAvailable, o => o.MapFrom(s => s.IsAvailable ?? false));
-
+                .ForMember(d => d.Category, o => o.MapFrom(s => s.Preference.Category));
             CreateMap<ShelterFeatureDTO, ShelterFeature>()
                 .ForMember(d => d.ShelterFeatureId, o => o.Ignore())
                 .ForMember(d => d.ShelterId, o => o.Ignore())                 // לא קיים ב-DTO, נקבע ב-Repository

@@ -12,7 +12,9 @@ namespace BLL.Search
     {
         List<RankedShelter> Rank(
             IReadOnlyList<RoutedShelter> shelters,
+            IReadOnlyList<UserPreference> requiredPreferences,
             IReadOnlyList<UserPreference> optionalPreferences,
             int maxSeconds, int take);
     }
+
 }

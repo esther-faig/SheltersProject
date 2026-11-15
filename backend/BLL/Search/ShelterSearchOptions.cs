@@ -30,9 +30,6 @@ namespace BLL.Search
         public double PreferenceWeight { get; set; } = 0.7;
         public double TravelTimeWeight { get; set; } = 0.3;
 
-        // true: מאפיין חובה שלא ידוע (NULL / אין רשומה) פוסל את המקלט
-        public bool UnknownFailsRequired { get; set; } = false;
-
         // מהירויות "נדיבות" - רק לפסילה בטוחה בשלב ה-SQL (מטר/שנייה)
         public double MaxWalkSpeedMps { get; set; } = 3.0;
         public double MaxDriveSpeedMps { get; set; } = 35.0;

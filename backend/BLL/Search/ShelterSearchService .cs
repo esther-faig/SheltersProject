@@ -138,8 +138,7 @@ namespace BLL.Services
                     "לא נמצא מקלט שאפשר להגיע אליו בזמן.");
 
             // ── שלבים 8-9: ציון + ערימת מקסימום ──
-            var ranked = _ranking.Rank(routed, optional, maxSeconds, _options.MaxResults);
-
+            var ranked = _ranking.Rank(routed, required, optional, maxSeconds, _options.MaxResults);
             // ── שלב 10: בניית התשובה ──
             var results = ranked.Select((r, index) =>
             {

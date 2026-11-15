@@ -16,4 +16,21 @@ namespace BLL.Services
 
     // מקלט אחרי דירוג
     public record RankedShelter(RoutedShelter Routed, double Score, List<string> Reasons);
+
+    // true = Yes (התאמה), false = No (התנגשות), null או שורה חסרה = Unknown (לא ידוע)
+    public enum FeatureState { Unknown, Yes, No }
+
+    public static class ShelterFeatureLookup
+    {
+        public static FeatureState StateOf(Shelter shelter, int preferenceId)
+        {
+            var feature = shelter.ShelterFeatures.FirstOrDefault(f => f.PreferenceId == preferenceId);
+            return feature?.IsAvailable switch
+            {
+                true => FeatureState.Yes,
+                false => FeatureState.No,
+                _ => FeatureState.Unknown   // null, או אין שורה בכלל
+            };
+        }
+    }
 }

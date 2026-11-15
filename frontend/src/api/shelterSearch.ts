@@ -15,7 +15,7 @@ export interface ShelterSearchResult {
   isRecommended: boolean;
   isEstimate: boolean;
   matchReasons: string[];
-  features: { preferenceId: number; name: string; isAvailable: boolean }[];
+  features: { preferenceId: number; name: string; isAvailable: boolean | null }[];
   files: string[];
 }
 

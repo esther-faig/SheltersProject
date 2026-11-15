@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace BLL.Services
 {
-
+  
     public class ShelterRankingService : IShelterRankingService
     {
         private readonly ShelterSearchOptions _options;
@@ -21,15 +21,22 @@ namespace BLL.Services
 
         public List<RankedShelter> Rank(
             IReadOnlyList<RoutedShelter> shelters,
+            IReadOnlyList<UserPreference> requiredPreferences,
             IReadOnlyList<UserPreference> optionalPreferences,
             int maxSeconds, int take)
         {
-            // Priority 1 = הכי חשוב, לכן משקל = (הגדול ביותר - Priority + 1)
-            int maxPriority = optionalPreferences.Count == 0 ? 0 : optionalPreferences.Max(p => p.Priority);
-            var weighted = optionalPreferences
-                .Select(p => (Pref: p, Weight: maxPriority - p.Priority + 1))
-                .OrderByDescending(x => x.Weight)
-                .ToList();
+            // Priority 1 = הכי חשוב. הרגילות מסודרות, והראשונה מקבלת את המשקל הגבוה ביותר (n..1)
+            var orderedOptional = optionalPreferences
+                .OrderBy(p => p.Priority).ThenBy(p => p.PreferenceId).ToList();
+            int n = orderedOptional.Count;
+
+            // חובה מקבלת משקל גבוה מכל העדפה רגילה, כדי שמקלט שאישר דרישת חובה ינצח מקלט שלא ידוע
+            int requiredWeight = n + 1;
+
+            var weighted = new List<(UserPreference Pref, int Weight, bool Required)>();
+            weighted.AddRange(requiredPreferences.OrderBy(p => p.PreferenceId)
+                .Select(p => (p, requiredWeight, true)));
+            weighted.AddRange(orderedOptional.Select((p, i) => (p, n - i, false)));
             double totalWeight = weighted.Sum(x => x.Weight);
 
             // נרמול המשקלים כך שיסתכמו ל-1
@@ -43,26 +50,40 @@ namespace BLL.Services
 
             foreach (var routed in shelters)
             {
-                var features = routed.Shelter.ShelterFeatures.ToDictionary(f => f.PreferenceId, f => f.IsAvailable);
-
                 double earned = 0;
                 var reasons = new List<string> { TravelReason(routed) };
 
-                foreach (var (pref, weight) in weighted)
+                foreach (var (pref, weight, isRequired) in weighted)
                 {
                     string name = pref.Preference?.Name ?? $"העדפה {pref.PreferenceId}";
-                    features.TryGetValue(pref.PreferenceId, out var available);
 
-                    if (available == true) { earned += weight; reasons.Add($"מתאים להעדפה שלך: {name}"); }
-                    else if (available == false) reasons.Add($"אין במקלט: {name}");
-                    else reasons.Add($"לא ידוע אם יש: {name}");
+                    switch (ShelterFeatureLookup.StateOf(routed.Shelter, pref.PreferenceId))
+                    {
+                        case FeatureState.Yes:
+                            earned += weight;
+                            reasons.Add(isRequired
+                                ? $"עומד בדרישת החובה שלך: {name}"
+                                : $"מתאים להעדפה שלך: {name}");
+                            break;
+
+                        case FeatureState.No:
+                            // העדפת חובה עם "אין" כבר נפסלה בסינון, לכן כאן זה רק העדפה רגילה
+                            reasons.Add($"אין במקלט: {name}");
+                            break;
+
+                        default: // Unknown: 0 נקודות, ותווית ברורה
+                            reasons.Add(isRequired
+                                ? $"לא ידוע אם יש: {name} (דרישת חובה, לא אומת)"
+                                : $"לא ידוע אם יש: {name}");
+                            break;
+                    }
                 }
 
                 // רכיבים מנורמלים ל-0..100. 100 = הגעה מיידית, 0 = בדיוק בגבול הזמן
                 double timeScore = Math.Clamp(100.0 * (1.0 - (double)routed.Seconds / maxSeconds), 0, 100);
                 double prefScore = totalWeight > 0 ? 100.0 * earned / totalWeight : 0;
 
-                // אורח או משתמש בלי העדפות רגילות: רק ציון הזמן (אין מסלול קוד נפרד)
+                // אורח או משתמש בלי שום העדפה: רק ציון הזמן (אין מסלול קוד נפרד)
                 double score = totalWeight > 0 ? wPref * prefScore + wTime * timeScore : timeScore;
 
                 heap.Enqueue(
