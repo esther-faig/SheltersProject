@@ -601,3 +601,35 @@ h1{-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
 .thumb-edit .iconx{position:absolute;top:4px;inset-inline-start:4px;width:22px;height:22px}
 .site-disclaimer{font-size:12px;color:var(--ink2);text-align:center;padding:24px 16px 40px;position:relative;z-index:1;max-width:900px;margin:0 auto}
 .site-disclaimer a{text-decoration:underline}
+
+/* ===== כל הרקעים הצהובים — כמו הרקע של ריבוע "שיתוף מקלט פרטי" בדף הבית ===== */
+.reco,.chip.warn{background:linear-gradient(110deg,#f8eeee,#f3f7f7)}
+
+/* ===== כפתורי אייקון (עריכה / השבתה / מחיקה) עם הסבר בריחוף ===== */
+.my-sh-actions{flex-wrap:nowrap;gap:4px;align-items:center}
+.icon-act{
+  position:relative;width:40px;height:40px;display:grid;place-items:center;
+  padding:0;border:0;border-radius:50%;background:none;color:var(--ink);
+  transition:background .15s,color .15s,transform .15s;
+}
+.icon-act .ic{width:22px;height:22px}
+.icon-act:hover,.icon-act:focus-visible{background:var(--rose);color:var(--red-d);transform:translateY(-1px)}
+.icon-act.danger:hover,.icon-act.danger:focus-visible{background:#f7e0de;color:#b3342b}
+.icon-act::after{
+  content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;
+  transform:translate(-50%,4px);white-space:nowrap;pointer-events:none;
+  background:var(--ink);color:#fff;font-size:11px;font-weight:600;line-height:1;
+  padding:5px 8px;border-radius:6px;opacity:0;transition:opacity .15s,transform .15s;z-index:10;
+}
+.icon-act:hover::after,.icon-act:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+
+/* ===== שיתוף מקלט: שדות וכפתורי קואורדינטות זה לצד זה ===== */
+.coords-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.coords-row .btn{width:100%;min-width:0;padding:0 10px;gap:6px;font-size:13px}
+.coords-row .field input{font-size:14px}
+@media(max-width:560px){.actions .coords-row .btn,.coords-row .btn{width:100%}}
+
+/* ===== אייקוני פעולה: עדינים ויפים יותר ===== */
+.icon-act{color:var(--ink2)}
+.icon-act .ic{width:20px;height:20px;stroke-width:1.6}
+.icon-act[disabled]{opacity:.35;pointer-events:none}

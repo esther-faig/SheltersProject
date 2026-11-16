@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
 import { addShelter } from '../store/shelters/sheltersThunks';
@@ -283,27 +283,33 @@ function ShareShelterScreen() {
                   מיקום המקלט על המפה (קו רוחב וקו אורך):
                 </div>
 
-                <div className="field" style={{ marginTop: 10 }}>
-                  <Icon name="locate" />
-                  <input
-                    type="text"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                    placeholder="קו רוחב (Latitude) — למשל 32.080000"
-                  />
+                {/* קו רוחב וקו אורך — אחד ליד השני */}
+                <div className="coords-row">
+                  <div className="field">
+                    <Icon name="locate" />
+                    <input
+                      type="text"
+                      value={lat}
+                      onChange={(e) => setLat(e.target.value)}
+                      placeholder="קו רוחב — 32.080000"
+                      aria-label="קו רוחב (Latitude)"
+                    />
+                  </div>
+
+                  <div className="field">
+                    <Icon name="locate" />
+                    <input
+                      type="text"
+                      value={lng}
+                      onChange={(e) => setLng(e.target.value)}
+                      placeholder="קו אורך — 34.780000"
+                      aria-label="קו אורך (Longitude)"
+                    />
+                  </div>
                 </div>
 
-                <div className="field" style={{ marginTop: 10 }}>
-                  <Icon name="locate" />
-                  <input
-                    type="text"
-                    value={lng}
-                    onChange={(e) => setLng(e.target.value)}
-                    placeholder="קו אורך (Longitude) — למשל 34.780000"
-                  />
-                </div>
-
-                <div className="actions" style={{ marginTop: 12 }}>
+                {/* שני הכפתורים — אחד ליד השני */}
+                <div className="coords-row">
                   <button
                     type="button"
                     className="btn small soft"
@@ -325,13 +331,8 @@ function ShareShelterScreen() {
                     <span className="sh">
                       <Icon name="pin" />
                     </span>
-                    {geocoding ? 'מחפש...' : 'מצא קואורדינטות לפי הכתובת'}
+                    {geocoding ? 'מחפש...' : 'מצא קואורדינטות'}
                   </button>
-                </div>
-
-                <div className="hint" style={{ marginTop: 8 }}>
-                  לא נמצאים במקום? אפשר לסמן על המפה, או{' '}
-                  <Link to="/chat">לבקש מהעוזר</Link> שימצא את הקואורדינטות.
                 </div>
               </div>
             </div>

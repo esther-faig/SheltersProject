@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PreferencePicker from './PreferencePicker';
@@ -330,22 +329,25 @@ function ProfileScreen() {
                       )}
                     </div>
 
-                    {/* כפתורי פעולות למקלט */}
+                    {/* כפתורי פעולות למקלט — אייקונים עם הסבר בריחוף */}
                     <div className="my-sh-actions">
                       {/* עריכת מקלט */}
                       <button
-                        className="btn small primary"
+                        type="button"
+                        className="icon-act"
+                        data-tip="עריכה"
+                        aria-label="עריכה"
                         onClick={() => setEditingId(s.shelterId)}
                       >
-                        <span className="sh">
-                          <Icon name="edit" />
-                        </span>
-                        עריכה
+                        <Icon name="edit" />
                       </button>
 
                       {/* השבתה זמנית או הפעלה */}
                       <button
-                        className="btn small"
+                        type="button"
+                        className="icon-act"
+                        data-tip={s.isActive ? 'השבתה זמנית' : 'הפעלה'}
+                        aria-label={s.isActive ? 'השבתה זמנית' : 'הפעלה'}
                         onClick={() =>
                           dispatch(
                             setShelterActive({
@@ -355,24 +357,18 @@ function ProfileScreen() {
                           )
                         }
                       >
-                        <span className="sh">
-                          <Icon name={s.isActive ? 'clock' : 'check'} />
-                        </span>
-
-                        {s.isActive ? 'השבתה זמנית' : 'הפעלה'}
+                        <Icon name={s.isActive ? 'pause' : 'play'} />
                       </button>
 
                       {/* מחיקת מקלט */}
                       <button
-                        className="btn small"
-                        onClick={() =>
-                          handleDelete(s.shelterId, s.name)
-                        }
+                        type="button"
+                        className="icon-act danger"
+                        data-tip="מחיקה"
+                        aria-label="מחיקה"
+                        onClick={() => handleDelete(s.shelterId, s.name)}
                       >
-                        <span className="sh">
-                          <Icon name="x" />
-                        </span>
-                        מחיקה
+                        <Icon name="trash" />
                       </button>
                     </div>
                   </div>
