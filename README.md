@@ -61,3 +61,9 @@ npm install
 4. הרצת הפרויקט עם `F5`. ה-API עולה בכתובת `https://localhost:7273`, ו-Swagger נפתח אוטומטית.
 
 - לאחר כל שינוי במחלקות ב-DAL יש ליצור מיגרציה חדשה: `Add-Migration <שם>` ואז `Update-Database`.
+
+
+## מגבלות ואזכורים
+- האתר הוא כלי עזר בלבד. הנתונים עלולים להיות לא מדויקים או לא עדכניים, וההנחיות הרשמיות של פיקוד העורף קודמות תמיד.
+- זמן ההתראה המקדימה (8 דקות) הוא ערך קבוע של האתר ואינו נתון רשמי (`Source = 'SitePolicy'` בטבלת `ProtectionTime`).
+- אזורי התרעה, גבולות וזמני מיגון מבוססים על [amitfin/oref_alert](https://github.com/amitfin/oref_alert), רישיון MIT. ראו `third_party/oref_alert/LICENSE` ו-`THIRD_PARTY_NOTICES.md`.

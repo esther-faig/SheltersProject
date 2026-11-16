@@ -154,6 +154,12 @@ function Layout() {
       </main>
 
       <AgentChat />
+            <footer className="site-disclaimer">
+        האתר הוא כלי עזר בלבד. הנתונים (גבולות אזורים, זמני מיגון ומקלטים) עשויים להיות לא מדויקים או לא עדכניים.
+        זמן ההתראה המקדימה (8 דקות) הוא ערך קבוע של האתר ואינו נתון רשמי.
+        ההנחיות הרשמיות של פיקוד העורף קודמות תמיד. הנתונים הגיאוגרפיים מבוססים על{' '}
+        <a href="https://github.com/amitfin/oref_alert" target="_blank" rel="noopener noreferrer">amitfin/oref_alert</a> (MIT).
+      </footer>
     </div>
   );
 }
