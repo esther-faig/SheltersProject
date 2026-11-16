@@ -199,7 +199,7 @@ builder.Services.AddHttpClient<GeocodingTools>(client =>
     client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
     // חובה לפי כללי השימוש של Nominatim: שם מזהה לאפליקציה
     client.DefaultRequestHeaders.UserAgent.ParseAdd(
-        "SheltersProject-StudentApp/1.0 (your-email@example.com)");
+        "SheltersProject-StudentApp/1.0 (estherfaig865@gmail.com)");
 });
 
 // === רישום ה-ChatClient ב-DI Container ===

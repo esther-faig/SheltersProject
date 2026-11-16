@@ -89,50 +89,127 @@ namespace DAL
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ───────── נתוני התחלה: סוגי ההעדפות מהאפיון ─────────
-            // מזהים קבועים (1-6) ולעולם לא משתמשים בהם מחדש. העדפות שהמנהל יוסיף אחר כך יקבלו 7 ומעלה
+            // מזהים קבועים ולעולם לא משתמשים בהם מחדש. העדפות שהמנהל יוסיף אחר כך יקבלו 7 ומעלה
             modelBuilder.Entity<Preference>().HasData(
+                // נגישות
                 new Preference
                 {
                     PreferenceId = 1,
-                    Name = "ללא מדרגות",
-                    Description = "הגעה למקלט ללא צורך בעלייה או בירידה במדרגות",
+                    Name = "כניסה ללא מדרגות",
+                    Description = "ניתן להגיע למקלט ללא עלייה או ירידה במדרגות",
                     Category = "נגישות"
                 },
                 new Preference
                 {
                     PreferenceId = 2,
-                    Name = "נגיש לכיסא גלגלים",
-                    Description = "כניסה ותנועה בתוך המקלט מתאימות לכיסא גלגלים",
+                    Name = "גישה לכיסא גלגלים",
+                    Description = "הכניסה והתנועה במקלט מתאימות לאדם המשתמש בכיסא גלגלים",
                     Category = "נגישות"
                 },
                 new Preference
                 {
                     PreferenceId = 3,
-                    Name = "מרחב גדול",
-                    Description = "מקלט מרווח, מתאים למי שזקוק ליותר מקום, למשל בגלל קוצר נשימה",
-                    Category = "מרחב"
+                    Name = "מעלית",
+                    Description = "קיימת מעלית בדרך אל המקלט כאשר נדרשת עלייה או ירידה בקומות",
+                    Category = "נגישות"
                 },
                 new Preference
                 {
                     PreferenceId = 4,
-                    Name = "אוורור טוב",
-                    Description = "אוורור או כניסת אוויר מספקים בתוך המקלט",
-                    Category = "נוחות"
+                    Name = "שירותים נגישים",
+                    Description = "קיימים שירותים המותאמים לאנשים עם מוגבלות",
+                    Category = "נגישות"
                 },
+
+                // נוחות ואוורור
                 new Preference
                 {
                     PreferenceId = 5,
-                    Name = "צפיפות נמוכה",
-                    Description = "מקלט שבדרך כלל שוהים בו מעט אנשים ביחס לגודלו",
-                    Category = "מרחב"
+                    Name = "מרחב גדול",
+                    Description = "המקלט מרווח ומאפשר שהייה נוחה",
+                    Category = "נוחות ואוורור"
                 },
                 new Preference
                 {
                     PreferenceId = 6,
+                    Name = "אוורור טבעי",
+                    Description = "קיימים חלונות או פתחי אוורור טבעיים",
+                    Category = "נוחות ואוורור"
+                },
+                new Preference
+                {
+                    PreferenceId = 7,
+                    Name = "מיזוג אוויר",
+                    Description = "קיים מזגן או פתרון קירור",
+                    Category = "נוחות ואוורור"
+                },
+                new Preference
+                {
+                    PreferenceId = 8,
+                    Name = "תאורה טובה",
+                    Description = "התאורה במקלט מספקת לשהייה בטוחה ונוחה",
+                    Category = "נוחות ואוורור"
+                },
+                new Preference
+                {
+                    PreferenceId = 9,
                     Name = "מקומות ישיבה",
-                    Description = "במקלט יש מקומות ישיבה",
-                    Category = "נוחות"
-                });
+                    Description = "יש במקלט כיסאות, ספסלים או מקומות ישיבה",
+                    Category = "נוחות ואוורור"
+                },
+
+                // מתקנים ושירותים
+                new Preference
+                {
+                    PreferenceId = 10,
+                    Name = "שירותים",
+                    Description = "קיימים שירותים במקלט או בצמוד אליו",
+                    Category = "מתקנים ושירותים"
+                },
+                new Preference
+                {
+                    PreferenceId = 11,
+                    Name = "מי שתייה",
+                    Description = "יש גישה למי שתייה",
+                    Category = "מתקנים ושירותים"
+                },
+                new Preference
+                {
+                    PreferenceId = 12,
+                    Name = "חשמל",
+                    Description = "קיימות נקודות חשמל זמינות",
+                    Category = "מתקנים ושירותים"
+                },
+                new Preference
+                {
+                    PreferenceId = 13,
+                    Name = "קליטה סלולרית",
+                    Description = "יש קליטה סלולרית בתוך המקלט",
+                    Category = "מתקנים ושירותים"
+                },
+                new Preference
+                {
+                    PreferenceId = 14,
+                    Name = "אינטרנט",
+                    Description = "קיים חיבור Wi-Fi או חיבור אינטרנט זמין",
+                    Category = "מתקנים ושירותים"
+                },
+
+                // מאפיינים נוספים
+                new Preference
+                {
+                    PreferenceId = 15,
+                    Name = "כניסה עם בעלי חיים",
+                    Description = "מותר להיכנס למקלט עם בעלי חיים",
+                    Category = "מאפיינים נוספים"
+                }
+            );
+
+
+
+
+
+
         }
     }
 }

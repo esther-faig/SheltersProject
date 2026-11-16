@@ -83,43 +83,106 @@ namespace DAL.Migrations
                         {
                             PreferenceId = 1,
                             Category = "נגישות",
-                            Description = "הגעה למקלט ללא צורך בעלייה או בירידה במדרגות",
-                            Name = "ללא מדרגות"
+                            Description = "ניתן להגיע למקלט ללא עלייה או ירידה במדרגות",
+                            Name = "כניסה ללא מדרגות"
                         },
                         new
                         {
                             PreferenceId = 2,
                             Category = "נגישות",
-                            Description = "כניסה ותנועה בתוך המקלט מתאימות לכיסא גלגלים",
-                            Name = "נגיש לכיסא גלגלים"
+                            Description = "הכניסה והתנועה במקלט מתאימות לאדם המשתמש בכיסא גלגלים",
+                            Name = "גישה לכיסא גלגלים"
                         },
                         new
                         {
                             PreferenceId = 3,
-                            Category = "מרחב",
-                            Description = "מקלט מרווח, מתאים למי שזקוק ליותר מקום, למשל בגלל קוצר נשימה",
-                            Name = "מרחב גדול"
+                            Category = "נגישות",
+                            Description = "קיימת מעלית בדרך אל המקלט כאשר נדרשת עלייה או ירידה בקומות",
+                            Name = "מעלית"
                         },
                         new
                         {
                             PreferenceId = 4,
-                            Category = "נוחות",
-                            Description = "אוורור או כניסת אוויר מספקים בתוך המקלט",
-                            Name = "אוורור טוב"
+                            Category = "נגישות",
+                            Description = "קיימים שירותים המותאמים לאנשים עם מוגבלות",
+                            Name = "שירותים נגישים"
                         },
                         new
                         {
                             PreferenceId = 5,
-                            Category = "מרחב",
-                            Description = "מקלט שבדרך כלל שוהים בו מעט אנשים ביחס לגודלו",
-                            Name = "צפיפות נמוכה"
+                            Category = "נוחות ואוורור",
+                            Description = "המקלט מרווח ומאפשר שהייה נוחה",
+                            Name = "מרחב גדול"
                         },
                         new
                         {
                             PreferenceId = 6,
-                            Category = "נוחות",
-                            Description = "במקלט יש מקומות ישיבה",
+                            Category = "נוחות ואוורור",
+                            Description = "קיימים חלונות או פתחי אוורור טבעיים",
+                            Name = "אוורור טבעי"
+                        },
+                        new
+                        {
+                            PreferenceId = 7,
+                            Category = "נוחות ואוורור",
+                            Description = "קיים מזגן או פתרון קירור",
+                            Name = "מיזוג אוויר"
+                        },
+                        new
+                        {
+                            PreferenceId = 8,
+                            Category = "נוחות ואוורור",
+                            Description = "התאורה במקלט מספקת לשהייה בטוחה ונוחה",
+                            Name = "תאורה טובה"
+                        },
+                        new
+                        {
+                            PreferenceId = 9,
+                            Category = "נוחות ואוורור",
+                            Description = "יש במקלט כיסאות, ספסלים או מקומות ישיבה",
                             Name = "מקומות ישיבה"
+                        },
+                        new
+                        {
+                            PreferenceId = 10,
+                            Category = "מתקנים ושירותים",
+                            Description = "קיימים שירותים במקלט או בצמוד אליו",
+                            Name = "שירותים"
+                        },
+                        new
+                        {
+                            PreferenceId = 11,
+                            Category = "מתקנים ושירותים",
+                            Description = "יש גישה למי שתייה",
+                            Name = "מי שתייה"
+                        },
+                        new
+                        {
+                            PreferenceId = 12,
+                            Category = "מתקנים ושירותים",
+                            Description = "קיימות נקודות חשמל זמינות",
+                            Name = "חשמל"
+                        },
+                        new
+                        {
+                            PreferenceId = 13,
+                            Category = "מתקנים ושירותים",
+                            Description = "יש קליטה סלולרית בתוך המקלט",
+                            Name = "קליטה סלולרית"
+                        },
+                        new
+                        {
+                            PreferenceId = 14,
+                            Category = "מתקנים ושירותים",
+                            Description = "קיים חיבור Wi-Fi או חיבור אינטרנט זמין",
+                            Name = "אינטרנט"
+                        },
+                        new
+                        {
+                            PreferenceId = 15,
+                            Category = "מאפיינים נוספים",
+                            Description = "מותר להיכנס למקלט עם בעלי חיים",
+                            Name = "כניסה עם בעלי חיים"
                         });
                 });
 
