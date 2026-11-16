@@ -33,11 +33,11 @@ namespace SheltersProject.Filters
                 status >= 500 ? LogLevel.Error : LogLevel.Warning,
                 ex, "Exception at {Path}", context.HttpContext.Request.Path);
 
-            string message = ex.ToString();
+            string message = status >= 500 ? ex.ToString() : ex.Message;
 
-    //        string message = (status == 500 && !Debugger.IsAttached)
-    //? "אירעה שגיאה לא צפויה. נא לנסות שוב מאוחר יותר."
-    //: ex.ToString(); // יציג את ה-StackTrace המלא ישירות לתוך ה-Swagger!
+            //        string message = (status == 500 && !Debugger.IsAttached)
+            //? "אירעה שגיאה לא צפויה. נא לנסות שוב מאוחר יותר."
+            //: ex.ToString(); // יציג את ה-StackTrace המלא ישירות לתוך ה-Swagger!
 
             // 3. בשגיאה לא צפויה לא חושפים פרטים פנימיים ללקוח
             //string message = status == 500

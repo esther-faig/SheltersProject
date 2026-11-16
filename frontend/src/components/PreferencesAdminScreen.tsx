@@ -221,25 +221,25 @@ function PreferencesAdminScreen() {
                         </div>
                       )}
                     </div>
-                    <div className="actions">
+                                        <div className="actions">
                       <button
-                        className="iconbtn"
+                        className="icon-act"
                         type="button"
                         onClick={() => startEdit(p)}
                         aria-label={`עריכת ${p.name}`}
-                        title="עריכה"
+                        data-tip="עריכה"
                       >
                         <Icon name="edit" />
                       </button>
                       <button
-                        className="iconbtn"
+                        className="icon-act danger"
                         type="button"
                         disabled={busy}
                         onClick={() => remove(p)}
                         aria-label={`מחיקת ${p.name}`}
-                        title="מחיקה"
+                        data-tip="מחיקה"
                       >
-                        <Icon name="x" />
+                        <Icon name="trash" />
                       </button>
                     </div>
                   </div>

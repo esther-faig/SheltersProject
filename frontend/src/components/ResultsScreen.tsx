@@ -1,92 +1,117 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { shelters } from '../shelters';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Icon from './Icon';
 import RealMap, { type MapPoint } from './RealMap';
 import ShelterIllustration from './ShelterIllustration';
+import {
+  ShelterSourceBadge,
+  ShelterSourceNote,
+  TypeChip,
+  formatDistance,
+  formatTravel,
+} from './ShelterSource';
+import { searchShelters, type ShelterSearchResponse, type ShelterSearchResult } from '../api/shelterSearch';
+
+const IMAGES_URL = import.meta.env.VITE_IMAGES_URL as string;
+
+type Coords = { lat: number; lng: number };
+type ResultsState = { coords: Coords; response: ShelterSearchResponse };
 
 function ResultsScreen() {
   const { mode } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const state = location.state as ResultsState | null;
 
-  // המיקום שנקלט בדף החיפוש
-  const userCoords =
-    (location.state as { coords?: { lat: number; lng: number } | null } | null)
-      ?.coords ?? null;
-
-  const [showEmptyDemo, setShowEmptyDemo] = useState(false);
+  const [response, setResponse] = useState<ShelterSearchResponse | null>(state?.response ?? null);
+  const [byCar, setByCar] = useState(mode === 'car');
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     document.title = 'המקלטים המתאימים לך';
   }, []);
 
-  const byCar = mode === 'car';
+  // רענון הדף מאבד את התוצאות: חוזרים לחיפוש
+  if (!state || !response) return <Navigate to="/search" replace />;
 
-  const results = showEmptyDemo
-    ? []
-    : [...shelters].sort((a, b) => a.distance - b.distance);
+  const coords = state.coords;
+  const results = response.results;
 
-  // מקלטים שיש להם קואורדינטות אמיתיות (lat / lng) יוצגו כסמנים על המפה
-  const markers: MapPoint[] = results.flatMap((s) => {
-    const a = s as unknown as { lat?: number; lng?: number; name?: string };
-    return a.lat != null && a.lng != null
-      ? [{ id: s.id, lat: a.lat, lng: a.lng, title: a.name }]
-      : [];
-  });
+  const markers: MapPoint[] = results.map((s) => ({
+    id: s.shelterId,
+    lat: s.latitude,
+    lng: s.longitude,
+    title: s.name,
+  }));
 
-  function getMinutes(shelter: (typeof shelters)[number]) {
-    return byCar ? shelter.carMin : shelter.walkMin;
+  // חיפוש חוזר ברכב: מקלטים רחוקים יותר
+  async function searchByCar() {
+    setSearching(true);
+    setError('');
+    try {
+      const next = await searchShelters({
+        latitude: coords.lat,
+        longitude: coords.lng,
+        travelMode: 'DRIVING',
+      });
+      setResponse(next);
+      setByCar(true);
+    } catch (err) {
+      setError((err as Error).message || 'החיפוש נכשל. נסו שוב.');
+    } finally {
+      setSearching(false);
+    }
   }
 
-  function getShelterType(name: string) {
-    if (name.includes('פרטי')) return 'מקלט פרטי';
-    if (name.includes('בית ספר')) return 'מקלט מוסדי';
-    return 'מקלט ציבורי';
-  }
+  const driveButton = response.offerDrivingSearch && (
+    <button className="btn soft" type="button" onClick={searchByCar} disabled={searching}>
+      <span className="sh"><Icon name="car" /></span>
+      {searching ? 'מחפש...' : 'אני ברכב — חפש מקלטים רחוקים יותר'}
+    </button>
+  );
 
   return (
     <section className="screen active">
       <div className="wrap inner" style={{ maxWidth: 1080 }}>
         <div className="phead">
-          <button
-            className="iconbtn"
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label="חזרה"
-          >
+          <button className="iconbtn" type="button" onClick={() => navigate(-1)} aria-label="חזרה">
             <Icon name="arrow-r" />
           </button>
           <div>
             <h2>המקלטים המתאימים לך</h2>
             <div className="sub">
-              {byCar
-                ? 'לפי זמן נסיעה מהמיקום שלך'
-                : 'לפי מרחק הליכה מהמיקום שלך'}
+              {byCar ? 'לפי זמן נסיעה מהמיקום שלך' : 'לפי זמן הליכה מהמיקום שלך'}
             </div>
           </div>
         </div>
 
+        {error && <div className="err" role="alert">{error}</div>}
+
         <div className="cols" style={{ gridTemplateColumns: '1.25fr 1fr' }} id="resCols">
           <div className="list" id="resList">
-            {results.length === 0 ? (
+            {!response.hasResults || results.length === 0 ? (
               <div className="card empty">
                 <span className="bubble"><Icon name="alert" /></span>
                 <h3 style={{ fontSize: 24 }}>לא נמצא מקלט מתאים</h3>
-                <p>
-                  לא מצאנו מקלט מתאים באזור שלך. אפשר לנסות חיפוש מחדש או
-                  לשנות את אופן ההגעה.
-                </p>
+                <p>{response.message}</p>
 
-                <div className="info" style={{ textAlign: 'right', marginTop: 14 }}>
-                  <Icon name="info" />
-                  <span>
-                    <b>הנחיות חשובות</b>
-                    <br />
-                    היכנסו למבנה סגור, התרחקו מחלונות ופעלו לפי הנחיות פיקוד
-                    העורף.
-                  </span>
-                </div>
+                {response.emergencyGuidance && (
+                  <div className="info" style={{ textAlign: 'right', marginTop: 14 }}>
+                    <Icon name="info" />
+                    <span>
+                      <b>{response.emergencyGuidance.title}</b>
+                      <br />
+                      {response.emergencyGuidance.instructions.split('\n').map((line) => (
+                        <span key={line}>
+                          {line}
+                          <br />
+                        </span>
+                      ))}
+                      <small>מקור: {response.emergencyGuidance.source}</small>
+                    </span>
+                  </div>
+                )}
 
                 <div className="emerg">
                   <div><b>100</b>משטרה</div>
@@ -100,73 +125,40 @@ function ResultsScreen() {
                     <span className="sh"><Icon name="sliders" /></span>
                     חזרה לחיפוש
                   </Link>
-                  <button
-                    className="btn primary"
-                    type="button"
-                    onClick={() => setShowEmptyDemo(false)}
-                  >
-                    <span className="sh"><Icon name="pin" /></span>
-                    חיפוש מחדש
-                  </button>
+                  {driveButton}
                 </div>
               </div>
             ) : (
               <>
-                <ShelterResultCard
-                  shelter={results[0]}
-                  minutes={getMinutes(results[0])}
-                  byCar={byCar}
-                  recommended
-                  shelterType={getShelterType(results[0].name)}
-                />
+                <ShelterResultCard shelter={results[0]} coords={coords} byCar={byCar} recommended />
 
                 {results.length > 1 && (
                   <>
-                    <h3 style={{ fontSize: 20, margin: '6px 4px -6px' }}>
-                      אפשרויות נוספות
-                    </h3>
-
+                    <h3 style={{ fontSize: 20, margin: '6px 4px -6px' }}>אפשרויות נוספות</h3>
                     {results.slice(1).map((shelter) => (
                       <ShelterResultCard
-                        key={shelter.id}
+                        key={shelter.shelterId}
                         shelter={shelter}
-                        minutes={getMinutes(shelter)}
+                        coords={coords}
                         byCar={byCar}
-                        shelterType={getShelterType(shelter.name)}
                       />
                     ))}
                   </>
                 )}
+
+                {driveButton}
               </>
             )}
           </div>
 
           <div className="sticky">
             <RealMap
-              center={userCoords}
-              userPos={userCoords}
+              center={coords}
+              userPos={coords}
               markers={markers}
               height={460}
-              caption={
-                results.length === 0
-                  ? 'אין מקלטים להצגה'
-                  : `${results.length} מקלטים מתאימים בסביבה`
-              }
+              caption={results.length === 0 ? 'אין מקלטים להצגה' : `${results.length} מקלטים מתאימים בסביבה`}
             />
-
-            <div className="demo-note">
-              <button
-                className="nl"
-                style={{ fontSize: 12 }}
-                type="button"
-                onClick={() => setShowEmptyDemo((current) => !current)}
-              >
-                {showEmptyDemo
-                  ? 'חזרה להצגת המקלטים'
-                  : 'הדגמה: מצב ״לא נמצא מקלט מתאים״'}
-              </button>
-              <div>הדגמה עיצובית — המפה והמקלטים הם נתוני דוגמה.</div>
-            </div>
           </div>
         </div>
       </div>
@@ -174,21 +166,16 @@ function ResultsScreen() {
   );
 }
 
-type ShelterResultCardProps = {
-  shelter: (typeof shelters)[number];
-  minutes: number;
+type CardProps = {
+  shelter: ShelterSearchResult;
+  coords: Coords;
   byCar: boolean;
   recommended?: boolean;
-  shelterType: string;
 };
 
-function ShelterResultCard({
-  shelter,
-  minutes,
-  byCar,
-  recommended = false,
-  shelterType,
-}: ShelterResultCardProps) {
+function ShelterResultCard({ shelter, coords, byCar, recommended = false }: CardProps) {
+  const available = shelter.features.filter((f) => f.isAvailable === true);
+
   return (
     <article className={recommended ? 'card reco' : 'card'}>
       {recommended && (
@@ -199,33 +186,61 @@ function ShelterResultCard({
       )}
 
       <div className="sh-card">
-        <div className="thumb"><ShelterIllustration /></div>
+        <div className="thumb">
+          {shelter.files.length > 0 ? (
+            <img
+              src={`${IMAGES_URL}/${shelter.files[0]}`}
+              alt={shelter.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <ShelterIllustration />
+          )}
+        </div>
 
         <div className="sh-body">
           <h3>{shelter.name}</h3>
 
-          <div className="meta">
-            <span><Icon name="pin" />{shelter.distance} מטר</span>
-            <span>
-              <Icon name="clock" />
-              {byCar ? 'נסיעה' : 'הליכה'} {minutes} דק׳ { /* זמן הגעה לפי אופן ההגעה שנבחר */ }
-            </span>
-            <span><Icon name="shield" />{shelterType}</span>
+          <div className="chips" style={{ marginBottom: 10 }}>
+            <TypeChip type={shelter.shelterType} />
+            <ShelterSourceBadge isImported={shelter.isImported} />
           </div>
 
-          <div className="chips">
-            {shelter.features.map((feature) => (
-              <span className="chip ok" key={feature}>
-                <Icon name="check" />
-                {feature}
-              </span>
-            ))}
+          <div className="meta">
+            <span><Icon name="pin" />{formatDistance(shelter.distanceMeters)}</span>
+            <span>
+              <Icon name="clock" />
+              {byCar ? 'נסיעה' : 'הליכה'} {formatTravel(shelter.travelTimeSeconds)}
+              {shelter.isEstimate ? ' (הערכה)' : ''}
+            </span>
           </div>
+
+          {available.length > 0 && (
+            <div className="chips">
+              {available.map((f) => (
+                <span className="chip ok" key={f.preferenceId}>
+                  <Icon name="check" />
+                  {f.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {shelter.matchReasons.length > 0 && (
+            <ul className="reasons">
+              {shelter.matchReasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          )}
+
+          <ShelterSourceNote isImported={shelter.isImported} />
 
           <div className="sh-actions">
             <Link
               className={recommended ? 'btn primary small' : 'btn soft small'}
-              to={`/shelter/${shelter.id}`}
+              to={`/shelter/${shelter.shelterId}`}
+              state={{ shelter, byCar, coords }}
             >
               <span className="sh"><Icon name="nav" /></span>
               ניווט ופרטים

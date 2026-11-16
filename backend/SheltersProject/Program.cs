@@ -1,5 +1,7 @@
 using BLL;
+using BLL.Agent;
 using BLL.Mapper;
+using BLL.Search;
 using BLL.Services;
 using DAL;
 using DAL.Repositories;
@@ -7,18 +9,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NetTopologySuite;
-using Microsoft.Extensions.FileProviders;
-using System.Text;
+using OpenAI;
 using SheltersProject.Filters;
 using System.ClientModel;
-using Microsoft.Extensions.AI;
-using OpenAI;
-using BLL.Agent;
-using System.Text.Json;
-using System.Globalization;
+using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,6 +99,20 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod());
 });
 
+// הגבלת קצב לצ'אט: לפי כתובת IP
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("chat", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 15,                 // 15 הודעות
+            Window = TimeSpan.FromMinutes(1), // לדקה
+            QueueLimit = 0
+        }));
+});
+
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 // אפשר לבדוק טוקנים ב-Swagger
@@ -149,9 +163,35 @@ builder.Services.AddSingleton<IImageService>(new ImageService(ImagesFolder));
 builder.Services.AddScoped<IAgentService, AgentService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IAddressCheckService, AddressCheckService>();
 
 // === כלים של ה-Agent ===
 builder.Services.AddScoped<ShelterTools>();
+
+// === חיפוש מקלטים ===
+builder.Services.Configure<ShelterSearchOptions>(
+    builder.Configuration.GetSection(ShelterSearchOptions.SectionName));
+builder.Services.AddScoped<IShelterEligibilityService, ShelterEligibilityService>();
+builder.Services.AddScoped<IShelterRankingService, ShelterRankingService>();
+builder.Services.AddScoped<IEmergencyGuidanceService, EmergencyGuidanceService>();
+builder.Services.AddScoped<IShelterSearchService, ShelterSearchService>();
+
+// Google Routes. Timeout קצר: בזמן אזעקה עדיף הערכה מהירה מהמתנה
+builder.Services.AddHttpClient<IDistanceService, GoogleMapsDistanceService>(client =>
+{
+    client.BaseAddress = new Uri("https://routes.googleapis.com/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+
+// שרת ההתרעות (המדומה כרגע). בהמשך מחליפים את ה-BaseUrl בקונפיגורציה
+builder.Services.AddHttpClient<IActiveAlertSource, OrefActiveAlertSource>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["AlertServer:BaseUrl"] ?? "http://localhost:8000/");
+    client.Timeout = TimeSpan.FromSeconds(2);   // בזמן אזעקה לא מחכים
+    // השרת האמיתי דורש את הכותרות האלה. לשרת המדומה הן לא מפריעות
+    client.DefaultRequestHeaders.Add("Referer", "https://www.oref.org.il/");
+    client.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+});
 
 // גיאוקודינג דרך Nominatim (OpenStreetMap): בלי מפתח API
 builder.Services.AddHttpClient<GeocodingTools>(client =>
@@ -167,221 +207,6 @@ builder.Services.AddChatClient(innerClient)
     .UseFunctionInvocation();
 
 var app = builder.Build();
-
-
-//זמני
-
-// ==========================================
-// ייבוא חד-פעמי של מקלטים מקובץ shelters.tsv
-// ==========================================
-
-if (args.Contains("--import-shelters"))
-{
-    try
-    {
-        using var scope = app.Services.CreateScope();
-
-        var db = scope.ServiceProvider
-            .GetRequiredService<DB_Shelters>();
-
-        // נתיב לקובץ הנתונים
-        string filePath = Path.Combine(
-            app.Environment.ContentRootPath,
-            "Data",
-            "shelters.tsv"
-        );
-
-        // בדיקה שקובץ הנתונים קיים
-        if (!File.Exists(filePath))
-        {
-            throw new FileNotFoundException(
-                $"לא נמצא קובץ הייבוא: {filePath}"
-            );
-        }
-
-        // בדיקה שמשתמש מספר 1 קיים
-        var user = await db.User
-            .FirstOrDefaultAsync(u => u.UserId == 1);
-
-        if (user == null)
-        {
-            throw new Exception(
-                "לא נמצא משתמש עם UserId = 1."
-            );
-        }
-
-        // מניעת ייבוא כפול
-        bool alreadyImported = await db.Shelter
-            .AnyAsync(s => s.IsImported && s.City == "פתח תקווה");
-
-        if (alreadyImported)
-        {
-            throw new Exception(
-                "כבר קיימים מקלטים מיובאים בפתח תקווה. הייבוא נעצר."
-            );
-        }
-
-        // קריאת כל השורות מהקובץ
-        // קריאה זו תומכת גם בקובץ Unicode עם BOM
-        string[] lines = await File.ReadAllLinesAsync(filePath);
-
-        if (lines.Length <= 1)
-        {
-            throw new Exception(
-                "קובץ הייבוא ריק או מכיל כותרת בלבד."
-            );
-        }
-
-        List<Shelter> sheltersToImport = new();
-
-        // מעבר על כל שורות הנתונים, החל משורה 2
-        for (int i = 1; i < lines.Length; i++)
-        {
-            if (string.IsNullOrWhiteSpace(lines[i]))
-                continue;
-
-            string[] columns = lines[i].Split('\t');
-
-            if (columns.Length < 8)
-            {
-                throw new Exception(
-                    $"שגיאה בשורה {i + 1}: חסרות עמודות בקובץ."
-                );
-            }
-
-            // קריאת הנתונים מהעמודות הרלוונטיות
-            string address = columns[0].Trim();
-            string shelterType = columns[1].Trim();
-            string openText = columns[3].Trim();
-
-            if (string.IsNullOrWhiteSpace(address))
-            {
-                throw new Exception(
-                    $"שגיאה בשורה {i + 1}: חסרה כתובת."
-                );
-            }
-
-            // המרת קווי הרוחב והאורך למספרים
-            if (!double.TryParse(
-                columns[6].Trim(),
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out double latitude))
-            {
-                throw new Exception(
-                    $"שגיאה בשורה {i + 1}: ערך Latitude אינו תקין."
-                );
-            }
-
-            if (!double.TryParse(
-                columns[7].Trim(),
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out double longitude))
-            {
-                throw new Exception(
-                    $"שגיאה בשורה {i + 1}: ערך Longitude אינו תקין."
-                );
-            }
-
-            // המרת מצב המקלט לערך IsActive
-            bool isActive;
-
-            if (openText == "פתוח")
-            {
-                isActive = true;
-            }
-            else if (openText == "סגור")
-            {
-                isActive = false;
-            }
-            else
-            {
-                throw new Exception(
-                    $"שגיאה בשורה {i + 1}: ערך פתיחה לא מוכר: {openText}"
-                );
-            }
-
-            // יצירת אובייקט מקלט לפי הישות הקיימת
-            Shelter shelter = new Shelter
-            {
-                Name = address,
-                Address = address,
-                ShelterType = shelterType,
-                City = "פתח תקווה",
-
-                Latitude = latitude,
-                Longitude = longitude,
-
-                MaxCapacity = null,
-
-                Status = ShelterStatus.Approved,
-
-                IsActive = isActive,
-
-                IsImported = true,
-
-                AlertZoneId = null,
-
-                CreatedByUserId = 1,
-                User = user,
-
-                Files = new List<string>(),
-                ShelterFeatures = new List<ShelterFeature>()
-            };
-
-            sheltersToImport.Add(shelter);
-        }
-
-        if (sheltersToImport.Count == 0)
-        {
-            throw new Exception(
-                "לא נמצאו מקלטים תקינים לייבוא."
-            );
-        }
-
-        // שמירת הנתונים במסד הנתונים בתוך טרנזקציה
-        await using var transaction =
-            await db.Database.BeginTransactionAsync();
-
-        await db.Shelter.AddRangeAsync(sheltersToImport);
-
-        await db.SaveChangesAsync();
-
-        await transaction.CommitAsync();
-
-        Console.WriteLine("------------------------------------");
-        Console.WriteLine("הייבוא הסתיים בהצלחה!");
-        Console.WriteLine($"מספר המקלטים שיובאו: {sheltersToImport.Count}");
-        Console.WriteLine("------------------------------------");
-    }
-
-    catch (Exception ex)
-    {
-        Console.WriteLine("אירעה שגיאה במהלך ייבוא המקלטים:");
-
-        Exception? currentException = ex;
-
-        while (currentException != null)
-        {
-            Console.WriteLine("------------------------------------");
-            Console.WriteLine("סוג השגיאה: " + currentException.GetType().Name);
-            Console.WriteLine("הודעת השגיאה: " + currentException.Message);
-
-            currentException = currentException.InnerException;
-        }
-
-        Environment.ExitCode = 1;
-    }
-
-
-    // עצירת התוכנית לאחר פעולת הייבוא
-    return;
-}
-
-
-
-
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -400,7 +225,9 @@ else
     // הפניה ל-HTTPS רק בפרודקשן. בפיתוח היא שוברת את הקריאות של React
     app.UseHttpsRedirection();
 }
+
 app.UseCors("React");
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

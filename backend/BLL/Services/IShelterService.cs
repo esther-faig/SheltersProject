@@ -21,6 +21,10 @@ namespace BLL.Services
         List<AdminShelterDTO> GetByStatus(string? status);
         ShelterDetailsDTO UpdateStatus(int id, UpdateShelterStatusDTO dto);
 
+
+
+        // עדכון מאפיינים של מקלט מיובא ע"י כל משתמש מחובר
+        ShelterSearchResultDTO UpdateImportedFeatures(int id, UpdateShelterFeaturesDTO dto);
         //לאיגנט
         List<ShelterSearchResultDTO> SearchByCity(string city, int max);   // בממשק
 

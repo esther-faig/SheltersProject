@@ -24,9 +24,16 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     window.location.href = '/login';
     throw new Error('נדרשת התחברות מחדש');
   }
-  if (!response.ok) {
-    throw new Error((await response.text()) || `שגיאה ${response.status}`);
+if (!response.ok) {
+  const raw = await response.text();
+  let message = raw;
+  try {
+    message = (JSON.parse(raw) as { title?: string }).title ?? raw;
+  } catch {
+    // לא JSON: משתמשים בטקסט כמו שהוא
   }
+  throw new Error(message || `שגיאה ${response.status}`);
+}
 
   const text = await response.text();        // register ו-204 חוזרים בלי גוף
   return (text ? JSON.parse(text) : undefined) as T;

@@ -3,12 +3,14 @@ using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace SheltersProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [AllowAnonymous]
+    [EnableRateLimiting("chat")]
     public class ChatController : ControllerBase
     {
         private readonly IAgentService _agentService;

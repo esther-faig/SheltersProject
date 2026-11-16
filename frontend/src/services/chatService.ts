@@ -1,4 +1,4 @@
-import { getToken } from '../api/http';
+//import { getToken } from '../api/http';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -17,16 +17,20 @@ const URL = `${import.meta.env.VITE_API_URL}/chat/stream`;
 export async function streamChat(
   messages: ChatMessage[],
   onChunk: (text: string) => void,
-  token: string | null = getToken()
+  token?: string | null
 ): Promise<void> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(URL, {
     method: 'POST',
     headers,
     body: JSON.stringify({ messages }),
   });
+
+  if (res.status === 429) throw new Error('יותר מדי הודעות בזמן קצר. נסו שוב בעוד דקה.');
+
+  // שאר הפונקציה נשארת כמו שהיא, מהשורה: if (!res.ok || !res.body) { ...
 
   // בדיקה האם הבקשה הצליחה ויש גוף נתונים (Stream) לקריאה
   if (!res.ok || !res.body) {

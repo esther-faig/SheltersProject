@@ -69,6 +69,12 @@ namespace SheltersProject.Controllers
         {
             return Ok(_service.UpdateAvailability(id, User.GetUserId(), dto));
         }
+        // PUT: api/Shelter/5/features  (מאפיינים של מקלט מיובא, כל משתמש מחובר)
+        [HttpPut("{id:int}/features")]
+        public ActionResult<ShelterSearchResultDTO> UpdateFeatures(int id, [FromBody] UpdateShelterFeaturesDTO dto)
+        {
+            return Ok(_service.UpdateImportedFeatures(id, dto));
+        }
 
         // DELETE: api/Shelter/5
         [HttpDelete("{id:int}")]
