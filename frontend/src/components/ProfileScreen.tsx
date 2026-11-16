@@ -1,17 +1,24 @@
+
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PreferencePicker from './PreferencePicker';
+import EditShelterDialog from './EditShelterDialog';
 import {
   fromUserPreferences,
   toPriorityList,
   type PickedPreference,
-} from '../utils/pickedPreferences';import Icon, { featureIcon } from './Icon';
+} from '../utils/pickedPreferences';
+import Icon, { featureIcon } from './Icon';
 import ShelterIllustration from './ShelterIllustration';
 import { selectIsAdmin } from '../store/auth/authSelectors';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchMe, saveMyPreferences } from '../store/profile/profileThunks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
-import { fetchMyShelters, setShelterActive, deleteShelter } from '../store/shelters/sheltersThunks';
+import {
+  fetchMyShelters,
+  setShelterActive,
+  deleteShelter,
+} from '../store/shelters/sheltersThunks';
 
 const IMAGES_URL = import.meta.env.VITE_IMAGES_URL as string;
 
@@ -34,6 +41,7 @@ function ProfileScreen() {
   const [picked, setPicked] = useState<PickedPreference[]>([]);
   const [saveError, setSaveError] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   useEffect(() => {
     document.title = 'הפרופיל שלי';
@@ -49,8 +57,6 @@ function ProfileScreen() {
     setSaveError('');
     setEditing(true);
   }
-
-
 
   async function handleSave() {
     setSaveError('');
@@ -75,7 +81,9 @@ function ProfileScreen() {
   }
 
   async function handleDelete(id: number, name: string) {
-    if (!window.confirm(`למחוק את המקלט "${name}"? אי אפשר לשחזר אחרי המחיקה.`)) return;
+    if (!window.confirm(`למחוק את המקלט "${name}"? אי אפשר לשחזר אחרי המחיקה.`)) {
+      return;
+    }
 
     setDeleteError('');
 
@@ -85,6 +93,7 @@ function ProfileScreen() {
       setDeleteError((err as { message: string }).message);
     }
   }
+
   if (loading || !user) {
     return (
       <section className="screen active">
@@ -106,9 +115,12 @@ function ProfileScreen() {
   }
 
   const requiredPrefs = user.preferences.filter((p) => p.isRequired);
+
   const preferredPrefs = user.preferences
     .filter((p) => !p.isRequired)
-    .sort((a, b) => a.priority - b.priority);  const prefList = (list: typeof user.preferences) =>
+    .sort((a, b) => a.priority - b.priority);
+
+  const prefList = (list: typeof user.preferences) =>
     list.length > 0 ? (
       list.map((p) => (
         <div className="pref-line" key={p.preferenceId}>
@@ -116,6 +128,7 @@ function ProfileScreen() {
             <Icon name={featureIcon(p.name)} />
             {p.name}
           </span>
+
           <button
             type="button"
             className="iconx"
@@ -132,7 +145,11 @@ function ProfileScreen() {
 
   return (
     <section className="screen active">
-      <div className="wrap inner" style={{ maxWidth: 900 }} id="profileBody">
+      <div
+        className="wrap inner"
+        style={{ maxWidth: 900 }}
+        id="profileBody"
+      >
         {/* כותרת */}
         <div className="phead">
           <button
@@ -143,19 +160,32 @@ function ProfileScreen() {
           >
             <Icon name="arrow-r" />
           </button>
-          <div><h2>הפרופיל שלי</h2></div>
+
+          <div>
+            <h2>הפרופיל שלי</h2>
+          </div>
         </div>
 
         <div className="stack">
           {/* פרטי המשתמש */}
           <div className="card profile-top">
-            <span className="avatar"><Icon name="user" /></span>
+            <span className="avatar">
+              <Icon name="user" />
+            </span>
 
             <div>
               <h3 style={{ fontSize: 24 }}>{user.fullName}</h3>
-              <div style={{ color: 'var(--ink2)', direction: 'ltr', textAlign: 'right' }}>
+
+              <div
+                style={{
+                  color: 'var(--ink2)',
+                  direction: 'ltr',
+                  textAlign: 'right',
+                }}
+              >
                 {user.email}
               </div>
+
               {isAdmin && (
                 <span className="chip warn" style={{ marginTop: 6 }}>
                   <Icon name="key" />
@@ -172,7 +202,9 @@ function ProfileScreen() {
 
               {!editing && (
                 <button className="btn small" onClick={startEdit}>
-                  <span className="sh"><Icon name="edit" /></span>
+                  <span className="sh">
+                    <Icon name="edit" />
+                  </span>
                   עריכת העדפות
                 </button>
               )}
@@ -181,18 +213,30 @@ function ProfileScreen() {
             {editing ? (
               <>
                 <div style={{ marginBottom: 18 }}>
-                  <PreferencePicker all={allPrefs} value={picked} onChange={setPicked} />
+                  <PreferencePicker
+                    all={allPrefs}
+                    value={picked}
+                    onChange={setPicked}
+                  />
                 </div>
 
                 {saveError && <div className="err">{saveError}</div>}
 
                 <div className="actions">
-                  <button className="btn primary small" onClick={handleSave}>
-                    <span className="sh"><Icon name="check" /></span>
+                  <button
+                    className="btn primary small"
+                    onClick={handleSave}
+                  >
+                    <span className="sh">
+                      <Icon name="check" />
+                    </span>
                     שמירה
                   </button>
 
-                  <button className="btn small" onClick={() => setEditing(false)}>
+                  <button
+                    className="btn small"
+                    onClick={() => setEditing(false)}
+                  >
                     ביטול
                   </button>
                 </div>
@@ -204,6 +248,7 @@ function ProfileScreen() {
                     <Icon name="lock" />
                     חובה
                   </span>
+
                   {prefList(requiredPrefs)}
                 </div>
 
@@ -212,6 +257,7 @@ function ProfileScreen() {
                     <Icon name="heart" />
                     מועדף
                   </span>
+
                   {prefList(preferredPrefs)}
                 </div>
               </div>
@@ -226,7 +272,9 @@ function ProfileScreen() {
               <h3 style={{ fontSize: 22 }}>המקלטים ששיתפתי</h3>
 
               <Link to="/share" className="btn small primary">
-                <span className="sh"><Icon name="plus" /></span>
+                <span className="sh">
+                  <Icon name="plus" />
+                </span>
                 שיתוף מקלט חדש
               </Link>
             </div>
@@ -242,12 +290,19 @@ function ProfileScreen() {
 
                 return (
                   <div className="my-sh" key={s.shelterId}>
-                    <div className="thumb" style={{ width: 58, height: 58 }}>
+                    <div
+                      className="thumb"
+                      style={{ width: 58, height: 58 }}
+                    >
                       {s.files && s.files.length > 0 ? (
                         <img
                           src={`${IMAGES_URL}/${s.files[0]}`}
                           alt={s.name}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
                         />
                       ) : (
                         <div style={{ transform: 'scale(.6)' }}>
@@ -258,38 +313,68 @@ function ProfileScreen() {
 
                     <div className="grow">
                       <b>{s.name}</b>
+
                       <div style={{ marginTop: 4 }}>
                         <span className={`chip ${status.className}`}>
                           {status.label}
                         </span>
                       </div>
+
                       <div className="hint">{s.address}</div>
+
+                      {/* סיבת דחייה, אם קיימת */}
+                      {s.status === 'Rejected' && s.rejectionReason && (
+                        <div className="hint">
+                          סיבת הדחייה: {s.rejectionReason}
+                        </div>
+                      )}
                     </div>
 
-                    <button
-                      className="btn small"
-                      onClick={() =>
-                        dispatch(
-                          setShelterActive({
-                            id: s.shelterId,
-                            isActive: !s.isActive,
-                          })
-                        )
-                      }
-                    >
-                      <span className="sh">
-                        <Icon name={s.isActive ? 'clock' : 'check'} />
-                      </span>
-                      {s.isActive ? 'השבתה זמנית' : 'הפעלה'}
-                    </button>
+                    {/* כפתורי פעולות למקלט */}
+                    <div className="my-sh-actions">
+                      {/* עריכת מקלט */}
+                      <button
+                        className="btn small primary"
+                        onClick={() => setEditingId(s.shelterId)}
+                      >
+                        <span className="sh">
+                          <Icon name="edit" />
+                        </span>
+                        עריכה
+                      </button>
 
-                    <button
-                      className="btn small"
-                      onClick={() => handleDelete(s.shelterId, s.name)}
-                    >
-                      <span className="sh"><Icon name="x" /></span>
-                      מחיקה
-                    </button>
+                      {/* השבתה זמנית או הפעלה */}
+                      <button
+                        className="btn small"
+                        onClick={() =>
+                          dispatch(
+                            setShelterActive({
+                              id: s.shelterId,
+                              isActive: !s.isActive,
+                            })
+                          )
+                        }
+                      >
+                        <span className="sh">
+                          <Icon name={s.isActive ? 'clock' : 'check'} />
+                        </span>
+
+                        {s.isActive ? 'השבתה זמנית' : 'הפעלה'}
+                      </button>
+
+                      {/* מחיקת מקלט */}
+                      <button
+                        className="btn small"
+                        onClick={() =>
+                          handleDelete(s.shelterId, s.name)
+                        }
+                      >
+                        <span className="sh">
+                          <Icon name="x" />
+                        </span>
+                        מחיקה
+                      </button>
+                    </div>
                   </div>
                 );
               })
@@ -301,6 +386,15 @@ function ProfileScreen() {
           </div>
         </div>
       </div>
+
+      {/* חלונית לעריכת מקלט */}
+      {editingId !== null && (
+        <EditShelterDialog
+          shelterId={editingId}
+          onClose={() => setEditingId(null)}
+          onSaved={() => dispatch(fetchMyShelters())}
+        />
+      )}
     </section>
   );
 }

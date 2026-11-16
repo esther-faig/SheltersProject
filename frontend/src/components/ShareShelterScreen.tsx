@@ -1,10 +1,12 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
 import { addShelter } from '../store/shelters/sheltersThunks';
 import Icon, { featureIcon } from './Icon';
 import RealMap from './RealMap';
+import { SHELTER_TYPES } from '../shelterTypes';
+import { geocodeAddress } from '../api/geocode';
 
 const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -14,9 +16,12 @@ function ShareShelterScreen() {
   const navigate = useNavigate();
 
   // נתונים מהשרת: ב-Redux
-  const { items: prefs, loading: prefsLoading, error: prefsError } = useAppSelector(
-    (state) => state.preferences
-  );
+  const {
+    items: prefs,
+    loading: prefsLoading,
+    error: prefsError,
+  } = useAppSelector((state) => state.preferences);
+
   const sharing = useAppSelector((state) => state.shelters.loading);
 
   // ערכי הטופס: state רגיל
@@ -31,6 +36,7 @@ function ShareShelterScreen() {
   const [files, setFiles] = useState<File[]>([]);
   const [message, setMessage] = useState('');
   const [locating, setLocating] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
 
   useEffect(() => {
     document.title = 'שיתוף מקלט';
@@ -41,13 +47,40 @@ function ShareShelterScreen() {
     setAvailable({ ...available, [id]: !available[id] });
   }
 
+  // מילוי קווי אורך ורוחב לפי הכתובת
+  async function handleFindCoords() {
+    if (!address.trim() || !city.trim()) {
+      setMessage('כתבו קודם כתובת ועיר');
+      return;
+    }
+
+    setGeocoding(true);
+    setMessage('');
+
+    try {
+      const found = await geocodeAddress(`${address.trim()}, ${city.trim()}`);
+      if (!found) {
+        setMessage('לא מצאנו את הכתובת. נסו כתובת מדויקת יותר, או סמנו על המפה.');
+      } else {
+        setLat(found.lat.toFixed(6));
+        setLng(found.lng.toFixed(6));
+      }
+    } catch {
+      setMessage('החיפוש נכשל. נסו שוב.');
+    } finally {
+      setGeocoding(false);
+    }
+  }
+
   function handleLocate() {
     if (!navigator.geolocation) {
       setMessage('הדפדפן לא תומך באיתור מיקום');
       return;
     }
+
     setLocating(true);
     setMessage('');
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLat(pos.coords.latitude.toFixed(6));
@@ -64,24 +97,35 @@ function ShareShelterScreen() {
 
   function handleFiles(e: ChangeEvent<HTMLInputElement>) {
     const chosen = Array.from(e.target.files ?? []);
+
     if (chosen.length > MAX_IMAGES) {
       setMessage(`אפשר להעלות עד ${MAX_IMAGES} תמונות`);
       return;
     }
+
     if (chosen.some((f) => f.size > MAX_IMAGE_BYTES)) {
       setMessage('כל תמונה יכולה להיות עד 5MB');
       return;
     }
+
     setMessage('');
     setFiles(chosen);
   }
 
   const latNum = parseFloat(lat);
   const lngNum = parseFloat(lng);
+
   const coordsValid =
-    !isNaN(latNum) && !isNaN(lngNum) &&
-    latNum >= -90 && latNum <= 90 &&
-    lngNum >= -180 && lngNum <= 180;
+    !isNaN(latNum) &&
+    !isNaN(lngNum) &&
+    latNum >= -90 &&
+    latNum <= 90 &&
+    lngNum >= -180 &&
+    lngNum <= 180;
+
+  // השרת דורש קיבולת של 1 לפחות
+  const capacityNum = parseInt(maxCapacity);
+  const capacityValid = !isNaN(capacityNum) && capacityNum >= 1;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -89,17 +133,23 @@ function ShareShelterScreen() {
 
     // השרת מצפה ל-multipart/form-data, ושמות השדות כמו ב-ShelterRequestDTO
     const form = new FormData();
+
     form.append('Name', shelterName);
     form.append('ShelterType', shelterType);
     form.append('Address', address);
     form.append('City', city);
     form.append('Latitude', String(latNum));
     form.append('Longitude', String(lngNum));
-    form.append('MaxCapacity', String(parseInt(maxCapacity) || 0));
+    form.append('MaxCapacity', String(capacityNum));
+
     prefs.forEach((p, i) => {
       form.append(`Features[${i}].PreferenceId`, String(p.preferenceId));
-      form.append(`Features[${i}].IsAvailable`, String(available[p.preferenceId] ?? false));
+      form.append(
+        `Features[${i}].IsAvailable`,
+        String(available[p.preferenceId] ?? false)
+      );
     });
+
     files.forEach((file) => form.append('ImageFiles', file));
 
     try {
@@ -122,6 +172,7 @@ function ShareShelterScreen() {
           >
             <Icon name="arrow-r" />
           </button>
+
           <div>
             <h2>שיתוף מקלט פרטי</h2>
             <div className="sub">
@@ -135,7 +186,10 @@ function ShareShelterScreen() {
             <div className="stack">
               <div className="card stack">
                 <div>
-                  <label className="lbl" htmlFor="shName">שם המקלט</label>
+                  <label className="lbl" htmlFor="shName">
+                    שם המקלט
+                  </label>
+
                   <div className="field">
                     <Icon name="home" />
                     <input
@@ -149,32 +203,37 @@ function ShareShelterScreen() {
                 </div>
 
                 <div>
-                  <span className="lbl">סוג המקום</span>
-                  {['ממ"ד פרטי', 'מקלט פרטי', 'מרחב מוגן אחר'].map((type) => (
-                    <label className="chk radio" key={type}>
-                      <input
-                        type="radio"
-                        name="shType"
-                        value={type}
-                        checked={shelterType === type}
-                        onChange={() => setShelterType(type)}
-                      />
-                      <span className="box"></span>
-                      <span className="lt">{type}</span>
-                    </label>
-                  ))}
+                  <label className="lbl" htmlFor="shType">
+                    סוג המקום
+                  </label>
+
+                  <select
+                    id="shType"
+                    className="select"
+                    value={shelterType}
+                    onChange={(e) => setShelterType(e.target.value)}
+                  >
+                    <option value="">בחרו סוג...</option>
+
+                    {SHELTER_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="lbl" htmlFor="shCap">
                     קיבולת מקסימלית (מספר אנשים)
                   </label>
+
                   <div className="field">
                     <Icon name="users" />
                     <input
                       id="shCap"
                       type="number"
-                      min="0"
+                      min="1"
                       value={maxCapacity}
                       onChange={(e) => setMaxCapacity(e.target.value)}
                       placeholder="10"
@@ -209,18 +268,20 @@ function ShareShelterScreen() {
                 </div>
 
                 <RealMap
-  pickable
-  height={320}
-  picked={coordsValid ? { lat: latNum, lng: lngNum } : null}
-  center={coordsValid ? { lat: latNum, lng: lngNum } : null}
-  onPick={(la, ln) => {
-    setLat(la.toFixed(6));
-    setLng(ln.toFixed(6));
-  }}
-  caption="לחצו על המפה או גררו את הסמן כדי לסמן את מיקום המקלט"
-/>
+                  pickable
+                  height={320}
+                  picked={coordsValid ? { lat: latNum, lng: lngNum } : null}
+                  center={coordsValid ? { lat: latNum, lng: lngNum } : null}
+                  onPick={(la, ln) => {
+                    setLat(la.toFixed(6));
+                    setLng(ln.toFixed(6));
+                  }}
+                  caption="לחצו על המפה או גררו את הסמן כדי לסמן את מיקום המקלט"
+                />
 
-                <div className="hint">מיקום המקלט על המפה (קו רוחב וקו אורך):</div>
+                <div className="hint">
+                  מיקום המקלט על המפה (קו רוחב וקו אורך):
+                </div>
 
                 <div className="field" style={{ marginTop: 10 }}>
                   <Icon name="locate" />
@@ -231,6 +292,7 @@ function ShareShelterScreen() {
                     placeholder="קו רוחב (Latitude) — למשל 32.080000"
                   />
                 </div>
+
                 <div className="field" style={{ marginTop: 10 }}>
                   <Icon name="locate" />
                   <input
@@ -241,26 +303,49 @@ function ShareShelterScreen() {
                   />
                 </div>
 
-                <button
-                  type="button"
-                  className="btn small soft"
-                  style={{ marginTop: 12 }}
-                  onClick={handleLocate}
-                  disabled={locating}
-                >
-                  <span className="sh"><Icon name="locate" /></span>
-                  {locating ? 'מאתר...' : 'השתמש במיקום שלי'}
-                </button>
+                <div className="actions" style={{ marginTop: 12 }}>
+                  <button
+                    type="button"
+                    className="btn small soft"
+                    onClick={handleLocate}
+                    disabled={locating}
+                  >
+                    <span className="sh">
+                      <Icon name="locate" />
+                    </span>
+                    {locating ? 'מאתר...' : 'השתמש במיקום שלי'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn small soft"
+                    onClick={handleFindCoords}
+                    disabled={geocoding}
+                  >
+                    <span className="sh">
+                      <Icon name="pin" />
+                    </span>
+                    {geocoding ? 'מחפש...' : 'מצא קואורדינטות לפי הכתובת'}
+                  </button>
+                </div>
+
+                <div className="hint" style={{ marginTop: 8 }}>
+                  לא נמצאים במקום? אפשר לסמן על המפה, או{' '}
+                  <Link to="/chat">לבקש מהעוזר</Link> שימצא את הקואורדינטות.
+                </div>
               </div>
             </div>
 
             <div className="stack">
               <div className="card">
                 <span className="lbl">מאפיינים</span>
+
                 {prefsLoading && <div className="hint">טוען מאפיינים...</div>}
+
                 {prefsError && (
                   <div className="err">שגיאה בטעינת מאפיינים: {prefsError}</div>
                 )}
+
                 <div id="shFeats">
                   {prefs.map((p) => (
                     <label key={p.preferenceId} className="chk">
@@ -269,7 +354,11 @@ function ShareShelterScreen() {
                         checked={available[p.preferenceId] ?? false}
                         onChange={() => togglePref(p.preferenceId)}
                       />
-                      <span className="box"><Icon name="check" /></span>
+
+                      <span className="box">
+                        <Icon name="check" />
+                      </span>
+
                       <span className="lt">
                         <Icon name={featureIcon(p.name)} />
                         {p.name}
@@ -283,6 +372,7 @@ function ShareShelterScreen() {
                 <span className="lbl">
                   תמונות (עד {MAX_IMAGES}, jpg / png / webp)
                 </span>
+
                 <label className="upload" id="upLabel">
                   <input
                     type="file"
@@ -290,23 +380,29 @@ function ShareShelterScreen() {
                     accept=".jpg,.jpeg,.png,.webp"
                     onChange={handleFiles}
                   />
+
                   <span id="upIn">
                     <Icon name="camera" style={{ width: 34, height: 34 }} />
                     <br />
                     העלאת תמונות
                   </span>
                 </label>
+
                 {files.length > 0 && (
                   <div className="chips file-chips">
                     {files.map((f) => (
-                      <span key={f.name} className="chip">{f.name}</span>
+                      <span key={f.name} className="chip">
+                        {f.name}
+                      </span>
                     ))}
                   </div>
                 )}
               </div>
 
               {message && (
-                <div className="err" id="shErr" role="alert">{message}</div>
+                <div className="err" id="shErr" role="alert">
+                  {message}
+                </div>
               )}
 
               <button
@@ -318,10 +414,14 @@ function ShareShelterScreen() {
                   address.trim() === '' ||
                   city.trim() === '' ||
                   shelterType === '' ||
+                  !capacityValid ||
                   !coordsValid
                 }
               >
-                <span className="sh"><Icon name="heart" /></span>
+                <span className="sh">
+                  <Icon name="heart" />
+                </span>
+
                 {sharing ? 'שולח...' : 'שיתוף המקלט'}
               </button>
 

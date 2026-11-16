@@ -9,6 +9,9 @@ export interface ShelterSearchResult {
   address: string;
   shelterType: string;
   city: string;
+  latitude: number;
+  longitude: number;
+  isImported: boolean;
   distanceMeters: number;
   travelTimeSeconds: number;
   matchScore: number;

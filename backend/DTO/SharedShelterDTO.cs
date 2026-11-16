@@ -15,6 +15,7 @@ namespace DTO
         public string ShelterType { get; set; } = "";
         public string Status { get; set; } = "";
         public bool IsActive { get; set; }
+        public string? RejectionReason { get; set; }
 
         //להחזרה לקלינט- רק שם התמונה
         public List<string> Files { get; set; }

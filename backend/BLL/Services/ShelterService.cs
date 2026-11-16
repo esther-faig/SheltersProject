@@ -14,6 +14,7 @@ namespace BLL.Services
         private readonly IAlertZoneService _alertZoneService;
         private readonly IMapper _mapper;
         private readonly IImageService _imageService;
+        private readonly IAddressCheckService _addressCheck;
         private const int MaxImages = 5;
 
         public ShelterService(
@@ -22,7 +23,8 @@ namespace BLL.Services
             IUserRepository userRepository,
             IAlertZoneService alertZoneService,
             IMapper mapper,
-            IImageService imageService)
+            IImageService imageService,
+            IAddressCheckService addressCheck)
         {
             _repository = repository;
             _preferenceRepository = preferenceRepository;
@@ -30,6 +32,7 @@ namespace BLL.Services
             _alertZoneService = alertZoneService;
             _mapper = mapper;
             _imageService = imageService;
+            _addressCheck = addressCheck;
         }
 
         public List<ShelterSearchResultDTO> GetAll()
@@ -61,9 +64,9 @@ namespace BLL.Services
         }
 
         // אם אותה העדפה נשלחה כמה פעמים האחרונה קובעת, וכל ההעדפות חייבות להיות קיימות
-        private List<ShelterFeatureUpdateDTO> GetValidFeatures(ShelterRequestDTO dto)
+        private List<ShelterFeatureUpdateDTO> GetValidFeatures(List<ShelterFeatureUpdateDTO> incoming)
         {
-            var features = dto.Features
+            var features = incoming
                 .GroupBy(f => f.PreferenceId)
                 .Select(g => g.Last())
                 .ToList();
@@ -81,11 +84,11 @@ namespace BLL.Services
             if (!_userRepository.Exists(userId))
                 throw new NotFoundException($"משתמש {userId} לא נמצא");
 
-            var features = GetValidFeatures(dto);
+            var features = GetValidFeatures(dto.Features);
 
             if (dto.ImageFiles.Count > MaxImages)
                 throw new BusinessRuleException($"אפשר להעלות עד {MaxImages} תמונות");
-
+            _addressCheck.EnsureMatches(dto.Address, dto.City, dto.Latitude, dto.Longitude);
             var shelter = _mapper.Map<DAL.Shelter>(dto);
             shelter.ShelterFeatures = _mapper.Map<List<ShelterFeature>>(features);
             shelter.CreatedByUserId = userId;
@@ -115,17 +118,29 @@ namespace BLL.Services
             var shelter = _repository.GetOwned(id, userId)
                 ?? throw new NotFoundException($"מקלט {id} לא נמצא");   // לא קיים או לא שלך
 
-            var features = GetValidFeatures(dto);
+            var features = GetValidFeatures(dto.Features);
 
             var keep = dto.ExistingFiles.Where(f => shelter.Files.Contains(f)).Distinct().ToList();
             var removed = shelter.Files.Except(keep).ToList();
             if (keep.Count + dto.ImageFiles.Count > MaxImages)
                 throw new BusinessRuleException($"אפשר להעלות עד {MaxImages} תמונות");
 
-            // שינוי מיקום: מחשבים אזור מחדש, והמקלט חוזר לאישור
-            if (shelter.Latitude != dto.Latitude || shelter.Longitude != dto.Longitude)
-            {
+            // שינוי מיקום: מחשבים אזור מחדש
+            bool locationChanged = shelter.Latitude != dto.Latitude || shelter.Longitude != dto.Longitude;
+            bool addressChanged =
+                !string.Equals((shelter.Address ?? "").Trim(), (dto.Address ?? "").Trim(), StringComparison.Ordinal) ||
+                !string.Equals((shelter.City ?? "").Trim(), (dto.City ?? "").Trim(), StringComparison.Ordinal);
+
+            // בדיקת התאמה בין כתובת לקואורדינטות: רק כשהן השתנו, וכל הבדיקות לפני שמירת תמונות
+            if (locationChanged || addressChanged)
+                _addressCheck.EnsureMatches(dto.Address, dto.City, dto.Latitude, dto.Longitude);
+
+            if (locationChanged)
                 shelter.AlertZoneId = _alertZoneService.FindZoneIdByLocation(dto.Latitude, dto.Longitude);
+
+            // חזרה לאישור מנהל רק כשהכתובת או המיקום השתנו. שינוי שם, מאפיינים, תמונות וקיבולת לא משנה סטטוס
+            if (!shelter.IsImported && (locationChanged || addressChanged))
+            {
                 shelter.Status = ShelterStatus.Pending;
                 shelter.RejectionReason = null;
             }
@@ -229,7 +244,29 @@ namespace BLL.Services
             return _mapper.Map<ShelterDetailsDTO>(_repository.Update(shelter));
         }
 
+        public ShelterSearchResultDTO UpdateImportedFeatures(int id, UpdateShelterFeaturesDTO dto)
+        {
+            var shelter = _repository.GetById(id)
+                ?? throw new NotFoundException($"מקלט {id} לא נמצא");
 
+            // רק מקלט מיובא, מאושר ופעיל. מקלט ששיתף משתמש נעול לכל מי שאינו הבעלים
+            if (!shelter.IsImported || shelter.Status != ShelterStatus.Approved || !shelter.IsActive)
+                throw new BusinessRuleException("אפשר לעדכן מאפיינים רק במקלט ציבורי מאושר");
+
+            var features = GetValidFeatures(dto.Features);
+
+            foreach (var f in features)
+            {
+                var existing = shelter.ShelterFeatures.FirstOrDefault(x => x.PreferenceId == f.PreferenceId);
+                if (existing != null)
+                    existing.IsAvailable = f.IsAvailable;
+                else
+                    shelter.ShelterFeatures.Add(new ShelterFeature { PreferenceId = f.PreferenceId, IsAvailable = f.IsAvailable });
+            }
+
+            // הסטטוס לא משתנה: מקלט מיובא נשאר מאושר ולא נעלם מהחיפוש
+            return _mapper.Map<ShelterSearchResultDTO>(_repository.Update(shelter));
+        }
 
         public List<ShelterSearchResultDTO> SearchByCity(string city, int max)
     => _mapper.Map<List<ShelterSearchResultDTO>>(_repository.SearchByCity(city, max));

@@ -578,3 +578,24 @@ h1{-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
 .pref-edit{align-items:flex-start;flex-wrap:wrap}
 .my-sh .actions{display:flex;gap:8px;flex:none}
 @media(max-width:560px){.pref-grid{grid-template-columns:1fr}}
+
+/* סיבות התאמה בתוצאות */
+.reasons{margin:10px 0 0;padding-inline-start:18px;color:var(--ink2);font-size:13px}
+.reasons li{margin:2px 0}
+
+/* בורר יש / אין / לא ידוע */
+.tri{display:inline-flex;border:2px solid var(--ink);border-radius:999px;overflow:hidden;flex:none}
+.tri button{border:0;background:#fff;padding:4px 12px;font-size:13px;font-weight:600;color:var(--ink2)}
+.tri button+button{border-inline-start:1.5px solid #263d4940}
+.tri button[aria-pressed=true]{background:var(--red);color:#fff}
+
+/* פעולות בשורת מקלט בפרופיל */
+.my-sh-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+/* חלון עריכה */
+.dlg-scroll{max-height:60vh;overflow-y:auto;padding-inline-end:6px}
+.select{width:100%;height:52px;border:2px solid var(--ink);background:#fff;padding:0 16px;border-radius:12px;outline:none}
+.select:focus{border-color:var(--red)}
+.thumb-edit{position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;border:2px solid var(--ink)}
+.thumb-edit img{width:100%;height:100%;object-fit:cover}
+.thumb-edit .iconx{position:absolute;top:4px;inset-inline-start:4px;width:22px;height:22px}
