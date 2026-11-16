@@ -17,8 +17,11 @@ using NetTopologySuite;
 using OpenAI;
 using SheltersProject.Filters;
 using System.ClientModel;
+using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using System.Threading.RateLimiting;
+using static BLL.Services.OrefActiveAlertSource;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -184,13 +187,24 @@ builder.Services.AddHttpClient<IDistanceService, GoogleMapsDistanceService>(clie
 });
 
 // שרת ההתרעות (המדומה כרגע). בהמשך מחליפים את ה-BaseUrl בקונפיגורציה
-builder.Services.AddHttpClient<IActiveAlertSource, OrefActiveAlertSource>(client =>
+builder.Services.AddHttpClient("alerts", c =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["AlertServer:BaseUrl"] ?? "http://localhost:8000/");
-    client.Timeout = TimeSpan.FromSeconds(2);   // בזמן אזעקה לא מחכים
-    // השרת האמיתי דורש את הכותרות האלה. לשרת המדומה הן לא מפריעות
-    client.DefaultRequestHeaders.Add("Referer", "https://www.oref.org.il/");
-    client.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+    c.Timeout = TimeSpan.FromSeconds(2);
+    c.DefaultRequestHeaders.Add("Referer", "https://www.oref.org.il/");
+    c.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+});
+builder.Services.AddScoped<IActiveAlertSource>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var log = sp.GetRequiredService<ILogger<OrefActiveAlertSource>>();
+    var urls = builder.Configuration.GetSection("AlertServer:BaseUrls").Get<string[]>()
+               ?? new[] { "https://www.oref.org.il/" };
+    return new CompositeActiveAlertSource(urls.Select(u =>
+    {
+        var c = factory.CreateClient("alerts");
+        c.BaseAddress = new Uri(u);
+        return (IActiveAlertSource)new OrefActiveAlertSource(c, log);
+    }));
 });
 
 // גיאוקודינג דרך Nominatim (OpenStreetMap): בלי מפתח API
@@ -207,6 +221,192 @@ builder.Services.AddChatClient(innerClient)
     .UseFunctionInvocation();
 
 var app = builder.Build();
+
+
+
+// ========================================
+// ייבוא מקלטים ציבוריים מקובץ GeoJSON
+// ========================================
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider
+        .GetRequiredService<DB_Shelters>();
+
+    const string cityName = "פתח תקווה";
+    const int alertZoneId = 1195;
+    const int createdByUserId = 7;
+
+    string geoJsonPath = Path.Combine(
+        app.Environment.ContentRootPath,
+        "DATA",
+        "PetahTikvaShelters.geojson"
+    );
+
+    // בדיקה שקובץ הנתונים קיים
+    if (!File.Exists(geoJsonPath))
+    {
+        throw new FileNotFoundException(
+            "קובץ המקלטים לא נמצא בתיקיית DATA",
+            geoJsonPath
+        );
+    }
+
+    // מניעת ייבוא חוזר
+    bool alreadyImported = await db.Shelter.AnyAsync(s =>
+        s.City == cityName &&
+        s.IsImported &&
+        s.ShelterType == "מקלט ציבורי"
+    );
+
+    if (alreadyImported)
+    {
+        Console.WriteLine(
+            "מקלטי פתח תקווה כבר קיימים במסד הנתונים. הייבוא דולג."
+        );
+    }
+    else
+    {
+        // בדיקת קשרי הגומלין
+        bool userExists = await db.User.AnyAsync(
+            u => u.UserId == createdByUserId
+        );
+
+        bool alertZoneExists = await db.AlertZone.AnyAsync(
+            a => a.AlertZoneId == alertZoneId
+        );
+
+        if (!userExists)
+            throw new Exception(
+                $"לא נמצא משתמש עם מזהה {createdByUserId}."
+            );
+
+        if (!alertZoneExists)
+            throw new Exception(
+                $"לא נמצא אזור התרעה עם מזהה {alertZoneId}."
+            );
+
+        // קריאת קובץ ה-GeoJSON
+        string json = await File.ReadAllTextAsync(geoJsonPath);
+
+        using JsonDocument document = JsonDocument.Parse(json);
+
+        JsonElement root = document.RootElement;
+
+        if (root.GetProperty("type").GetString() != "FeatureCollection")
+            throw new Exception("קובץ GeoJSON אינו FeatureCollection תקין.");
+
+        JsonElement features = root.GetProperty("features");
+
+        var sheltersToImport = new List<Shelter>();
+
+        int index = 1;
+
+        foreach (JsonElement feature in features.EnumerateArray())
+        {
+            JsonElement properties = feature.GetProperty("properties");
+            JsonElement geometry = feature.GetProperty("geometry");
+
+            if (geometry.GetProperty("type").GetString() != "Point")
+                throw new Exception($"רשומה {index}: סוג הגיאומטריה חייב להיות Point.");
+
+            // קריאת המאפיינים
+            string address = properties.GetProperty("address").GetString()
+                ?? throw new Exception($"רשומה {index}: חסרה כתובת.");
+
+            string openValue = properties.GetProperty("open").GetString()
+                ?? throw new Exception($"רשומה {index}: חסר סטטוס פתיחה.");
+
+            bool isActive = openValue switch
+            {
+                "פתוח" => true,
+                "סגור" => false,
+                _ => throw new Exception(
+                    $"רשומה {index}: ערך פתיחה לא תקין: {openValue}"
+                )
+            };
+
+            // GeoJSON: קודם Longitude ואחר כך Latitude
+            JsonElement coordinates = geometry.GetProperty("coordinates");
+
+            if (coordinates.GetArrayLength() != 2)
+                throw new Exception($"רשומה {index}: הקואורדינטות אינן תקינות.");
+
+            double longitude = coordinates[0].GetDouble();
+            double latitude = coordinates[1].GetDouble();
+
+            if (latitude < -90 || latitude > 90 ||
+                longitude < -180 || longitude > 180)
+            {
+                throw new Exception(
+                    $"רשומה {index}: הקואורדינטות מחוץ לטווח התקין."
+                );
+            }
+
+            // יצירת אובייקט Shelter
+            var shelter = new Shelter
+            {
+                Name = $"מקלט פתח תקווה {index}",
+                ShelterType = "מקלט ציבורי",
+                Address = address,
+                City = cityName,
+
+                Latitude = latitude,
+                Longitude = longitude,
+
+                MaxCapacity = null,
+
+                Status = ShelterStatus.Approved,
+                IsActive = isActive,
+
+                RejectionReason = null,
+                IsImported = true,
+
+                AlertZoneId = alertZoneId,
+                CreatedByUserId = createdByUserId,
+
+                Files = new List<string>(),
+                ShelterFeatures = new List<ShelterFeature>()
+            };
+
+            sheltersToImport.Add(shelter);
+            index++;
+        }
+
+        if (sheltersToImport.Count == 0)
+            throw new Exception("לא נמצאו מקלטים בקובץ GeoJSON.");
+
+        // הכנסת כל הנתונים בעסקה אחת
+        await using var transaction =
+            await db.Database.BeginTransactionAsync();
+
+        try
+        {
+            db.Shelter.AddRange(sheltersToImport);
+
+            await db.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            Console.WriteLine(
+                $"ייבוא הסתיים בהצלחה! נוספו {sheltersToImport.Count} מקלטים."
+            );
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+}
+
+
+
+
+
+
+
+
 
 app.UseStaticFiles(new StaticFileOptions
 {

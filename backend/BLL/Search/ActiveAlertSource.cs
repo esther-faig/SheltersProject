@@ -83,5 +83,21 @@ namespace BLL.Services
                 return null;
             }
         }
+
+        //מאפשר להתחבר גם לשרת האמיתי וגם למדומה
+        public class CompositeActiveAlertSource : IActiveAlertSource
+        {
+            private readonly IReadOnlyList<IActiveAlertSource> _sources;
+            public CompositeActiveAlertSource(IEnumerable<IActiveAlertSource> sources) => _sources = sources.ToList();
+
+            public async Task<ActiveAlert?> GetCurrentAsync(CancellationToken ct)
+            {
+                var results = await Task.WhenAll(_sources.Select(s => s.GetCurrentAsync(ct)));
+                // אזעקה קודמת להתראה מקדימה
+                return results.Where(r => r != null)
+                              .OrderBy(r => r!.AlertType == AlertTypes.Alarm ? 0 : 1)
+                              .FirstOrDefault();
+            }
+        }
     }
 }
