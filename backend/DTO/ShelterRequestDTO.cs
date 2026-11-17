@@ -30,7 +30,7 @@ namespace DTO
         public double Longitude { get; set; }
 
         [Range(1, 100000, ErrorMessage = "קיבולת המקלט חייבת להיות בין 1 ל-100000")]
-        public int MaxCapacity { get; set; }
+        public int? MaxCapacity { get; set; }
 
         // כל פריט ברשימה נבדק אוטומטית לפי ה-Attributes שב-ShelterFeatureUpdateDTO
         public List<ShelterFeatureUpdateDTO> Features { get; set; } = new();

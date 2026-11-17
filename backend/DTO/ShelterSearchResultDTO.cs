@@ -21,7 +21,7 @@ namespace DTO
         //זמן הנסיעה מהמקלט למשתמש בשניות
         public int TravelTimeSeconds { get; set; }
         //רק למידע
-        public int MaxCapacity { get; set; }
+        public int? MaxCapacity { get; set; }
 
         public double MatchScore { get; set; }  //0-100
         public bool IsRecommended { get; set; }             // הראשון ברשימה
