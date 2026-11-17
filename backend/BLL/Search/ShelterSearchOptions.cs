@@ -10,7 +10,7 @@ namespace BLL.Search
 {
     public class ShelterSearchOptions
     {
-        //כל ההגדרות הנצרכות בביל בהחישובים    
+        //כל ההגדרות הנצרכות בשביל החישובים    
 
         public const string SectionName = "ShelterSearch";
 
@@ -18,7 +18,7 @@ namespace BLL.Search
         public string DefaultAlertType { get; set; } = "alarm";
 
         // מרווח ביטחון שמורידים מזמן ההתגוננות (החלטת תכנון, לא נתון רשמי)
-        public int SafetyMarginSeconds { get; set; } = 10;
+        public int SafetyMarginSeconds { get; set; } = 8;
 
         // כמה מקלטים לכל היותר נשלחים ל-Google
         public int MaxCandidatesForRouting { get; set; } = 50;

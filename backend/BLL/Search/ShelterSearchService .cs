@@ -4,18 +4,13 @@ using DAL;
 using DAL.Repositories;
 using DTO;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL.Services
 {
     public class ShelterSearchService : IShelterSearchService
     {
         private readonly IAlertZoneService _alertZoneService;
-        private readonly IActiveAlertSource _activeAlerts;
+        private readonly IActiveAlertCache _alertCache;
         private readonly IShelterRepository _shelterRepository;
         private readonly IUserPreferenceRepository _userPreferenceRepository;
         private readonly IShelterEligibilityService _eligibility;
@@ -27,7 +22,7 @@ namespace BLL.Services
 
         public ShelterSearchService(
             IAlertZoneService alertZoneService,
-            IActiveAlertSource activeAlerts,
+            IActiveAlertCache alertCache,
             IShelterRepository shelterRepository,
             IUserPreferenceRepository userPreferenceRepository,
             IShelterEligibilityService eligibility,
@@ -38,7 +33,7 @@ namespace BLL.Services
             IOptions<ShelterSearchOptions> options)
         {
             _alertZoneService = alertZoneService;
-            _activeAlerts = activeAlerts;
+            _alertCache = alertCache;
             _shelterRepository = shelterRepository;
             _userPreferenceRepository = userPreferenceRepository;
             _eligibility = eligibility;
@@ -63,8 +58,8 @@ namespace BLL.Services
                     "לא זוהה אזור התרעה עבור המיקום שלך.");
             }
 
-            // ── שלב 1ב: סוג ההתרעה. התרעה חיה בשרת > מה שהלקוח שלח > ברירת מחדל ──
-            var (alertType, alertSource) = await ResolveAlertTypeAsync(zone, request.AlertType, ct);
+            // ── שלב 1ב: סוג ההתרעה. התרעה חיה (מהזיכרון) > מה שהלקוח שלח > ברירת מחדל ──
+            var (alertType, alertSource) = ResolveAlertType(zone, request.AlertType);
 
             // ── שלב 2: זמן התגוננות לפי אזור + סוג התרעה. אם אין, לא ממציאים ──
             int? duration = _alertZoneService.GetDurationSeconds(zone, alertType);
@@ -133,6 +128,7 @@ namespace BLL.Services
 
             // ── שלבים 8-9: ציון + ערימת מקסימום ──
             var ranked = _ranking.Rank(routed, required, optional, maxSeconds, _options.MaxResults);
+
             // ── שלב 10: בניית התשובה ──
             var results = ranked.Select((r, index) =>
             {
@@ -159,11 +155,11 @@ namespace BLL.Services
             };
         }
 
-        // התרעה חיה שחלה על האזור קובעת. אחרת מה שהלקוח ביקש (לבדיקות), ואחרת ברירת המחדל
-        private async Task<(string Type, string Source)> ResolveAlertTypeAsync(
-            AlertZone zone, string? requested, CancellationToken ct)
+        // התרעה חיה שחלה על האזור קובעת (נקראת מהזיכרון, בלי רשת).
+        // אחרת מה שהלקוח ביקש (לבדיקות), ואחרת ברירת המחדל
+        private (string Type, string Source) ResolveAlertType(AlertZone zone, string? requested)
         {
-            var live = await _activeAlerts.GetCurrentAsync(ct);
+            var live = _alertCache.Current;
             if (live != null && live.Covers(zone.AreaName))
                 return (live.AlertType, "Live");
 

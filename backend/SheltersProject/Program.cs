@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NetTopologySuite;
@@ -21,7 +22,6 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
-using static BLL.Services.OrefActiveAlertSource;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -186,26 +186,44 @@ builder.Services.AddHttpClient<IDistanceService, GoogleMapsDistanceService>(clie
     client.Timeout = TimeSpan.FromSeconds(5);
 });
 
-// שרת ההתרעות (המדומה כרגע). בהמשך מחליפים את ה-BaseUrl בקונפיגורציה
-builder.Services.AddHttpClient("alerts", c =>
+// ───── התרעות: קריאה ברקע, מכמה שרתים (מדומה ואמיתי) ─────
+builder.Services.Configure<AlertServerOptions>(
+    builder.Configuration.GetSection(AlertServerOptions.SectionName));
+
+builder.Services.AddHttpClient("alerts", client =>
 {
-    c.Timeout = TimeSpan.FromSeconds(5);
-    c.DefaultRequestHeaders.Add("Referer", "https://www.oref.org.il/");
-    c.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+    client.Timeout = TimeSpan.FromSeconds(
+        builder.Configuration.GetValue<int?>("AlertServer:TimeoutSeconds") ?? 3);
+    // השרת האמיתי דורש את הכותרות האלה. לשרת המדומה הן לא מפריעות
+    client.DefaultRequestHeaders.Add("Referer", "https://www.oref.org.il/");
+    client.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+{
+    PooledConnectionLifetime = TimeSpan.FromMinutes(5),   // מרענן DNS, ומשאיר חיבור חם
+    ConnectTimeout = TimeSpan.FromSeconds(2),
+    AutomaticDecompression = System.Net.DecompressionMethods.All
 });
-builder.Services.AddScoped<IActiveAlertSource>(sp =>
+
+builder.Services.AddSingleton<IActiveAlertSource>(sp =>
 {
+    var options = sp.GetRequiredService<IOptions<AlertServerOptions>>().Value;
     var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var log = sp.GetRequiredService<ILogger<OrefActiveAlertSource>>();
-    var urls = builder.Configuration.GetSection("AlertServer:BaseUrls").Get<string[]>()
-               ?? new[] { "https://www.oref.org.il/" };
-    return new CompositeActiveAlertSource(urls.Select(u =>
+
+    var sources = options.ResolveUrls().Select(url =>
     {
-        var c = factory.CreateClient("alerts");
-        c.BaseAddress = new Uri(u);
-        return (IActiveAlertSource)new OrefActiveAlertSource(c, log);
-    }));
+        var client = factory.CreateClient("alerts");
+        client.BaseAddress = new Uri(url);
+        return (IActiveAlertSource)new OrefActiveAlertSource(client);
+    });
+    return new CompositeActiveAlertSource(sources);
 });
+
+builder.Services.AddSingleton<ActiveAlertCache>();
+builder.Services.AddSingleton<IActiveAlertCache>(sp => sp.GetRequiredService<ActiveAlertCache>());
+builder.Services.AddHostedService<AlertPollingService>();
 
 // גיאוקודינג דרך Nominatim (OpenStreetMap): בלי מפתח API
 builder.Services.AddHttpClient<GeocodingTools>(client =>
