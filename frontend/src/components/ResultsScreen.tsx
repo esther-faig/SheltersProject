@@ -1,8 +1,17 @@
+
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
+
 import Icon from './Icon';
 import RealMap, { type MapPoint } from './RealMap';
 import ShelterIllustration from './ShelterIllustration';
+
 import {
   ShelterSourceBadge,
   ShelterSourceNote,
@@ -10,20 +19,38 @@ import {
   formatDistance,
   formatTravel,
 } from './ShelterSource';
-import { searchShelters, type ShelterSearchResponse, type ShelterSearchResult } from '../api/shelterSearch';
+
+import {
+  searchShelters,
+  type AlertType,
+  type ShelterSearchResponse,
+  type ShelterSearchResult,
+} from '../api/shelterSearch';
 
 const IMAGES_URL = import.meta.env.VITE_IMAGES_URL as string;
 
-type Coords = { lat: number; lng: number };
-type ResultsState = { coords: Coords; response: ShelterSearchResponse };
+type Coords = {
+  lat: number;
+  lng: number;
+};
+
+type ResultsState = {
+  coords: Coords;
+  response: ShelterSearchResponse;
+  alertType?: AlertType;
+};
 
 function ResultsScreen() {
   const { mode } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
   const state = location.state as ResultsState | null;
 
-  const [response, setResponse] = useState<ShelterSearchResponse | null>(state?.response ?? null);
+  const [response, setResponse] = useState<ShelterSearchResponse | null>(
+    state?.response ?? null
+  );
+
   const [byCar, setByCar] = useState(mode === 'car');
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
@@ -33,108 +60,255 @@ function ResultsScreen() {
   }, []);
 
   // רענון הדף מאבד את התוצאות: חוזרים לחיפוש
-  if (!state || !response) return <Navigate to="/search" replace />;
+  if (!state || !response) {
+    return <Navigate to="/search" replace />;
+  }
 
+  // לאחר הבדיקה TypeScript יודע ש-state אינו null
   const coords = state.coords;
+  const requestedAlertType = state.alertType;
   const results = response.results;
 
-  const markers: MapPoint[] = results.map((s) => ({
-    id: s.shelterId,
-    lat: s.latitude,
-    lng: s.longitude,
-    title: s.name,
+  const markers: MapPoint[] = results.map((shelter) => ({
+    id: shelter.shelterId,
+    lat: shelter.latitude,
+    lng: shelter.longitude,
+    title: shelter.name,
   }));
 
-  // חיפוש חוזר ברכב: מקלטים רחוקים יותר
+  // חיפוש חוזר ברכב: שומרים על סוג ההתרעה המקורי
   async function searchByCar() {
     setSearching(true);
     setError('');
+
     try {
       const next = await searchShelters({
         latitude: coords.lat,
         longitude: coords.lng,
         travelMode: 'DRIVING',
+        alertType: requestedAlertType,
       });
+
       setResponse(next);
       setByCar(true);
     } catch (err) {
-      setError((err as Error).message || 'החיפוש נכשל. נסו שוב.');
+      setError(
+        (err as Error).message || 'החיפוש נכשל. נסו שוב.'
+      );
     } finally {
       setSearching(false);
     }
   }
 
   const driveButton = response.offerDrivingSearch && (
-    <button className="btn soft" type="button" onClick={searchByCar} disabled={searching}>
-      <span className="sh"><Icon name="car" /></span>
-      {searching ? 'מחפש...' : 'אני ברכב — חפש מקלטים רחוקים יותר'}
+    <button
+      className="btn soft"
+      type="button"
+      onClick={searchByCar}
+      disabled={searching}
+    >
+      <span className="sh">
+        <Icon name="car" />
+      </span>
+
+      {searching
+        ? 'מחפש...'
+        : 'אני ברכב — חפש מקלטים רחוקים יותר'}
     </button>
   );
+
+  const alertTypeText =
+    response.alertType === 'Alarm'
+      ? 'אזעקה'
+      : response.alertType === 'Warning'
+        ? 'התרעה'
+        : response.alertType;
+
+  const alertSourceText =
+    response.alertSource === 'Live'
+      ? 'נתוני התרעה בזמן אמת'
+      : response.alertSource === 'Requested'
+        ? 'סוג התרעה שנבחר בחיפוש'
+        : response.alertSource === 'Default'
+          ? 'סוג התרעה ברירת מחדל'
+          : response.alertSource;
 
   return (
     <section className="screen active">
       <div className="wrap inner" style={{ maxWidth: 1080 }}>
         <div className="phead">
-          <button className="iconbtn" type="button" onClick={() => navigate(-1)} aria-label="חזרה">
+          <button
+            className="iconbtn"
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label="חזרה"
+          >
             <Icon name="arrow-r" />
           </button>
+
           <div>
             <h2>המקלטים המתאימים לך</h2>
+
             <div className="sub">
-              {byCar ? 'לפי זמן נסיעה מהמיקום שלך' : 'לפי זמן הליכה מהמיקום שלך'}
+              {byCar
+                ? 'לפי זמן נסיעה מהמיקום שלך'
+                : 'לפי זמן הליכה מהמיקום שלך'}
             </div>
           </div>
         </div>
 
-        {error && <div className="err" role="alert">{error}</div>}
+        {(response.areaName ||
+          response.alertType ||
+          response.alertSource ||
+          response.maxSecondsToReach > 0) && (
+          <div className="info" style={{ marginBottom: 16 }}>
+            <Icon name="info" />
 
-        <div className="cols" style={{ gridTemplateColumns: '1.25fr 1fr' }} id="resCols">
+            <span>
+              {response.areaName && (
+                <span>
+                  אזור התרעה: <b>{response.areaName}</b>
+                  <br />
+                </span>
+              )}
+
+              {alertTypeText && (
+                <span>
+                  סוג התרעה: <b>{alertTypeText}</b>
+                  <br />
+                </span>
+              )}
+
+              {alertSourceText && (
+                <span>
+                  מקור הנתונים: {alertSourceText}
+                  <br />
+                </span>
+              )}
+
+              {response.maxSecondsToReach > 0 && (
+                <span>
+                  זמן ההתגוננות באזור: {response.maxSecondsToReach} שניות
+                </span>
+              )}
+            </span>
+          </div>
+        )}
+
+        {error && (
+          <div className="err" role="alert">
+            {error}
+          </div>
+        )}
+
+        <div
+          className="cols"
+          style={{ gridTemplateColumns: '1.25fr 1fr' }}
+          id="resCols"
+        >
           <div className="list" id="resList">
             {!response.hasResults || results.length === 0 ? (
               <div className="card empty">
-                <span className="bubble"><Icon name="alert" /></span>
-                <h3 style={{ fontSize: 24 }}>לא נמצא מקלט מתאים</h3>
+                <span className="bubble">
+                  <Icon name="alert" />
+                </span>
+
+                <h3 style={{ fontSize: 24 }}>
+                  לא נמצא מקלט מתאים
+                </h3>
+
                 <p>{response.message}</p>
 
                 {response.emergencyGuidance && (
-                  <div className="info" style={{ textAlign: 'right', marginTop: 14 }}>
+                  <div
+                    className="info"
+                    style={{
+                      textAlign: 'right',
+                      marginTop: 14,
+                    }}
+                  >
                     <Icon name="info" />
+
                     <span>
                       <b>{response.emergencyGuidance.title}</b>
                       <br />
-                      {response.emergencyGuidance.instructions.split('\n').map((line) => (
-                        <span key={line}>
-                          {line}
-                          <br />
-                        </span>
-                      ))}
-                      <small>מקור: {response.emergencyGuidance.source}</small>
+
+                      {response.emergencyGuidance.instructions
+                        .split('\n')
+                        .map((line, index) => (
+                          <span key={index}>
+                            {line}
+                            <br />
+                          </span>
+                        ))}
+
+                      <small>
+                        מקור: {response.emergencyGuidance.source}
+                      </small>
                     </span>
                   </div>
                 )}
 
                 <div className="emerg">
-                  <div><b>100</b>משטרה</div>
-                  <div><b>101</b>מד״א</div>
-                  <div><b>102</b>כבאות</div>
-                  <div><b>104</b>פיקוד העורף</div>
+                  <div>
+                    <b>100</b>
+                    משטרה
+                  </div>
+
+                  <div>
+                    <b>101</b>
+                    מד״א
+                  </div>
+
+                  <div>
+                    <b>102</b>
+                    כבאות
+                  </div>
+
+                  <div>
+                    <b>104</b>
+                    פיקוד העורף
+                  </div>
                 </div>
 
-                <div className="actions" style={{ justifyContent: 'center', marginTop: 20 }}>
+                <div
+                  className="actions"
+                  style={{
+                    justifyContent: 'center',
+                    marginTop: 20,
+                  }}
+                >
                   <Link className="btn" to="/search">
-                    <span className="sh"><Icon name="sliders" /></span>
+                    <span className="sh">
+                      <Icon name="sliders" />
+                    </span>
+
                     חזרה לחיפוש
                   </Link>
+
                   {driveButton}
                 </div>
               </div>
             ) : (
               <>
-                <ShelterResultCard shelter={results[0]} coords={coords} byCar={byCar} recommended />
+                <ShelterResultCard
+                  shelter={results[0]}
+                  coords={coords}
+                  byCar={byCar}
+                  recommended
+                />
 
                 {results.length > 1 && (
                   <>
-                    <h3 style={{ fontSize: 20, margin: '6px 4px -6px' }}>אפשרויות נוספות</h3>
+                    <h3
+                      style={{
+                        fontSize: 20,
+                        margin: '6px 4px -6px',
+                      }}
+                    >
+                      אפשרויות נוספות
+                    </h3>
+
                     {results.slice(1).map((shelter) => (
                       <ShelterResultCard
                         key={shelter.shelterId}
@@ -157,7 +331,11 @@ function ResultsScreen() {
               userPos={coords}
               markers={markers}
               height={460}
-              caption={results.length === 0 ? 'אין מקלטים להצגה' : `${results.length} מקלטים מתאימים בסביבה`}
+              caption={
+                results.length === 0
+                  ? 'אין מקלטים להצגה'
+                  : `${results.length} מקלטים מתאימים בסביבה`
+              }
             />
           </div>
         </div>
@@ -173,8 +351,15 @@ type CardProps = {
   recommended?: boolean;
 };
 
-function ShelterResultCard({ shelter, coords, byCar, recommended = false }: CardProps) {
-  const available = shelter.features.filter((f) => f.isAvailable === true);
+function ShelterResultCard({
+  shelter,
+  coords,
+  byCar,
+  recommended = false,
+}: CardProps) {
+  const available = shelter.features.filter(
+    (feature) => feature.isAvailable === true
+  );
 
   return (
     <article className={recommended ? 'card reco' : 'card'}>
@@ -191,7 +376,11 @@ function ShelterResultCard({ shelter, coords, byCar, recommended = false }: Card
             <img
               src={`${IMAGES_URL}/${shelter.files[0]}`}
               alt={shelter.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
             />
           ) : (
             <ShelterIllustration />
@@ -203,24 +392,35 @@ function ShelterResultCard({ shelter, coords, byCar, recommended = false }: Card
 
           <div className="chips" style={{ marginBottom: 10 }}>
             <TypeChip type={shelter.shelterType} />
-            <ShelterSourceBadge isImported={shelter.isImported} />
+
+            <ShelterSourceBadge
+              isImported={shelter.isImported}
+            />
           </div>
 
           <div className="meta">
-            <span><Icon name="pin" />{formatDistance(shelter.distanceMeters)}</span>
+            <span>
+              <Icon name="pin" />
+              {formatDistance(shelter.distanceMeters)}
+            </span>
+
             <span>
               <Icon name="clock" />
-              {byCar ? 'נסיעה' : 'הליכה'} {formatTravel(shelter.travelTimeSeconds)}
+              {byCar ? 'נסיעה' : 'הליכה'}{' '}
+              {formatTravel(shelter.travelTimeSeconds)}
               {shelter.isEstimate ? ' (הערכה)' : ''}
             </span>
           </div>
 
           {available.length > 0 && (
             <div className="chips">
-              {available.map((f) => (
-                <span className="chip ok" key={f.preferenceId}>
+              {available.map((feature) => (
+                <span
+                  className="chip ok"
+                  key={feature.preferenceId}
+                >
                   <Icon name="check" />
-                  {f.name}
+                  {feature.name}
                 </span>
               ))}
             </div>
@@ -228,21 +428,32 @@ function ShelterResultCard({ shelter, coords, byCar, recommended = false }: Card
 
           {shelter.matchReasons.length > 0 && (
             <ul className="reasons">
-              {shelter.matchReasons.map((reason) => (
-                <li key={reason}>{reason}</li>
+              {shelter.matchReasons.map((reason, index) => (
+                <li key={`${shelter.shelterId}-${index}`}>
+                  {reason}
+                </li>
               ))}
             </ul>
           )}
 
-          <ShelterSourceNote isImported={shelter.isImported} />
+          <ShelterSourceNote
+            isImported={shelter.isImported}
+          />
 
           <div className="sh-actions">
             <Link
-              className={recommended ? 'btn primary small' : 'btn soft small'}
+              className={
+                recommended
+                  ? 'btn primary small'
+                  : 'btn soft small'
+              }
               to={`/shelter/${shelter.shelterId}`}
               state={{ shelter, byCar, coords }}
             >
-              <span className="sh"><Icon name="nav" /></span>
+              <span className="sh">
+                <Icon name="nav" />
+              </span>
+
               ניווט ופרטים
             </Link>
           </div>

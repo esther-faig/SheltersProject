@@ -41,6 +41,12 @@ def test_early_warning_is_different_category():
     client.post("/simulate/alert", json={"cities": ["בני ברק"], "alert_type": "early_warning"})
     assert _oref()["cat"] == "14"
 
+def test_new_scenarios():
+    assert client.post("/simulate/scenario/petah_tikva_alarm").status_code == 200
+    assert _oref()["cat"] == "1"
+    client.post("/simulate/clear")
+    assert client.post("/simulate/scenario/jerusalem_early_warning").status_code == 200
+    assert _oref()["cat"] == "14"
 
 def test_clear_and_stop():
     a = client.post("/simulate/alert", json={"cities": ["בני ברק"]}).json()

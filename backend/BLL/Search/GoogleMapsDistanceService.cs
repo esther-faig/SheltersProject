@@ -42,7 +42,19 @@ namespace BLL.Services
             var tasks = destinations.Chunk(BatchSize)
                 .Select(batch => GetBatchSafeAsync(originLat, originLon, batch, travelMode, ct));
             var parts = await Task.WhenAll(tasks);
-            return parts.SelectMany(p => p).ToList();
+            var results = parts.SelectMany(p => p).ToList();
+
+            // מקלטים ש-Google לא החזיר להם מסלול (למשל נקודה בתוך בניין): משלימים בהערכה
+            // לפי קו אווירי, כדי שלא ייעלמו מהתוצאות. הם יסומנו כ"(הערכה)"
+            var found = results.Select(r => r.ShelterId).ToHashSet();
+            foreach (var s in destinations.Where(s => !found.Contains(s.ShelterId)))
+            {
+                _logger.LogInformation(
+                    "No Google route for shelter {ShelterId}, using straight-line estimate", s.ShelterId);
+                results.Add(Estimate(originLat, originLon, s, travelMode));
+            }
+
+            return results;
         }
 
         // אם Google נכשל: מעריכים לפי קו אווירי, כדי שהחיפוש לא ייכשל בזמן אזעקה
@@ -96,7 +108,7 @@ namespace BLL.Services
                 int index = element.TryGetProperty("destinationIndex", out var idx) ? idx.GetInt32() : 0;
 
                 if (!element.TryGetProperty("condition", out var cond) || cond.GetString() != "ROUTE_EXISTS")
-                    continue; // אין מסלול למקלט הזה: לא מוסיפים אותו
+                    continue; // אין מסלול: GetRoutesAsync ישלים הערכה למקלט הזה
 
                 double meters = element.TryGetProperty("distanceMeters", out var d) ? d.GetDouble() : 0;
                 double seconds = element.TryGetProperty("duration", out var dur)

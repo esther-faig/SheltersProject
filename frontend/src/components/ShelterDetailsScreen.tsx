@@ -250,7 +250,7 @@ function ShelterDetailsScreen() {
 
             <a
               className="btn primary block"
-              href={googleMapsUrl(current.latitude, current.longitude, mode)}
+              href={googleMapsUrl(current.latitude, current.longitude, mode, userCoords)}
               target="_blank"
               rel="noopener noreferrer"
             >

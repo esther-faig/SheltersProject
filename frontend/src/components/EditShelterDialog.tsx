@@ -152,7 +152,7 @@ function EditShelterDialog({ shelterId, onClose, onSaved }: Props) {
         <div className="info" style={{ marginBottom: 14 }}>
           <Icon name="info" />
           <span>
-            שינוי שם, מאפיינים או תמונות נשמר מיד. שינוי כתובת או מיקום יחזיר
+            שינוי שם או מאפיינים נשמר מיד. שינוי כתובת, מיקום או תמונה יחזיר
             את המקלט להמתנה לאישור מנהל.
           </span>
         </div>

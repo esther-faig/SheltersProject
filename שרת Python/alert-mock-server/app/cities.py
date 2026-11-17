@@ -27,6 +27,11 @@ SCENARIOS: dict[ScenarioName, tuple[AlertType, list[str]]] = {
         AlertType.early_warning,
         ["שדרות, איבים, ניר עם", "אשקלון - דרום", "באר שבע - מזרח"],
     ),
+    ScenarioName.petah_tikva_alarm: (AlertType.alarm, ["פתח תקווה"]),
+    ScenarioName.jerusalem_early_warning: (
+        AlertType.early_warning,
+        ["ירושלים - מרכז", "ירושלים - דרום", "ירושלים - מזרח", "ירושלים - מערב", "ירושלים - צפון"],
+    ),
 }
 
 # אם שם בתרחיש לא קיים בנתונים החדשים, מדפיסים אזהרה (במקום להיכשל בשקט)

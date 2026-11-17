@@ -34,9 +34,14 @@ namespace BLL.Services
                     .GeocodeAddressAsync($"{address.Trim()}, {city.Trim()}", CancellationToken.None)
                     .GetAwaiter().GetResult();
             }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+            catch (Exception ex) when (
+                ex is HttpRequestException
+                or TaskCanceledException
+                or System.Text.Json.JsonException
+                or NotSupportedException)
             {
-                throw new BusinessRuleException("לא הצלחנו לאמת את הכתובת כרגע. נסו שוב בעוד רגע.");
+                throw new BusinessRuleException(
+                    "לא הצלחנו לאמת את הכתובת כרגע. נסו שוב בעוד רגע.");
             }
 
             // אם תרצי לא לחסום כתובות ש-OpenStreetMap לא מכיר, החליפי את ה-throw ב-return

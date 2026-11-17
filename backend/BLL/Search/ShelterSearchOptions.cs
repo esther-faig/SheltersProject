@@ -15,7 +15,7 @@ namespace BLL.Search
         public const string SectionName = "ShelterSearch";
 
         // סוג התרעה כשהלקוח לא שלח
-        public string DefaultAlertType { get; set; } = "alarm";
+        public string DefaultAlertType { get; set; } = "Alarm";
 
         // מרווח ביטחון שמורידים מזמן ההתגוננות (החלטת תכנון, לא נתון רשמי)
         public int SafetyMarginSeconds { get; set; } = 8;

@@ -1,9 +1,12 @@
 export type TravelMode = 'walk' | 'car';
 
 // Google Maps: תומך בהליכה וברכב
-export function googleMapsUrl(lat: number, lng: number, mode: TravelMode) {
+export type LatLng = { lat: number; lng: number };
+
+export function googleMapsUrl(lat: number, lng: number, mode: TravelMode, origin?: LatLng | null) {
   const travelmode = mode === 'car' ? 'driving' : 'walking';
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=${travelmode}`;
+  const from = origin ? `&origin=${origin.lat},${origin.lng}` : '';
+  return `https://www.google.com/maps/dir/?api=1${from}&destination=${lat},${lng}&travelmode=${travelmode}`;
 }
 
 // Waze: ניווט לרכב בלבד (אין בו מצב הליכה)

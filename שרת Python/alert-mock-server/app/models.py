@@ -18,6 +18,8 @@ class ScenarioName(str, Enum):
     south_alarm = "south_alarm"
     center_early_warning = "center_early_warning"
     south_early_warning = "south_early_warning"
+    petah_tikva_alarm = "petah_tikva_alarm"              # חדש
+    jerusalem_early_warning = "jerusalem_early_warning"  # חדש
 
 
 class ActivateAlertRequest(BaseModel):
