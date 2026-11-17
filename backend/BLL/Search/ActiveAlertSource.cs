@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.Json;
-using Microsoft.Extensions.Logging;
+﻿using System.Text.Json;
 
 namespace BLL.Services
 {
@@ -22,25 +16,28 @@ namespace BLL.Services
                               .Split(' ', StringSplitOptions.RemoveEmptyEntries));
     }
 
+    // מצב החיבור לשרת התרעות אחד
+    public record AlertSourceStatus(string Source, bool Succeeded, string? Error, DateTime CheckedAtUtc);
+
+    // Succeeded = לפחות שרת אחד ענה בהצלחה (גם אם אין התרעה). Alert = null כשאין התרעה
+    public record AlertPollResult(bool Succeeded, ActiveAlert? Alert, IReadOnlyList<AlertSourceStatus> Sources);
+
     public interface IActiveAlertSource
     {
-        // null = אין התרעה פעילה, או שהשרת לא זמין. לעולם לא זורק חריגה
-        Task<ActiveAlert?> GetCurrentAsync(CancellationToken ct);
+        // לעולם לא זורק חריגה (חוץ מביטול)
+        Task<AlertPollResult> PollAsync(CancellationToken ct);
     }
 
-    // קורא מ-alerts.json (בפורמט של פיקוד העורף). מצביעים אותו לשרת המדומה או לאמיתי דרך AlertServer:BaseUrl
+    // קורא מ-alerts.json אחד (בפורמט של פיקוד העורף)
     public class OrefActiveAlertSource : IActiveAlertSource
     {
         private readonly HttpClient _http;
-        private readonly ILogger<OrefActiveAlertSource> _logger;
 
-        public OrefActiveAlertSource(HttpClient http, ILogger<OrefActiveAlertSource> logger)
-        {
-            _http = http;
-            _logger = logger;
-        }
+        public OrefActiveAlertSource(HttpClient http) => _http = http;
 
-        public async Task<ActiveAlert?> GetCurrentAsync(CancellationToken ct)
+        private string Name => _http.BaseAddress?.ToString() ?? "unknown";
+
+        public async Task<AlertPollResult> PollAsync(CancellationToken ct)
         {
             try
             {
@@ -49,55 +46,76 @@ namespace BLL.Services
 
                 // כשאין התרעה הגוף ריק (BOM בלבד), וזה תקין
                 var text = (await response.Content.ReadAsStringAsync(ct)).Trim('\uFEFF', '\0', ' ', '\r', '\n', '\t');
-                if (text.Length == 0) return null;
-
-                using var doc = JsonDocument.Parse(text);
-                var root = doc.RootElement;
-
-                // cat מגיע כמחרוזת ("1"), אבל מטפלים גם במספר
-                var catElement = root.GetProperty("cat");
-                string cat = catElement.ValueKind == JsonValueKind.String
-                    ? catElement.GetString() ?? ""
-                    : catElement.GetRawText();
-
-                string? type = cat switch
-                {
-                    "1" => AlertTypes.Alarm,      // ירי רקטות וטילים
-                    "14" => AlertTypes.Warning,   // התראה מקדימה
-                    _ => null                     // סוגי התרעה אחרים לא נתמכים כרגע
-                };
-                if (type == null) return null;
-
-                var areas = root.GetProperty("data").EnumerateArray()
-                    .Select(e => e.GetString() ?? "")
-                    .Where(s => s.Length > 0)
-                    .ToList();
-
-                return new ActiveAlert(type, areas);
+                var alert = text.Length == 0 ? null : Parse(text);
+                return Result(true, alert, null);
             }
             catch (Exception ex) when (!ct.IsCancellationRequested &&
-                (ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or InvalidOperationException))
+                (ex is HttpRequestException or TaskCanceledException or JsonException
+                    or KeyNotFoundException or InvalidOperationException))
             {
-                // בזמן חירום עדיף להמשיך בלי המידע הזה מאשר להיכשל
-                _logger.LogWarning(ex, "Could not read current alert, continuing without it");
-                return null;
+                // Timeout מגיע כ-TaskCanceledException בלי שהטוקן שלנו בוטל
+                return Result(false, null, ex.Message);
             }
         }
 
-        //מאפשר להתחבר גם לשרת האמיתי וגם למדומה
-        public class CompositeActiveAlertSource : IActiveAlertSource
+        private static ActiveAlert? Parse(string text)
         {
-            private readonly IReadOnlyList<IActiveAlertSource> _sources;
-            public CompositeActiveAlertSource(IEnumerable<IActiveAlertSource> sources) => _sources = sources.ToList();
+            using var doc = JsonDocument.Parse(text);
+            var root = doc.RootElement;
 
-            public async Task<ActiveAlert?> GetCurrentAsync(CancellationToken ct)
+            // cat מגיע כמחרוזת ("1"), אבל מטפלים גם במספר
+            var catElement = root.GetProperty("cat");
+            string cat = catElement.ValueKind == JsonValueKind.String
+                ? catElement.GetString() ?? ""
+                : catElement.GetRawText();
+
+            string? type = cat switch
             {
-                var results = await Task.WhenAll(_sources.Select(s => s.GetCurrentAsync(ct)));
-                // אזעקה קודמת להתראה מקדימה
-                return results.Where(r => r != null)
-                              .OrderBy(r => r!.AlertType == AlertTypes.Alarm ? 0 : 1)
-                              .FirstOrDefault();
+                "1" => AlertTypes.Alarm,      // ירי רקטות וטילים
+                "14" => AlertTypes.Warning,   // התראה מקדימה
+                _ => null                     // סוגי התרעה אחרים לא נתמכים כרגע
+            };
+            if (type == null) return null;
+
+            var areas = root.GetProperty("data").EnumerateArray()
+                .Select(e => e.GetString() ?? "")
+                .Where(s => s.Length > 0)
+                .ToList();
+
+            return new ActiveAlert(type, areas);
+        }
+
+        private AlertPollResult Result(bool ok, ActiveAlert? alert, string? error) =>
+            new(ok, alert, new[] { new AlertSourceStatus(Name, ok, error, DateTime.UtcNow) });
+    }
+
+    // כמה שרתים במקביל (מדומה + אמיתי). אזעקה קודמת להתראה מקדימה
+    public class CompositeActiveAlertSource : IActiveAlertSource
+    {
+        private readonly IReadOnlyList<IActiveAlertSource> _sources;
+
+        public CompositeActiveAlertSource(IEnumerable<IActiveAlertSource> sources)
+            => _sources = sources.ToList();
+
+        public async Task<AlertPollResult> PollAsync(CancellationToken ct)
+        {
+            var results = await Task.WhenAll(_sources.Select(s => s.PollAsync(ct)));
+
+            var statuses = results.SelectMany(r => r.Sources).ToList();
+            bool ok = results.Any(r => r.Succeeded);
+
+            var alerts = results.Where(r => r.Alert != null).Select(r => r.Alert!).ToList();
+            ActiveAlert? merged = null;
+            if (alerts.Count > 0)
+            {
+                var type = alerts.Any(a => a.AlertType == AlertTypes.Alarm)
+                    ? AlertTypes.Alarm : AlertTypes.Warning;
+                var areas = alerts.Where(a => a.AlertType == type)
+                                  .SelectMany(a => a.Areas).Distinct().ToList();
+                merged = new ActiveAlert(type, areas);
             }
+
+            return new AlertPollResult(ok, merged, statuses);
         }
     }
 }
