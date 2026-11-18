@@ -207,6 +207,7 @@ builder.Services.AddScoped<IShelterEligibilityService, ShelterEligibilityService
 builder.Services.AddScoped<IShelterRankingService, ShelterRankingService>();
 builder.Services.AddScoped<IEmergencyGuidanceService, EmergencyGuidanceService>();
 builder.Services.AddScoped<IShelterSearchService, ShelterSearchService>();
+builder.Services.AddScoped<IAddressCheckService, AddressCheckService>();
 
 // Google Routes. Timeout קצר: בזמן אזעקה עדיף הערכה מהירה מהמתנה
 builder.Services.AddHttpClient<IDistanceService, GoogleMapsDistanceService>(client =>
