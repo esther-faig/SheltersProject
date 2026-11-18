@@ -22,11 +22,12 @@ export async function streamChat(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ messages }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(URL, { method: 'POST', headers, body: JSON.stringify({ messages }) });
+  } catch {
+    throw new Error('לא ניתן להתחבר לשרת. נסו שוב בעוד רגע.');
+  }
 
   if (res.status === 429) throw new Error('יותר מדי הודעות בזמן קצר. נסו שוב בעוד דקה.');
 
@@ -35,7 +36,7 @@ export async function streamChat(
   // בדיקה האם הבקשה הצליחה ויש גוף נתונים (Stream) לקריאה
   if (!res.ok || !res.body) {
     const err = await res.json().catch(() => null);
-    throw new Error(err?.title ?? 'Chat request failed');
+    throw new Error(err?.title ?? 'הבקשה נכשלה. נסו שוב.');
   }
 
   // פתיחת קורא (Reader) לזרם הנתונים בעזרת TextDecoderStream הממיר בייטים למחרוזות

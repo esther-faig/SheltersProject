@@ -16,7 +16,7 @@ const usersSlice = createSlice({
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(logout.fulfilled, () => initialState);
   },

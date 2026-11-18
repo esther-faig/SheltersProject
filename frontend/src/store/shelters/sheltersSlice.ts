@@ -16,13 +16,13 @@ const sheltersSlice = createSlice({
       })
       .addCase(fetchMyShelters.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(addShelter.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(addShelter.fulfilled, (state) => { state.loading = false; })
       .addCase(addShelter.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(setShelterActive.fulfilled, (state, action) => {
         const index = state.items.findIndex((s) => s.shelterId === action.payload.id);

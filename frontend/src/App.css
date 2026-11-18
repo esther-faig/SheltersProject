@@ -633,3 +633,9 @@ h1{-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
 .icon-act{color:var(--ink2)}
 .icon-act .ic{width:20px;height:20px;stroke-width:1.6}
 .icon-act[disabled]{opacity:.35;pointer-events:none}
+.countdown{display:flex;align-items:center;gap:14px;padding:14px 18px;margin-bottom:18px;border:2px solid var(--ink);border-radius:var(--wob2);background:var(--sage-l)}
+.countdown .ic{width:34px;height:34px}
+.countdown-label{font-weight:700;font-size:14px}
+.countdown-time{font-family:'Secular One',Assistant,sans-serif;font-size:34px;line-height:1;direction:ltr}
+.countdown.low{background:#fbe6bb}
+.countdown.over{background:#f7e0de}

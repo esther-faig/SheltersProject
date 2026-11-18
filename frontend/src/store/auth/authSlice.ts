@@ -12,7 +12,7 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state) => { state.loading = false; })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(login.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(login.fulfilled, (state, action) => {
@@ -21,7 +21,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(logout.fulfilled, (state) => { state.token = null; });
   },

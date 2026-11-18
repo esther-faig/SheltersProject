@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Icon from './Icon';
 import RealMap from './RealMap';
 import { geocodeAddress } from '../api/geocode';
-import { searchShelters, type AlertType } from '../api/shelterSearch';
+import { searchShelters } from '../api/shelterSearch';
 
 type Coords = {
   lat: number;
@@ -20,7 +20,6 @@ function SearchShelterPage() {
   const [locating, setLocating] = useState(false);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
-  const [alertType, setAlertType] = useState<'' | AlertType>('');
 
   useEffect(() => {
     document.title = 'מציאת מקלט';
@@ -70,9 +69,9 @@ function SearchShelterPage() {
     setSearching(true);
 
     try {
-      // מיקום משותף, או כתובת שמומרת לקואורדינטות
       let origin = coords;
 
+      // אם המשתמש הזין כתובת, ממירים אותה לקואורדינטות
       if (!origin) {
         origin = await geocodeAddress(address.trim());
 
@@ -90,14 +89,12 @@ function SearchShelterPage() {
         latitude: origin.lat,
         longitude: origin.lng,
         travelMode: mode === 'car' ? 'DRIVING' : 'WALKING',
-        alertType: alertType || undefined,
       });
 
       navigate(`/results/${mode}`, {
         state: {
           coords: origin,
           response,
-          alertType: alertType || undefined,
         },
       });
     } catch (err) {
@@ -233,27 +230,6 @@ function SearchShelterPage() {
                 </button>
               </div>
             </div>
-
-            {import.meta.env.DEV && (
-              <div>
-                <label className="lbl" htmlFor="alert-type">
-                  סוג התרעה לבדיקה (סביבת פיתוח בלבד)
-                </label>
-
-                <select
-                  id="alert-type"
-                  className="select"
-                  value={alertType}
-                  onChange={(event) =>
-                    setAlertType(event.target.value as '' | AlertType)
-                  }
-                >
-                  <option value="">לפי נתוני השרת</option>
-                  <option value="Alarm">אזעקה</option>
-                  <option value="Warning">התרעה</option>
-                </select>
-              </div>
-            )}
 
             <div className="info">
               <Icon name="info" />

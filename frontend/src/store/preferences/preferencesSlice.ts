@@ -20,7 +20,7 @@ const preferencesSlice = createSlice({
       })
       .addCase(fetchPreferences.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(createPreference.fulfilled, (state, action) => {
         state.items.push(action.payload);

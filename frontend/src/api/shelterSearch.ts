@@ -1,8 +1,6 @@
 
 import { request } from './http';
 
-export type AlertType = 'Alarm' | 'Warning';
-
 export type TravelMode = 'WALKING' | 'DRIVING';
 
 export interface ShelterSearchResult {
@@ -41,9 +39,8 @@ export interface ShelterSearchResponse {
   hasResults: boolean;
   message: string;
 
-  alertType: string;
+  // פרטי האזור וזמן ההתגוננות שמחזיר השרת
   areaName: string;
-  alertSource: string;
   maxSecondsToReach: number;
 
   offerDrivingSearch: boolean;
@@ -56,13 +53,12 @@ export interface ShelterSearchResponse {
   } | null;
 }
 
-// הטוקן, אם קיים, נשלח אוטומטית מתוך request.
-// לכן משתמש רשום יכול לקבל התאמה להעדפות שלו.
+// אם קיים טוקן, הוא נשלח אוטומטית מתוך request.
+// משתמש רשום יכול לקבל התאמה להעדפות שלו.
 export function searchShelters(body: {
   latitude: number;
   longitude: number;
   travelMode: TravelMode;
-  alertType?: AlertType;
 }) {
   return request<ShelterSearchResponse>('/ShelterSearch', {
     method: 'POST',

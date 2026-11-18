@@ -6,7 +6,7 @@ export type LatLng = { lat: number; lng: number };
 export function googleMapsUrl(lat: number, lng: number, mode: TravelMode, origin?: LatLng | null) {
   const travelmode = mode === 'car' ? 'driving' : 'walking';
   const from = origin ? `&origin=${origin.lat},${origin.lng}` : '';
-  return `https://www.google.com/maps/dir/?api=1${from}&destination=${lat},${lng}&travelmode=${travelmode}`;
+  return `https://www.google.com/maps/dir/?api=1${from}&destination=${lat},${lng}&travelmode=${travelmode}&dir_action=navigate`;
 }
 
 // Waze: ניווט לרכב בלבד (אין בו מצב הליכה)

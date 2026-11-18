@@ -17,13 +17,13 @@ const adminSlice = createSlice({
       })
       .addCase(fetchPendingShelters.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(reviewShelter.fulfilled, (state, action) => {
         state.items = state.items.filter((s) => s.shelterId !== action.payload);
       })
       .addCase(reviewShelter.rejected, (state, action) => {
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(logout.fulfilled, () => initialState);
   },

@@ -16,13 +16,13 @@ const profileSlice = createSlice({
       })
       .addCase(fetchMe.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(saveMyPreferences.fulfilled, (state, action) => {
         if (state.user) state.user.preferences = action.payload;
       })
       .addCase(saveMyPreferences.rejected, (state, action) => {
-        state.error = action.error.message ?? 'Error';
+        state.error = action.error.message ?? 'אירעה שגיאה';
       })
       .addCase(logout.fulfilled, () => initialState);   // בהתנתקות מנקים את המידע האישי
   },

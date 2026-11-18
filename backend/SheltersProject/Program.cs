@@ -22,6 +22,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +32,10 @@ var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
         "Connection string 'DefaultConnection' is missing. " +
         "Set it with User Secrets or an environment variable.");
 
-var geminiKey = builder.Configuration["Gemini:ApiKey"]
-    ?? throw new InvalidOperationException("Gemini:ApiKey is missing");
+// בלי מפתח הצ'אט לא יעבוד, אבל שאר האתר ימשיך לעלות
+var geminiKey = builder.Configuration["Gemini:ApiKey"];
+if (string.IsNullOrWhiteSpace(geminiKey)) geminiKey = "missing-key";
+
 
 var openAiOptions = new OpenAIClientOptions
 {
@@ -91,6 +94,32 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<GlobalExceptionFilter>();
+
+    // הודעות ה-Binding של המסגרת, בעברית
+    var m = options.ModelBindingMessageProvider;
+    m.SetValueMustBeANumberAccessor(field => $"השדה '{field}' חייב להיות מספר");
+    m.SetAttemptedValueIsInvalidAccessor((value, field) => $"הערך '{value}' אינו תקין בשדה '{field}'");
+    m.SetValueIsInvalidAccessor(value => $"הערך '{value}' אינו תקין");
+    m.SetUnknownValueIsInvalidAccessor(field => $"הערך בשדה '{field}' אינו תקין");
+    m.SetMissingBindRequiredValueAccessor(field => $"חסר ערך בשדה '{field}'");
+    m.SetMissingRequestBodyRequiredValueAccessor(() => "גוף הבקשה חסר");
+})
+.ConfigureApiBehaviorOptions(options =>
+{
+    // מחזיר את הודעת הוולידציה הראשונה בעברית ב-title, במבנה אחיד עם שאר השגיאות
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var first = context.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .FirstOrDefault(msg => System.Text.RegularExpressions.Regex.IsMatch(msg, "[\u0590-\u05FF]"))
+            ?? "הנתונים שנשלחו אינם תקינים";
+
+        return new ObjectResult(new ProblemDetails { Status = 400, Title = first })
+        {
+            StatusCode = 400
+        };
+    };
 });
 
 // CORS - לאפשר את ריאקט
@@ -229,6 +258,7 @@ builder.Services.AddHostedService<AlertPollingService>();
 builder.Services.AddHttpClient<GeocodingTools>(client =>
 {
     client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+    client.Timeout = TimeSpan.FromSeconds(8);
     // חובה לפי כללי השימוש של Nominatim: שם מזהה לאפליקציה
     client.DefaultRequestHeaders.UserAgent.ParseAdd(
         "SheltersProject-StudentApp/1.0 (estherfaig865@gmail.com)");

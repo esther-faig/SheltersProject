@@ -1,5 +1,5 @@
-﻿using BLL.Services;
-using BLL.Search;
+﻿using BLL.Search;
+using BLL.Services;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,15 +17,24 @@ namespace SheltersProject.Controllers
             _service = service;
         }
 
-        // POST: api/ShelterSearch   (פתוח לאורח; משתמש רשום מזוהה לפי הטוקן אם נשלח)
+        // POST: api/ShelterSearch
+        // פתוח לאורח. משתמש רשום מזוהה לפי הטוקן, אם נשלח.
         [AllowAnonymous]
         [HttpPost]
         public async Task<ActionResult<ShelterSearchResponseDTO>> Search(
-            [FromBody] ShelterSearchRequestDTO dto, CancellationToken ct)
+            [FromBody] ShelterSearchRequestDTO dto,
+            CancellationToken ct)
         {
-            // בלי טוקן תקף: null = אורח, והסינון לפי מיקום בלבד
+            // בלי טוקן תקף: null = אורח
+            // במקרה כזה החיפוש יתבצע ללא העדפות אישיות.
             var userId = User.GetUserIdOrNull();
-            return Ok(await _service.SearchAsync(dto, userId, ct));
+
+            var response = await _service.SearchAsync(
+                dto,
+                userId,
+                ct);
+
+            return Ok(response);
         }
     }
 }

@@ -52,7 +52,7 @@ namespace SheltersProject.Controllers
         public IActionResult Register(RegisterRequestDTO dto)
         {
             if (!_service.Register(dto))
-                return Conflict("Email is already registered.");
+                return Problem(title: "כתובת המייל כבר רשומה במערכת", statusCode: StatusCodes.Status409Conflict);
 
             // ההרשמה רק יוצרת את המשתמש. את הטוקן מקבלים בהתחברות
             return Ok();
@@ -65,7 +65,7 @@ namespace SheltersProject.Controllers
         {
             var result = _service.Login(dto);
             if (result is null)
-                return Unauthorized("Wrong email or password.");
+                return Problem(title: "כתובת המייל או הסיסמה שגויות", statusCode: StatusCodes.Status401Unauthorized);
 
             return Ok(result);
         }

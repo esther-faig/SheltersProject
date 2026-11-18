@@ -37,8 +37,7 @@ namespace SheltersProject.Controllers
             }
             catch (Exception ex) when (Response.HasStarted && ex is not OperationCanceledException)
             {
-                var json = JsonSerializer.Serialize(new { title = "The answer was interrupted. Please try again." });
-                await Response.WriteAsync($"event: error\ndata: {json}\n\n");
+                var json = JsonSerializer.Serialize(new { title = "התשובה נקטעה. נסו שוב." }); await Response.WriteAsync($"event: error\ndata: {json}\n\n");
             }
         }
     }

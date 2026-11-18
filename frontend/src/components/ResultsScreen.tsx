@@ -22,7 +22,6 @@ import {
 
 import {
   searchShelters,
-  type AlertType,
   type ShelterSearchResponse,
   type ShelterSearchResult,
 } from '../api/shelterSearch';
@@ -37,7 +36,6 @@ type Coords = {
 type ResultsState = {
   coords: Coords;
   response: ShelterSearchResponse;
-  alertType?: AlertType;
 };
 
 function ResultsScreen() {
@@ -54,20 +52,21 @@ function ResultsScreen() {
   const [byCar, setByCar] = useState(mode === 'car');
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
+  const [startedAt] = useState(() => Date.now());
 
   useEffect(() => {
     document.title = 'המקלטים המתאימים לך';
   }, []);
 
-  // רענון הדף מאבד את התוצאות: חוזרים לחיפוש
+  // אם המשתמש רענן את הדף ואין נתוני חיפוש, חוזרים למסך החיפוש
   if (!state || !response) {
     return <Navigate to="/search" replace />;
   }
 
-  // לאחר הבדיקה TypeScript יודע ש-state אינו null
   const coords = state.coords;
-  const requestedAlertType = state.alertType;
-  const results = response.results;
+  const results = response.results ?? [];
+  const deadline =
+  response.maxSecondsToReach > 0 ? startedAt + response.maxSecondsToReach * 1000 : null;
 
   const markers: MapPoint[] = results.map((shelter) => ({
     id: shelter.shelterId,
@@ -76,7 +75,7 @@ function ResultsScreen() {
     title: shelter.name,
   }));
 
-  // חיפוש חוזר ברכב: שומרים על סוג ההתרעה המקורי
+  // חיפוש חוזר ברכב ללא שינוי בהגדרות ההתרעה שבשרת
   async function searchByCar() {
     setSearching(true);
     setError('');
@@ -86,7 +85,6 @@ function ResultsScreen() {
         latitude: coords.lat,
         longitude: coords.lng,
         travelMode: 'DRIVING',
-        alertType: requestedAlertType,
       });
 
       setResponse(next);
@@ -117,22 +115,6 @@ function ResultsScreen() {
     </button>
   );
 
-  const alertTypeText =
-    response.alertType === 'Alarm'
-      ? 'אזעקה'
-      : response.alertType === 'Warning'
-        ? 'התרעה'
-        : response.alertType;
-
-  const alertSourceText =
-    response.alertSource === 'Live'
-      ? 'נתוני התרעה בזמן אמת'
-      : response.alertSource === 'Requested'
-        ? 'סוג התרעה שנבחר בחיפוש'
-        : response.alertSource === 'Default'
-          ? 'סוג התרעה ברירת מחדל'
-          : response.alertSource;
-
   return (
     <section className="screen active">
       <div className="wrap inner" style={{ maxWidth: 1080 }}>
@@ -157,32 +139,15 @@ function ResultsScreen() {
           </div>
         </div>
 
-        {(response.areaName ||
-          response.alertType ||
-          response.alertSource ||
-          response.maxSecondsToReach > 0) && (
+        {(response.areaName || response.maxSecondsToReach > 0) && (
           <div className="info" style={{ marginBottom: 16 }}>
             <Icon name="info" />
 
             <span>
               {response.areaName && (
                 <span>
-                  אזור התרעה: <b>{response.areaName}</b>
-                  <br />
-                </span>
-              )}
-
-              {alertTypeText && (
-                <span>
-                  סוג התרעה: <b>{alertTypeText}</b>
-                  <br />
-                </span>
-              )}
-
-              {alertSourceText && (
-                <span>
-                  מקור הנתונים: {alertSourceText}
-                  <br />
+                  אזור ההתגוננות: <b>{response.areaName}</b>
+                  {response.maxSecondsToReach > 0 && <br />}
                 </span>
               )}
 
@@ -200,6 +165,7 @@ function ResultsScreen() {
             {error}
           </div>
         )}
+        {deadline !== null && <Countdown deadline={deadline} />}
 
         <div
           className="cols"
@@ -293,7 +259,6 @@ function ResultsScreen() {
               <>
                 <ShelterResultCard
                   shelter={results[0]}
-                  coords={coords}
                   byCar={byCar}
                   recommended
                 />
@@ -313,7 +278,6 @@ function ResultsScreen() {
                       <ShelterResultCard
                         key={shelter.shelterId}
                         shelter={shelter}
-                        coords={coords}
                         byCar={byCar}
                       />
                     ))}
@@ -343,21 +307,46 @@ function ResultsScreen() {
     </section>
   );
 }
+const remaining = (deadline: number) => Math.max(0, Math.round((deadline - Date.now()) / 1000));
+
+function Countdown({ deadline }: { deadline: number }) {
+  const [left, setLeft] = useState(() => remaining(deadline));
+
+  useEffect(() => {
+    setLeft(remaining(deadline));
+    const id = window.setInterval(() => setLeft(remaining(deadline)), 1000);
+    return () => window.clearInterval(id);
+  }, [deadline]);
+
+  const minutes = Math.floor(left / 60);
+  const seconds = String(left % 60).padStart(2, '0');
+
+  return (
+    <div className={`countdown${left === 0 ? ' over' : left <= 30 ? ' low' : ''}`} role="timer">
+      <Icon name="clock" />
+      <div>
+        <div className="countdown-label">
+          {left > 0 ? 'זמן שנותר להגיע למקלט' : 'הזמן הסתיים — היכנסו למרחב המוגן הקרוב ביותר'}
+        </div>
+        <div className="countdown-time">{minutes}:{seconds}</div>
+        <div className="hint">הספירה מתחילה ברגע שהתוצאות מוצגות</div>
+      </div>
+    </div>
+  );
+}
 
 type CardProps = {
   shelter: ShelterSearchResult;
-  coords: Coords;
   byCar: boolean;
   recommended?: boolean;
 };
 
 function ShelterResultCard({
   shelter,
-  coords,
   byCar,
   recommended = false,
 }: CardProps) {
-  const available = shelter.features.filter(
+  const available = (shelter.features ?? []).filter(
     (feature) => feature.isAvailable === true
   );
 
@@ -372,7 +361,7 @@ function ShelterResultCard({
 
       <div className="sh-card">
         <div className="thumb">
-          {shelter.files.length > 0 ? (
+          {shelter.files?.length > 0 ? (
             <img
               src={`${IMAGES_URL}/${shelter.files[0]}`}
               alt={shelter.name}
@@ -393,9 +382,7 @@ function ShelterResultCard({
           <div className="chips" style={{ marginBottom: 10 }}>
             <TypeChip type={shelter.shelterType} />
 
-            <ShelterSourceBadge
-              isImported={shelter.isImported}
-            />
+            <ShelterSourceBadge isImported={shelter.isImported} />
           </div>
 
           <div className="meta">
@@ -426,7 +413,7 @@ function ShelterResultCard({
             </div>
           )}
 
-          {shelter.matchReasons.length > 0 && (
+          {shelter.matchReasons?.length > 0 && (
             <ul className="reasons">
               {shelter.matchReasons.map((reason, index) => (
                 <li key={`${shelter.shelterId}-${index}`}>
@@ -436,9 +423,7 @@ function ShelterResultCard({
             </ul>
           )}
 
-          <ShelterSourceNote
-            isImported={shelter.isImported}
-          />
+          <ShelterSourceNote isImported={shelter.isImported} />
 
           <div className="sh-actions">
             <Link
@@ -448,7 +433,7 @@ function ShelterResultCard({
                   : 'btn soft small'
               }
               to={`/shelter/${shelter.shelterId}`}
-              state={{ shelter, byCar, coords }}
+              state={{ shelter, byCar }}
             >
               <span className="sh">
                 <Icon name="nav" />
