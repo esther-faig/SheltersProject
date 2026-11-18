@@ -12,7 +12,7 @@ namespace BLL.Search
         public string DefaultAlertType { get; set; } = "Alarm";
 
         // מרווח ביטחון שמורידים מזמן ההתגוננות
-        public int SafetyMarginSeconds { get; set; } = 8;
+        public int SafetyMarginSeconds { get; set; } =0;
 
         // מספר המקלטים המרבי שנשלח לחישוב מסלולים
         public int MaxCandidatesForRouting { get; set; } = 50;
