@@ -49,8 +49,6 @@ namespace DAL
         public AlertZone? AlertZone { get; set; } // ניווט לטבלת AlertZone
 
         public int CreatedByUserId { get; set; }
-
-        [ForeignKey(nameof(CreatedByUserId))]
         public User User { get; set; } = null!;
 
         public List<string> Files { get; set; } = new List<string>();//the name of the image

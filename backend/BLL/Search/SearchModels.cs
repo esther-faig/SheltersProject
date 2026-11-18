@@ -19,7 +19,8 @@ namespace BLL.Services
 
     // true = Yes (התאמה), false = No (התנגשות), null או שורה חסרה = Unknown (לא ידוע)
     public enum FeatureState { Unknown, Yes, No }
-
+    
+    //מחפש את המאפיין בשורות של המקלט
     public static class ShelterFeatureLookup
     {
         public static FeatureState StateOf(Shelter shelter, int preferenceId)
