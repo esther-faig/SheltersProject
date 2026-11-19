@@ -1,15 +1,12 @@
-
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Icon from './Icon';
 import RealMap from './RealMap';
-import { geocodeAddress } from '../api/geocode';
 import { searchShelters } from '../api/shelterSearch';
+import { geocodeAddress } from '../api/geocode';
+import { useGeolocation, useDocumentTitle, type Coords } from '../store/hooks';
 
-type Coords = {
-  lat: number;
-  lng: number;
-};
+const LOCATE_FAIL = 'לא הצלחנו לאתר את המיקום. יש לאשר גישה למיקום בדפדפן ולנסות שוב.';
 
 function SearchShelterPage() {
   const navigate = useNavigate();
@@ -17,46 +14,23 @@ function SearchShelterPage() {
   const [mode, setMode] = useState<'walk' | 'car'>('walk');
   const [coords, setCoords] = useState<Coords | null>(null);
   const [address, setAddress] = useState('');
-  const [locating, setLocating] = useState(false);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    document.title = 'מציאת מקלט';
-  }, []);
+  const { locating, locate } = useGeolocation(LOCATE_FAIL);
+  useDocumentTitle('מציאת מקלט');
 
   const located = coords !== null || address.trim() !== '';
 
-  function handleLocate() {
-    if (!navigator.geolocation) {
-      setError('הדפדפן לא תומך באיתור מיקום');
-      return;
-    }
-
-    setLocating(true);
+  async function handleLocate() {
     setError('');
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-
-        setAddress('');
-        setLocating(false);
-      },
-      () => {
-        setError(
-          'לא הצלחנו לאתר את המיקום. יש לאשר גישה למיקום בדפדפן ולנסות שוב.'
-        );
-        setLocating(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }
-    );
+    try {
+      setCoords(await locate());
+      setAddress('');
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   async function handleFindShelter() {
@@ -69,19 +43,14 @@ function SearchShelterPage() {
     setSearching(true);
 
     try {
+      // מיקום משותף, או כתובת שמומרת לקואורדינטות
       let origin = coords;
-
-      // אם המשתמש הזין כתובת, ממירים אותה לקואורדינטות
       if (!origin) {
         origin = await geocodeAddress(address.trim());
-
         if (!origin) {
-          setError(
-            'לא מצאנו את הכתובת. נסו להוסיף עיר, או שתפו את המיקום שלכם.'
-          );
+          setError('לא מצאנו את הכתובת. נסו להוסיף עיר, או שתפו את המיקום שלכם.');
           return;
         }
-
         setCoords(origin);
       }
 
@@ -91,12 +60,7 @@ function SearchShelterPage() {
         travelMode: mode === 'car' ? 'DRIVING' : 'WALKING',
       });
 
-      navigate(`/results/${mode}`, {
-        state: {
-          coords: origin,
-          response,
-        },
-      });
+      navigate(`/results/${mode}`, { state: { coords: origin, response } });
     } catch (err) {
       setError((err as Error).message || 'החיפוש נכשל. נסו שוב.');
     } finally {
@@ -108,20 +72,12 @@ function SearchShelterPage() {
     <section className="screen active">
       <div className="wrap inner">
         <div className="phead">
-          <button
-            className="iconbtn"
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label="חזרה"
-          >
+          <button className="iconbtn" type="button" onClick={() => navigate(-1)} aria-label="חזרה">
             <Icon name="arrow-r" />
           </button>
-
           <div>
             <h2>מציאת מקלט</h2>
-            <div className="sub">
-              משתפים מיקום, בוחרים איך מגיעים — ואנחנו מוצאים.
-            </div>
+            <div className="sub">משתפים מיקום, בוחרים איך מגיעים — ואנחנו מוצאים.</div>
           </div>
         </div>
 
@@ -137,23 +93,15 @@ function SearchShelterPage() {
             <div className="card stack">
               <div>
                 <span className="lbl">המיקום שלך</span>
-
                 <button
                   className="btn soft block"
                   type="button"
                   onClick={handleLocate}
                   disabled={locating}
                 >
-                  <span className="sh">
-                    <Icon name="locate" />
-                  </span>
-
+                  <span className="sh"><Icon name="locate" /></span>
                   <span>
-                    {locating
-                      ? 'מאתר מיקום...'
-                      : coords
-                        ? 'המיקום שלך נקלט ✓'
-                        : 'שתף את המיקום שלי'}
+                    {locating ? 'מאתר מיקום...' : coords ? 'המיקום שלך נקלט ✓' : 'שתף את המיקום שלי'}
                   </span>
                 </button>
 
@@ -165,13 +113,9 @@ function SearchShelterPage() {
               </div>
 
               <div>
-                <label className="lbl" htmlFor="search-address">
-                  או הזינו כתובת ידנית
-                </label>
-
+                <label className="lbl" htmlFor="search-address">או הזינו כתובת ידנית</label>
                 <div className="field">
                   <Icon name="pin" />
-
                   <input
                     id="search-address"
                     type="text"
@@ -182,9 +126,9 @@ function SearchShelterPage() {
                       setAddress(event.target.value);
                       setCoords(null);
                     }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
                         handleFindShelter();
                       }
                     }}
@@ -195,34 +139,17 @@ function SearchShelterPage() {
 
             <div>
               <span className="lbl">אופן הגעה</span>
-
               <div className="modes">
-                <button
-                  className="mode"
-                  type="button"
-                  aria-pressed={mode === 'walk'}
-                  onClick={() => setMode('walk')}
-                >
-                  <span className="bubble">
-                    <Icon name="walk" />
-                  </span>
-
+                <button className="mode" type="button" aria-pressed={mode === 'walk'} onClick={() => setMode('walk')}>
+                  <span className="bubble"><Icon name="walk" /></span>
                   <span>
                     <strong>הליכה</strong>
                     <small>מסלול רגלי קרוב</small>
                   </span>
                 </button>
 
-                <button
-                  className="mode"
-                  type="button"
-                  aria-pressed={mode === 'car'}
-                  onClick={() => setMode('car')}
-                >
-                  <span className="bubble">
-                    <Icon name="car" />
-                  </span>
-
+                <button className="mode" type="button" aria-pressed={mode === 'car'} onClick={() => setMode('car')}>
+                  <span className="bubble"><Icon name="car" /></span>
                   <span>
                     <strong>רכב</strong>
                     <small>טווח הגעה רחב יותר</small>
@@ -233,29 +160,15 @@ function SearchShelterPage() {
 
             <div className="info">
               <Icon name="info" />
-
               <span>
-                אפשר לחפש גם בלי להירשם. <Link to="/register">הרשמו</Link> כדי
-                שנתחשב בהעדפות שלכם.
+                אפשר לחפש גם בלי להירשם. <Link to="/register">הרשמו</Link> כדי שנתחשב בהעדפות שלכם.
               </span>
             </div>
 
-            {error && (
-              <div className="err" role="alert">
-                {error}
-              </div>
-            )}
+            {error && <div className="err" role="alert">{error}</div>}
 
-            <button
-              className="btn primary block"
-              type="button"
-              onClick={handleFindShelter}
-              disabled={searching}
-            >
-              <span className="sh">
-                <Icon name="shieldcheck" />
-              </span>
-
+            <button className="btn primary block" type="button" onClick={handleFindShelter} disabled={searching}>
+              <span className="sh"><Icon name="shieldcheck" /></span>
               {searching ? 'מחפש...' : 'מצא לי מקלט'}
             </button>
           </div>

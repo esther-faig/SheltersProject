@@ -1,6 +1,11 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useGeolocation,
+  useDocumentTitle,
+} from '../store/hooks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
 import { addShelter, type NearbyShelter } from '../store/shelters/sheltersThunks';
 import Icon, { featureIcon } from './Icon';
@@ -10,6 +15,7 @@ import { geocodeAddress } from '../api/geocode';
 
 const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const LOCATE_FAIL = 'לא הצלחנו לאתר מיקום. אפשר להקליד קווי אורך ורוחב ידנית';
 
 function ShareShelterScreen() {
   const dispatch = useAppDispatch();
@@ -35,14 +41,16 @@ function ShareShelterScreen() {
   const [available, setAvailable] = useState<Record<number, boolean>>({});
   const [files, setFiles] = useState<File[]>([]);
   const [message, setMessage] = useState('');
-  const [locating, setLocating] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
+
+  // Custom Hooks
+  const { locating, locate } = useGeolocation(LOCATE_FAIL);
+  useDocumentTitle('שיתוף מקלט');
 
   // אזהרה על מקלט קרוב (לא שגיאה): null = אין אזהרה
   const [warning, setWarning] = useState<{ message: string; nearby: NearbyShelter[] } | null>(null);
 
   useEffect(() => {
-    document.title = 'שיתוף מקלט';
     dispatch(fetchPreferences());
   }, [dispatch]);
 
@@ -80,27 +88,16 @@ function ShareShelterScreen() {
     }
   }
 
-  function handleLocate() {
-    if (!navigator.geolocation) {
-      setMessage('הדפדפן לא תומך באיתור מיקום');
-      return;
-    }
-
-    setLocating(true);
+  async function handleLocate() {
     setMessage('');
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude.toFixed(6));
-        setLng(pos.coords.longitude.toFixed(6));
-        setLocating(false);
-      },
-      () => {
-        setMessage('לא הצלחנו לאתר מיקום. אפשר להקליד קווי אורך ורוחב ידנית');
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    try {
+      const found = await locate();
+      setLat(found.lat.toFixed(6));
+      setLng(found.lng.toFixed(6));
+    } catch (err) {
+      setMessage((err as Error).message);
+    }
   }
 
   function handleFiles(e: ChangeEvent<HTMLInputElement>) {
