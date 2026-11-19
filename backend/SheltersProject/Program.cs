@@ -253,6 +253,7 @@ builder.Services.AddSingleton<IActiveAlertSource>(sp =>
 
 builder.Services.AddSingleton<ActiveAlertCache>();
 builder.Services.AddSingleton<IActiveAlertCache>(sp => sp.GetRequiredService<ActiveAlertCache>());
+//שירות שרץ ברקע כל חיי המחלקה
 builder.Services.AddHostedService<AlertPollingService>();
 
 // גיאוקודינג דרך Nominatim (OpenStreetMap): בלי מפתח API

@@ -47,7 +47,7 @@ namespace SheltersProject.Controllers
         {
             return Ok(_service.GetMyShelter(id, User.GetUserId()));
         }
-
+        //שיתוף מקלט חדש רק למשתמש מחובר
         // POST: api/Shelter
         // תמיד 200. Saved=true: נשמר (ממתין לאישור מנהל). Saved=false: אזהרה על מקלט קרוב, לא נשמר כלום.
         // כדי לשתף בכל זאת שולחים שוב עם ConfirmDuplicate=true
@@ -57,7 +57,7 @@ namespace SheltersProject.Controllers
             // Ok ולא CreatedAtAction: מקלט חדש ממתין לאישור, ו-GetById מחזיר 404 למקלט כזה
             return Ok(_service.Add(User.GetUserId(), dto));
         }
-
+        //עריכת מקלט שלי
         // PUT: api/Shelter/5
         [HttpPut("{id:int}")]
         public ActionResult<ShelterDetailsDTO> Update(int id, [FromForm] ShelterRequestDTO dto)
@@ -71,6 +71,7 @@ namespace SheltersProject.Controllers
         {
             return Ok(_service.UpdateAvailability(id, User.GetUserId(), dto));
         }
+        
         // PUT: api/Shelter/5/features  (מאפיינים של מקלט מיובא, כל משתמש מחובר)
         [HttpPut("{id:int}/features")]
         public ActionResult<ShelterSearchResultDTO> UpdateFeatures(int id, [FromBody] UpdateShelterFeaturesDTO dto)
@@ -98,7 +99,7 @@ namespace SheltersProject.Controllers
         {
             return Ok(_service.GetByStatus(status));
         }
-
+        //אישור או דחיה של מקלטים
         // PUT: api/Shelter/5/status
         [Authorize(Roles = "Admin")]
         [HttpPut("{id:int}/status")]
