@@ -49,8 +49,10 @@ namespace SheltersProject.Controllers
         }
 
         // POST: api/Shelter
+        // תמיד 200. Saved=true: נשמר (ממתין לאישור מנהל). Saved=false: אזהרה על מקלט קרוב, לא נשמר כלום.
+        // כדי לשתף בכל זאת שולחים שוב עם ConfirmDuplicate=true
         [HttpPost]
-        public ActionResult<ShelterDetailsDTO> Add([FromForm] ShelterRequestDTO dto)
+        public ActionResult<AddShelterResultDTO> Add([FromForm] ShelterRequestDTO dto)
         {
             // Ok ולא CreatedAtAction: מקלט חדש ממתין לאישור, ו-GetById מחזיר 404 למקלט כזה
             return Ok(_service.Add(User.GetUserId(), dto));

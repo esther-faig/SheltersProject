@@ -17,13 +17,17 @@ namespace DAL.Repositories
         //למנהל- עבור מסך הניהול שהוא רוצה לראות את כל המקלטים
         //נשלח לפונקציה פעמיים NULL למנהל-
         List<Shelter> Find(ShelterStatus? status, bool? isActive);
-        
+
         //למשתמש-להצגת המקלטים שהוא שיתף
         List<Shelter> GetByUserId(int userId);
 
         List<Shelter> SearchByCity(string city, int max);
         // מועמדים לחיפוש: מאושרים ופעילים בתוך ריבוע גיאוגרפי
         List<Shelter> FindCandidates(double minLat, double maxLat, double minLon, double maxLon);
+
+        // לזיהוי כפילויות בשיתוף: כל המקלטים שלא נדחו (גם ממתינים וגם מושבתים) בתוך ריבוע גיאוגרפי
+        List<Shelter> FindInBox(double minLat, double maxLat, double minLon, double maxLon);
+
         Shelter? GetById(int id);
         Shelter Add(Shelter entity);
         Shelter? Update(Shelter entity);

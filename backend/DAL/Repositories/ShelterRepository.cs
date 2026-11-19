@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DAL.Repositories
 {
-    public class ShelterRepository: IShelterRepository
+    public class ShelterRepository : IShelterRepository
     {
         private readonly DB_Shelters _context;
 
@@ -96,6 +96,17 @@ namespace DAL.Repositories
                     .ThenInclude(sf => sf.Preference)
                 .Where(s => s.Status == ShelterStatus.Approved
                          && s.IsActive
+                         && s.Latitude >= minLat && s.Latitude <= maxLat
+                         && s.Longitude >= minLon && s.Longitude <= maxLon)
+                .ToList();
+        }
+
+        // זיהוי כפילויות: כל מקלט שלא נדחה בתוך הריבוע (גם ממתין וגם מושבת). בלי Include, אין צורך במאפיינים
+        public List<Shelter> FindInBox(double minLat, double maxLat, double minLon, double maxLon)
+        {
+            return _context.Shelter
+                .AsNoTracking()
+                .Where(s => s.Status != ShelterStatus.Rejected
                          && s.Latitude >= minLat && s.Latitude <= maxLat
                          && s.Longitude >= minLon && s.Longitude <= maxLon)
                 .ToList();

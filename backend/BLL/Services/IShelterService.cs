@@ -12,7 +12,10 @@ namespace BLL.Services
         //בעל מקלט- משתמש מחובר שהמקלט שלו
         List<SharedShelterDTO> GetMyShelters(int userId);
         ShelterDetailsDTO GetMyShelter(int id, int userId);
-        ShelterDetailsDTO Add(int userId, ShelterRequestDTO dto);
+
+        // מחזיר Saved=false + אזהרה (לא שגיאה) אם יש מקלט קרוב מאוד והמשתמש עוד לא אישר
+        AddShelterResultDTO Add(int userId, ShelterRequestDTO dto);
+
         ShelterDetailsDTO Update(int id, int userId, ShelterRequestDTO dto);
         ShelterDetailsDTO UpdateAvailability(int id, int userId, UpdateShelterAvailabilityDTO dto);
         void Delete(int id, int userId);

@@ -42,5 +42,9 @@ namespace DTO
 
         // בעריכה: שמות של תמונות קיימות שרוצים לשמור (מה שלא נשלח יימחק)
         public List<string> ExistingFiles { get; set; } = new();
+
+        // בשיתוף מקלט חדש: המשתמש אישר שהוא מכיר את האזהרה על מקלט קרוב ורוצה לשתף בכל זאת.
+        // לא ממופה ל-Shelter (AutoMapper ממפה רק שדות שקיימים ביעד)
+        public bool ConfirmDuplicate { get; set; } = false;
     }
 }

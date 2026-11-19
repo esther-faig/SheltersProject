@@ -2,13 +2,28 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { request } from '../../api/http';
 import type { SharedShelter } from '../profile/profileState';
 
+export interface NearbyShelter {
+  name: string;
+  address: string;
+  shelterType: string;
+  distanceMeters: number;
+  detailsVisible: boolean;
+}
+
+// saved=false הוא אזהרה (לא שגיאה): המקלט לא נשמר עד שהמשתמש מאשר
+export interface AddShelterResult {
+  saved: boolean;
+  message?: string | null;
+  nearbyShelters: NearbyShelter[];
+}
+
 export const fetchMyShelters = createAsyncThunk('shelters/fetchMyShelters', async () => {
   return request<SharedShelter[]>('/Shelter/my');
 });
 
 // שיתוף מקלט חדש: FormData, לא JSON (בגלל התמונות)
 export const addShelter = createAsyncThunk('shelters/addShelter', async (form: FormData) => {
-  await request('/Shelter', { method: 'POST', body: form });
+  return request<AddShelterResult>('/Shelter', { method: 'POST', body: form });
 });
 
 export const setShelterActive = createAsyncThunk(

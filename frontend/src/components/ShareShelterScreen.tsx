@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchPreferences } from '../store/preferences/preferencesThunks';
-import { addShelter } from '../store/shelters/sheltersThunks';
+import { addShelter, type NearbyShelter } from '../store/shelters/sheltersThunks';
 import Icon, { featureIcon } from './Icon';
 import RealMap from './RealMap';
 import { SHELTER_TYPES } from '../shelterTypes';
@@ -38,10 +38,18 @@ function ShareShelterScreen() {
   const [locating, setLocating] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
 
+  // אזהרה על מקלט קרוב (לא שגיאה): null = אין אזהרה
+  const [warning, setWarning] = useState<{ message: string; nearby: NearbyShelter[] } | null>(null);
+
   useEffect(() => {
     document.title = 'שיתוף מקלט';
     dispatch(fetchPreferences());
   }, [dispatch]);
+
+  // שינוי מיקום מבטל אזהרה קודמת, כי היא נבדקה מול המיקום הישן
+  useEffect(() => {
+    setWarning(null);
+  }, [lat, lng]);
 
   function togglePref(id: number) {
     setAvailable({ ...available, [id]: !available[id] });
@@ -127,8 +135,8 @@ function ShareShelterScreen() {
   const capacityNum = parseInt(maxCapacity);
   const capacityValid = !isNaN(capacityNum) && capacityNum >= 1;
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  // שליחה לשרת. confirmDuplicate=true רק אחרי שהמשתמש אישר את האזהרה
+  async function submit(confirmDuplicate: boolean) {
     setMessage('');
 
     // השרת מצפה ל-multipart/form-data, ושמות השדות כמו ב-ShelterRequestDTO
@@ -141,6 +149,7 @@ function ShareShelterScreen() {
     form.append('Latitude', String(latNum));
     form.append('Longitude', String(lngNum));
     form.append('MaxCapacity', String(capacityNum));
+    form.append('ConfirmDuplicate', String(confirmDuplicate));
 
     prefs.forEach((p, i) => {
       form.append(`Features[${i}].PreferenceId`, String(p.preferenceId));
@@ -153,11 +162,25 @@ function ShareShelterScreen() {
     files.forEach((file) => form.append('ImageFiles', file));
 
     try {
-      await dispatch(addShelter(form)).unwrap();
-      navigate('/profile');
+      const result = await dispatch(addShelter(form)).unwrap();
+
+      if (result.saved) {
+        navigate('/profile');
+      } else {
+        // אזהרה, לא שגיאה: מציגים ומחכים להחלטת המשתמש
+        setWarning({
+          message: result.message ?? 'נמצא מקלט קרוב מאוד למיקום שסימנת.',
+          nearby: result.nearbyShelters,
+        });
+      }
     } catch (err) {
       setMessage((err as { message: string }).message);
     }
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    submit(false);
   }
 
   return (
@@ -403,6 +426,53 @@ function ShareShelterScreen() {
               {message && (
                 <div className="err" id="shErr" role="alert">
                   {message}
+                </div>
+              )}
+
+              {/* אזהרה על מקלט קרוב: אפשר להתעלם ממנה */}
+              {warning && (
+                <div className="card" role="alert" style={{ background: '#fbe6bb' }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <Icon name="alert" style={{ width: 28, height: 28, flex: 'none' }} />
+                    <div>
+                      <b>שימו לב: ייתכן שהמקלט כבר קיים</b>
+                      <div style={{ marginTop: 6 }}>{warning.message}</div>
+
+                      <ul style={{ margin: '10px 0 0', paddingInlineStart: 20 }}>
+                        {warning.nearby.map((n, i) => (
+                          <li key={i}>
+                            {n.detailsVisible
+                              ? `${n.name}${n.address ? `, ${n.address}` : ''}`
+                              : n.name}{' '}
+                            ({n.shelterType}) — כ-{n.distanceMeters} מטר מהמיקום שסימנתם
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="actions" style={{ marginTop: 14 }}>
+                        <button
+                          type="button"
+                          className="btn small primary"
+                          disabled={sharing}
+                          onClick={() => submit(true)}
+                        >
+                          <span className="sh">
+                            <Icon name="check" />
+                          </span>
+                          {sharing ? 'שולח...' : 'זו דירה אחרת, שתף בכל זאת'}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn small"
+                          disabled={sharing}
+                          onClick={() => setWarning(null)}
+                        >
+                          ביטול
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
